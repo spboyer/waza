@@ -118,7 +118,11 @@ These are generated/temporary and should not be committed:
 
 ### Generate eval from SKILL.md
 ```bash
+# Pattern-based generation
 skill-eval generate <SKILL.md URL or path> -o ./my-eval
+
+# LLM-assisted generation (better quality)
+skill-eval generate <SKILL.md URL or path> -o ./my-eval --assist --model claude-opus-4.5
 ```
 
 ### Run eval with all options
@@ -139,3 +143,4 @@ skill-eval run ./eval.yaml \
 - `--context-dir` - Project files for context
 - `--executor` - mock or copilot-sdk
 - `--model` - LLM model to use
+- `--assist` - Use LLM for better task/fixture generation (generate command only)

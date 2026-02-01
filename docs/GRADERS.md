@@ -94,6 +94,18 @@ Evaluates Python expressions against the execution context.
 
 **Scoring:** `passed_assertions / total_assertions`
 
+**⚠️ Important:** Do NOT use generator expressions in assertions. They don't work with Python's `eval()` in restricted scope.
+
+```yaml
+# ❌ WRONG - generator expressions fail
+assertions:
+  - "any(kw in output for kw in ['azure', 'deploy'])"
+
+# ✅ CORRECT - use explicit or chains
+assertions:
+  - "'azure' in output.lower() or 'deploy' in output.lower()"
+```
+
 ---
 
 ### `regex` - Pattern Matching Grader
