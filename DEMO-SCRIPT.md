@@ -230,13 +230,16 @@ Structure created:
   ├── trigger_tests.yaml
   ├── tasks/
   │   └── example-task.yaml
+  ├── fixtures/
+  │   └── example.py
   └── graders/
       └── custom_grader.py
 
 Next steps:
-  1. Edit tasks/*.yaml to add test cases
-  2. Edit trigger_tests.yaml for trigger accuracy tests
-  3. Run: skill-eval run code-reviewer/eval.yaml
+  1. Add code files to fixtures/
+  2. Edit tasks/*.yaml to add test cases
+  3. Edit trigger_tests.yaml for trigger accuracy tests
+  4. Run: skill-eval run code-reviewer/eval.yaml --context-dir code-reviewer/fixtures
 ```
 
 ### Show the Eval Spec
@@ -252,7 +255,7 @@ cat code-reviewer/eval.yaml
 
 ---
 
-## Part 3: Customize Task Definitions (2 min)
+## Part 3b: Customize Task Definitions (2 min)
 
 ### Talking Points
 
