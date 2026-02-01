@@ -1,72 +1,57 @@
-# Demo Script: Skill Evals Framework
+# Demo Script: skill-eval
 
-> A step-by-step walkthrough for creating a demo video of the skill-eval framework.
+> Step-by-step walkthrough for demonstrating the skill-eval framework.
 
 ## Demo Overview
 
 **Duration:** ~12-15 minutes  
-**Goal:** Show how to evaluate Agent Skills using the same patterns as AI agent evals
+**Goal:** Show how to evaluate Agent Skills with the same rigor as AI agent evals
 
 ---
 
 ## Pre-Demo Setup
 
 ```bash
-# Ensure clean environment
-cd ~/demo
-rm -rf skill-eval-demo
+# Clean environment
+cd ~/demo && rm -rf skill-eval-demo
 mkdir skill-eval-demo && cd skill-eval-demo
 
-# Create a virtual environment
+# Install skill-eval
 uv venv && source .venv/bin/activate
-
-# Install skill-eval from GitHub release (with Copilot SDK support)
 uv pip install "https://github.com/spboyer/evals-for-skills/releases/latest/download/skill_eval-0.0.2-py3-none-any.whl"
-
-# Or from PyPI when available:
-# uv pip install skill-eval[copilot]
 ```
 
 ---
 
 ## Part 1: Introduction (1 min)
 
-### Talking Points
+### The Hook
 
-> "Today I'm going to show you **skill-eval** — a framework for evaluating Agent Skills using the same patterns that power AI agent evaluations."
+> "Agent Skills are becoming as important as the agents themselves. But how do you know if a skill actually works? How do you catch regressions? How do you compare performance across models?"
 
-> "Just like we have evals for AI agents, we now have evals for skills. This helps answer: Did the skill accomplish what we wanted?"
+> "Today I'll show you **skill-eval** — a framework that brings the same evaluation rigor we use for AI agents to Agent Skills."
 
-### Show the Version
+### The Problem
+
+> "Right now, testing skills is mostly manual. You try a prompt, eyeball the result, and hope it works in production. That doesn't scale."
+
+> "skill-eval fixes this with:"
+> - **Automated test suites** generated from SKILL.md files
+> - **Multiple grader types** — from simple regex to LLM-as-judge
+> - **Model comparison** — benchmark skills across GPT-4, Claude, etc.
+> - **CI/CD integration** — catch regressions before they ship
+
+### Quick Demo
 
 ```bash
 skill-eval --version
-# Output: skill-eval, version 0.1.0
-```
-
-### Show Available Commands
-
-```bash
 skill-eval --help
 ```
 
-**Expected Output:**
-```
-Usage: skill-eval [OPTIONS] COMMAND [ARGS]...
-
-  Skill Eval - Evaluate Agent Skills like you evaluate AI Agents.
-
-Commands:
-  analyze       Analyze runtime telemetry data.
-  compare       Compare results across multiple eval runs.
-  generate      Generate eval suite from a SKILL.md file.
-  init          Initialize a new eval suite for a skill.
-  list-graders  List available grader types.
-  report        Generate a report from eval results.
-  run           Run an evaluation suite.
-```
-
-> "Notice we have seven commands including the new **generate** command for auto-creating evals from SKILL.md files."
+**Key commands:**
+- `generate` — Create eval from SKILL.md
+- `run` — Execute evaluation
+- `compare` — Benchmark across models
 
 ---
 
