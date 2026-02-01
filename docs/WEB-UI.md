@@ -217,3 +217,105 @@ Contributions to the Web UI are welcome! Areas of focus:
 5. **Docker**: Containerization for easy deployment
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+
+## Complete Feature Set
+
+### Enhanced Pages
+
+#### Dashboard
+- Overview metrics (Total Evals, Total Runs, Model, Executor)
+- Quick actions (View All Evals, Configure Settings)
+- Recent runs with status badges
+- Eval suites preview with grid layout
+
+#### Evals List
+- Filterable table of eval suites
+- Search by name or skill
+- Run and Delete actions per eval
+- Empty state with CLI hints
+
+#### Run Details
+- Real-time progress updates via SSE
+- Status tracking (queued, running, completed, failed)
+- Progress bar and task counters
+- Results display with pass/fail badges
+- Transcript viewer (conversation history)
+- Error display for failed runs
+
+#### Settings
+- GitHub OAuth authentication status
+- Login/Logout functionality
+- Model configuration (Claude, GPT variants)
+- Executor selection (mock or copilot-sdk)
+- System information display
+
+### Authentication
+
+GitHub OAuth is now fully implemented:
+- Login redirects to GitHub OAuth flow
+- Session management with cookies
+- Protected routes for copilot-sdk and advanced features
+- User profile display in Settings
+
+### Docker Deployment
+
+The application is now containerized:
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Access at http://localhost:8000
+```
+
+Environment variables for OAuth:
+- `GITHUB_CLIENT_ID` - Your GitHub OAuth app client ID
+- `GITHUB_CLIENT_SECRET` - Your GitHub OAuth app secret
+- `GITHUB_REDIRECT_URI` - OAuth callback URL
+
+See `.env.example` for configuration.
+
+### Real-time Features
+
+- Server-Sent Events (SSE) for live run updates
+- Background task execution for eval runs
+- Progress tracking with detailed status
+- Automatic refetching for active runs
+
+## Development Workflow
+
+### Frontend Development
+
+```bash
+cd web/
+npm install
+npm run dev
+```
+
+The dev server runs on http://localhost:5173 with hot reload.
+
+### Backend Development
+
+```bash
+skill-eval serve --reload
+```
+
+The API server runs on http://localhost:8000 with auto-reload.
+
+### Full Stack Development
+
+Run both servers simultaneously:
+
+```bash
+# Terminal 1: Backend
+skill-eval serve --reload
+
+# Terminal 2: Frontend  
+cd web && npm run dev
+```
+
+Access:
+- Frontend: http://localhost:5173
+- API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+

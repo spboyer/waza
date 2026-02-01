@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from skill_eval import __version__
+from skill_eval.api import auth
 from skill_eval.api.routes import config, evals, runs, skills
 
 # Create FastAPI app
@@ -28,6 +29,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(evals.router, prefix="/api/evals", tags=["evals"])
 app.include_router(runs.router, prefix="/api/runs", tags=["runs"])
 app.include_router(skills.router, prefix="/api/skills", tags=["skills"])

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -16,7 +18,7 @@ from skill_eval.schemas.eval_spec import EvalSpec
 router = APIRouter()
 storage = StorageManager()
 
-# Track active runs
+# Track active runs with detailed progress
 active_runs: dict[str, dict[str, Any]] = {}
 
 
@@ -27,18 +29,20 @@ class RunCreate(BaseModel):
 
 
 async def execute_run(run_id: str, eval_id: str, eval_spec: EvalSpec, tasks: list[str] | None):
-    """Execute an eval run in the background."""
+    """Execute an eval run in the background with progress tracking."""
     try:
-        # Update status
+        # Initialize progress
         active_runs[run_id] = {
-            "status": "running",
+            "status": "initializing",
             "progress": 0,
             "total_tasks": 0,
             "completed_tasks": 0,
+            "current_task": None,
+            "current_trial": 0,
+            "results": [],
         }
         
         # Create runner
-        from pathlib import Path
         eval_path = storage.evals_dir / f"{eval_id}.yaml"
         runner = EvalRunner(spec=eval_spec, base_path=eval_path.parent)
         
@@ -47,24 +51,58 @@ async def execute_run(run_id: str, eval_id: str, eval_spec: EvalSpec, tasks: lis
         if tasks:
             all_tasks = [t for t in all_tasks if t.id in tasks]
         
-        active_runs[run_id]["total_tasks"] = len(all_tasks)
+        total_tasks = len(all_tasks)
+        active_runs[run_id].update({
+            "status": "running",
+            "total_tasks": total_tasks,
+        })
         
-        # Run eval
-        results = runner.run()
+        # Progress callback
+        def progress_callback(
+            event: str,
+            task_name: str | None = None,
+            task_num: int | None = None,
+            trial_num: int | None = None,
+            status: str | None = None,
+            **kwargs
+        ):
+            if run_id in active_runs:
+                if event == "task_start":
+                    active_runs[run_id].update({
+                        "current_task": task_name,
+                        "current_trial": trial_num or 1,
+                    })
+                elif event == "task_complete":
+                    completed = active_runs[run_id]["completed_tasks"] + 1
+                    active_runs[run_id].update({
+                        "completed_tasks": completed,
+                        "progress": int((completed / total_tasks) * 100) if total_tasks else 0,
+                    })
+                    if status:
+                        active_runs[run_id].setdefault("results", []).append({
+                            "task": task_name,
+                            "status": status,
+                        })
+        
+        # Run eval with progress callback
+        results = runner.run(progress_callback=progress_callback)
         
         # Save results
         storage.save_run_results(run_id, results)
         
-        # Update status
-        active_runs[run_id]["status"] = "completed"
-        active_runs[run_id]["progress"] = 100
-        active_runs[run_id]["completed_tasks"] = len(all_tasks)
+        # Update final status
+        active_runs[run_id].update({
+            "status": "completed",
+            "progress": 100,
+            "completed_tasks": total_tasks,
+        })
         
     except Exception as e:
-        active_runs[run_id] = {
-            "status": "failed",
-            "error": str(e),
-        }
+        if run_id in active_runs:
+            active_runs[run_id].update({
+                "status": "failed",
+                "error": str(e),
+            })
 
 
 @router.get("")

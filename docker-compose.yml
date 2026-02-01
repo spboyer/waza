@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  skill-eval:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount local eval storage for persistence
+      - ~/.skill-eval:/root/.skill-eval
+    environment:
+      # Optional: Set GitHub OAuth credentials
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost:8000/api/auth/callback}
+    restart: unless-stopped
