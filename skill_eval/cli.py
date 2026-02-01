@@ -85,6 +85,28 @@ def run(
         spec.config.executor = ExecutorType(executor)
     spec.config.verbose = verbose
 
+    # Validate context-dir if provided
+    if context_dir:
+        context_path = Path(context_dir)
+        if not context_path.exists():
+            console.print(f"[red]✗ Context directory not found:[/red] {context_dir}")
+            sys.exit(1)
+        
+        # Check for files
+        file_count = sum(1 for _ in context_path.glob("**/*") if _.is_file())
+        if file_count == 0:
+            console.print(f"[yellow]⚠ Warning: Context directory is empty:[/yellow] {context_dir}")
+            console.print("  The skill will see an empty workspace. Consider adding project files.")
+        else:
+            # Count relevant files
+            relevant_exts = ["*.py", "*.js", "*.ts", "*.json", "*.yaml", "*.yml", "*.md", "*.txt"]
+            relevant_count = sum(
+                1 for ext in relevant_exts 
+                for f in context_path.glob(f"**/{ext}") 
+                if f.is_file()
+            )
+            console.print(f"  Context: {context_dir} ({relevant_count} files)")
+
     # Display executor/model info
     console.print(f"  Executor: {spec.config.executor.value}")
     console.print(f"  Model: {spec.config.model}")

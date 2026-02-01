@@ -122,8 +122,24 @@ class CopilotExecutor(BaseExecutor):
         skill_name: str | None = None,
     ) -> ExecutionResult:
         """Execute a prompt using Copilot SDK."""
-        if not self._client:
-            await self.setup()
+        # For each execution, we need a fresh workspace with context files
+        # So we teardown any existing client and create new one with files already present
+        await self.teardown()
+        
+        # Create temp workspace first
+        self._workspace = tempfile.mkdtemp(prefix="skill-eval-")
+        
+        # Write context files BEFORE initializing client
+        if context:
+            await self._setup_context(context)
+        
+        # Now initialize client with populated workspace
+        ClientClass = _get_copilot_client()
+        self._client = ClientClass({
+            "cwd": self._workspace,
+            "log_level": "error",
+        })
+        await self._client.start()
         
         start_time = time.time()
         events: list[SessionEvent] = []
@@ -131,9 +147,6 @@ class CopilotExecutor(BaseExecutor):
         error: str | None = None
         
         try:
-            # Set up workspace context if provided
-            if context:
-                await self._setup_context(context)
             
             # Create session with model config
             session = await self._client.create_session({
@@ -227,7 +240,9 @@ class CopilotExecutor(BaseExecutor):
             
             if path and content:
                 full_path = os.path.join(self._workspace, path)
-                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                dir_path = os.path.dirname(full_path)
+                if dir_path:
+                    os.makedirs(dir_path, exist_ok=True)
                 with open(full_path, "w") as f:
                     f.write(content)
         
@@ -239,7 +254,9 @@ class CopilotExecutor(BaseExecutor):
             
             if path and content:
                 full_path = os.path.join(self._workspace, path)
-                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                dir_path = os.path.dirname(full_path)
+                if dir_path:
+                    os.makedirs(dir_path, exist_ok=True)
                 with open(full_path, "w") as f:
                     f.write(content)
 
