@@ -132,8 +132,7 @@ def _format_issue_body(
     lines.append(f"**Skill:** {result.skill}")
     lines.append(f"**Timestamp:** {result.timestamp.isoformat()}")
     lines.append(f"**Model:** {result.config.model or 'default'}")
-    executor = result.config.executor
-    executor_str = executor.value if hasattr(executor, 'value') else str(executor)
+    executor_str = str(result.config.executor)
     lines.append(f"**Executor:** {executor_str}")
     lines.append("")
 
