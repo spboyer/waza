@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from skill_eval.scanner import SkillInfo, SkillScanner, parse_repo_arg
+from waza.scanner import SkillInfo, SkillScanner, parse_repo_arg
 
 
 class TestSkillScanner:

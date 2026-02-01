@@ -1,11 +1,35 @@
 # Changelog
 
-All notable changes to skill-eval will be documented in this file.
+All notable changes to waza will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-02-02
+
+### Changed
+
+- **Renamed project from `skill-eval` to `waza`** (技 - Japanese for "technique/skill")
+  - New CLI command: `waza` (previously `skill-eval`)
+  - New package name: `waza` (previously `skill_eval`)
+  - Repository renamed to `waza`
+- Bumped version to 0.1.0 to mark the rename milestone
+
+### Migration
+
+If you were using `skill-eval`, update your scripts:
+
+```bash
+# Old
+skill-eval run ./eval.yaml
+pip install skill-eval
+
+# New
+waza run ./eval.yaml
+pip install waza
+```
 
 ## [0.0.2] - 2026-02-01
 
@@ -27,10 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **CLI Commands**
-  - `skill-eval run` - Run evaluation suites against skills
-  - `skill-eval generate` - Auto-generate evals from SKILL.md files
-  - `skill-eval init` - Initialize new eval suites interactively
-  - `skill-eval report` - Generate reports from results
+  - `waza run` - Run evaluation suites against skills
+  - `waza generate` - Auto-generate evals from SKILL.md files
+  - `waza init` - Initialize new eval suites interactively
+  - `waza report` - Generate reports from results
 
 - **Eval Generation**
   - Pattern-based generation from SKILL.md files
@@ -65,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - YAML escaping for regex patterns with backslashes
 - Progress bar now shows 100% on completion
 
-[Unreleased]: https://github.com/spboyer/evals-for-skills/compare/v0.0.2...HEAD
-[0.0.2]: https://github.com/spboyer/evals-for-skills/compare/v0.0.1...v0.0.2
-[0.0.1]: https://github.com/spboyer/evals-for-skills/releases/tag/v0.0.1
+[Unreleased]: https://github.com/spboyer/waza/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/spboyer/waza/compare/v0.0.2...v0.1.0
+[0.0.2]: https://github.com/spboyer/waza/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/spboyer/waza/releases/tag/v0.0.1

@@ -1,72 +1,57 @@
-# Demo Script: Skill Evals Framework
+# Demo Script: waza
 
-> A step-by-step walkthrough for creating a demo video of the skill-eval framework.
+> Step-by-step walkthrough for demonstrating the waza framework.
 
 ## Demo Overview
 
 **Duration:** ~12-15 minutes  
-**Goal:** Show how to evaluate Agent Skills using the same patterns as AI agent evals
+**Goal:** Show how to evaluate Agent Skills with the same rigor as AI agent evals
 
 ---
 
 ## Pre-Demo Setup
 
 ```bash
-# Ensure clean environment
-cd ~/demo
-rm -rf skill-eval-demo
-mkdir skill-eval-demo && cd skill-eval-demo
+# Clean environment
+cd ~/demo && rm -rf waza-demo
+mkdir waza-demo && cd waza-demo
 
-# Create a virtual environment
+# Install waza
 uv venv && source .venv/bin/activate
-
-# Install skill-eval from GitHub release (with Copilot SDK support)
-uv pip install "https://github.com/spboyer/evals-for-skills/releases/latest/download/skill_eval-0.0.2-py3-none-any.whl"
-
-# Or from PyPI when available:
-# uv pip install skill-eval[copilot]
+uv pip install "https://github.com/spboyer/waza/releases/latest/download/waza-0.0.2-py3-none-any.whl"
 ```
 
 ---
 
 ## Part 1: Introduction (1 min)
 
-### Talking Points
+### The Hook
 
-> "Today I'm going to show you **skill-eval** — a framework for evaluating Agent Skills using the same patterns that power AI agent evaluations."
+> "Agent Skills are becoming as important as the agents themselves. But how do you know if a skill actually works? How do you catch regressions? How do you compare performance across models?"
 
-> "Just like we have evals for AI agents, we now have evals for skills. This helps answer: Did the skill accomplish what we wanted?"
+> "Today I'll show you **waza** — a framework that brings the same evaluation rigor we use for AI agents to Agent Skills."
 
-### Show the Version
+### The Problem
+
+> "Right now, testing skills is mostly manual. You try a prompt, eyeball the result, and hope it works in production. That doesn't scale."
+
+> "waza fixes this with:"
+> - **Automated test suites** generated from SKILL.md files
+> - **Multiple grader types** — from simple regex to LLM-as-judge
+> - **Model comparison** — benchmark skills across GPT-4, Claude, etc.
+> - **CI/CD integration** — catch regressions before they ship
+
+### Quick Demo
 
 ```bash
-skill-eval --version
-# Output: skill-eval, version 0.1.0
+waza --version
+waza --help
 ```
 
-### Show Available Commands
-
-```bash
-skill-eval --help
-```
-
-**Expected Output:**
-```
-Usage: skill-eval [OPTIONS] COMMAND [ARGS]...
-
-  Skill Eval - Evaluate Agent Skills like you evaluate AI Agents.
-
-Commands:
-  analyze       Analyze runtime telemetry data.
-  compare       Compare results across multiple eval runs.
-  generate      Generate eval suite from a SKILL.md file.
-  init          Initialize a new eval suite for a skill.
-  list-graders  List available grader types.
-  report        Generate a report from eval results.
-  run           Run an evaluation suite.
-```
-
-> "Notice we have seven commands including the new **generate** command for auto-creating evals from SKILL.md files."
+**Key commands:**
+- `generate` — Create eval from SKILL.md
+- `run` — Execute evaluation
+- `compare` — Benchmark across models
 
 ---
 
@@ -79,13 +64,13 @@ Commands:
 ### Generate from URL
 
 ```bash
-skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md \
+waza generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md \
   -o azure-functions-eval
 ```
 
 **Expected Output:**
 ```
-skill-eval v0.1.0
+waza v0.1.0
 
 Parsing: https://raw.githubusercontent.com/microsoft/...
 ✓ Parsed skill: azure-functions
@@ -108,7 +93,7 @@ Parsing: https://raw.githubusercontent.com/microsoft/...
 │ Generated eval suite at: azure-functions-eval   │
 │                                                 │
 │ Run with:                                       │
-│   skill-eval run azure-functions-eval/eval.yaml │
+│   waza run azure-functions-eval/eval.yaml │
 ╰─────────────────────────────────────────────────╯
 ```
 
@@ -147,17 +132,17 @@ azure-functions-eval/
 ### Generate with LLM Assistance
 
 ```bash
-skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md \
+waza generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md \
   -o azure-functions-eval-assisted \
   --assist
 
 # Use a different model (claude-opus-4.5, gpt-4o, gpt-5)
-skill-eval generate ./SKILL.md -o ./my-eval --assist --model claude-opus-4.5
+waza generate ./SKILL.md -o ./my-eval --assist --model claude-opus-4.5
 ```
 
 **Expected Output:**
 ```
-skill-eval v0.1.0
+waza v0.1.0
 
 Parsing: https://raw.githubusercontent.com/microsoft/...
 ✓ Parsed skill: azure-functions
@@ -188,7 +173,7 @@ Using LLM-assisted generation with claude-sonnet-4-20250514...
 │ Generated eval suite at: azure-functions-eval-assisted │
 │                                                        │
 │ Run with:                                              │
-│   skill-eval run azure-functions-eval-assisted/eval.yaml │
+│   waza run azure-functions-eval-assisted/eval.yaml │
 ╰────────────────────────────────────────────────────────╯
 ```
 
@@ -217,7 +202,7 @@ cat azure-functions-eval-assisted/tasks/task-001.yaml
 ### Run Init Command
 
 ```bash
-skill-eval init code-reviewer
+waza init code-reviewer
 ```
 
 **Expected Output:**
@@ -230,13 +215,16 @@ Structure created:
   ├── trigger_tests.yaml
   ├── tasks/
   │   └── example-task.yaml
+  ├── fixtures/
+  │   └── example.py
   └── graders/
       └── custom_grader.py
 
 Next steps:
-  1. Edit tasks/*.yaml to add test cases
-  2. Edit trigger_tests.yaml for trigger accuracy tests
-  3. Run: skill-eval run code-reviewer/eval.yaml
+  1. Add code files to fixtures/
+  2. Edit tasks/*.yaml to add test cases
+  3. Edit trigger_tests.yaml for trigger accuracy tests
+  4. Run: waza run code-reviewer/eval.yaml --context-dir code-reviewer/fixtures
 ```
 
 ### Show the Eval Spec
@@ -252,11 +240,27 @@ cat code-reviewer/eval.yaml
 
 ---
 
-## Part 3: Customize Task Definitions (2 min)
+## Part 3b: Customize Task Definitions (2 min)
 
 ### Talking Points
 
 > "Tasks are individual test cases. Let's create a real task for our code reviewer skill."
+
+### Create a Fixture File First
+
+```bash
+# Create fixtures directory
+mkdir -p code-reviewer/fixtures
+
+# Create a code file to review
+cat > code-reviewer/fixtures/example.py << 'EOF'
+def calculate_total(items):
+    total = 0
+    for i in range(len(items)):
+        total = total + items[i]['price']
+    return total
+EOF
+```
 
 ### Create a Task File
 
@@ -273,12 +277,6 @@ inputs:
     language: "python"
   files:
     - path: example.py
-      content: |
-        def calculate_total(items):
-            total = 0
-            for i in range(len(items)):
-                total = total + items[i]['price']
-            return total
 
 expected:
   output_contains:
@@ -290,9 +288,10 @@ expected:
 graders:
   - name: found_issues
     type: code
-    assertions:
-      - "len(output) > 50"
-      - "'improve' in output.lower() or 'suggest' in output.lower() or 'issue' in output.lower()"
+    config:
+      assertions:
+        - "len(output) > 50"
+        - "'improve' in output.lower() or 'suggest' in output.lower() or 'issue' in output.lower()"
 EOF
 ```
 
@@ -303,9 +302,21 @@ cat code-reviewer/tasks/review-python-code.yaml
 ```
 
 **Highlight:**
-- `inputs`: The prompt and context
+- `inputs.files.path`: Filename only — resolved via `--context-dir` at runtime
 - `expected`: What success looks like
 - `graders`: How to score the result
+
+> "The `path: example.py` is relative to whatever you pass as `--context-dir`. There's no default — you must specify it when running."
+
+### Run with Fixtures
+
+```bash
+# The --context-dir tells waza where to find the files
+waza run code-reviewer/eval.yaml \
+  --context-dir code-reviewer/fixtures \
+  --executor mock \
+  -v
+```
 
 ---
 
@@ -355,12 +366,12 @@ EOF
 ### Execute the Eval
 
 ```bash
-skill-eval run code-reviewer/eval.yaml -v
+waza run code-reviewer/eval.yaml -v
 ```
 
 **Expected Output (verbose shows real-time conversation):**
 ```
-skill-eval v0.1.0
+waza v0.1.0
 
 ✓ Loaded eval: code-reviewer-eval
   Skill: code-reviewer
@@ -399,8 +410,10 @@ skill-eval v0.1.0
 ### Run with Project Context
 
 ```bash
-# Use fixtures (generated code files) as context
-skill-eval run azure-functions-eval/eval.yaml --context-dir azure-functions-eval/fixtures -v
+# Use fixtures (code files) as context
+waza run examples/code-explainer/eval.yaml \
+  --context-dir examples/code-explainer/fixtures \
+  -v
 ```
 
 > "The --context-dir option provides real project files to the skill, so it has something to work with."
@@ -408,8 +421,8 @@ skill-eval run azure-functions-eval/eval.yaml --context-dir azure-functions-eval
 ### Save Conversation Transcript
 
 ```bash
-skill-eval run azure-functions-eval/eval.yaml \
-  --context-dir azure-functions-eval/fixtures \
+waza run examples/code-explainer/eval.yaml \
+  --context-dir examples/code-explainer/fixtures \
   --log transcript.json \
   --output results.json
 ```
@@ -427,17 +440,17 @@ cat transcript.json | python -m json.tool | head -30
 [
   {
     "timestamp": "2025-01-20T10:30:00Z",
-    "task": "deploy-function-001",
+    "task": "explain-python-recursion-001",
     "trial": 1,
     "role": "user",
-    "content": "Help me create an Azure Function..."
+    "content": "Explain this code to me"
   },
   {
     "timestamp": "2025-01-20T10:30:01Z",
-    "task": "deploy-function-001",
+    "task": "explain-python-recursion-001",
     "trial": 1,
     "role": "assistant", 
-    "content": "I'll help you create an Azure Function..."
+    "content": "This Python function calculates the factorial..."
   }
 ]
 ```
@@ -445,7 +458,7 @@ cat transcript.json | python -m json.tool | head -30
 ### Save Results to JSON
 
 ```bash
-skill-eval run code-reviewer/eval.yaml --output results.json
+waza run code-reviewer/eval.yaml --output results.json
 
 # View the JSON structure
 cat results.json | python -m json.tool | head -40
@@ -468,7 +481,7 @@ cat results.json | python -m json.tool | head -40
 ### List Graders
 
 ```bash
-skill-eval list-graders
+waza list-graders
 ```
 
 **Expected Output:**
@@ -496,22 +509,103 @@ Available Grader Types
 
 ---
 
-## Part 7: Run an Existing Example (1 min)
+## Part 7: Run the Built-in Example (1 min)
 
 ### Talking Points
 
-> "Let me show you a more complete example — evaluating the azure-deploy skill."
+> "Let me show you a complete example — the code-explainer eval. This includes a SKILL.md, so you can see the full workflow."
 
-### Run Azure Deploy Eval
+### View the Skill Definition
 
 ```bash
-# Clone the examples (or copy from repo)
-cd /path/to/evals-for-skills
-
-skill-eval run examples/azure-deploy/eval.yaml
+# The example includes a complete SKILL.md
+cat examples/code-explainer/SKILL.md | head -30
 ```
 
-**Show the output with real tasks.**
+> "Every eval starts with a SKILL.md that defines what the skill does, when it should trigger, and how it should behave."
+
+### Run Code Explainer Eval
+
+```bash
+# From the waza repo
+cd /path/to/waza
+
+# Run with mock executor and fixtures
+waza run examples/code-explainer/eval.yaml \
+  --executor mock \
+  --context-dir examples/code-explainer/fixtures \
+  -v
+```
+
+**Expected Output:**
+```
+waza v0.0.2
+
+✓ Loaded eval: code-explainer-eval
+  Skill: code-explainer
+  Context: examples/code-explainer/fixtures (4 files)
+  Executor: mock
+  Model: claude-sonnet-4-20250514
+  Tasks: 4
+  Trials per task: 3
+
+   Progress: ██████████████████████████████ 4/4 (100%)
+
+╭──────────────────────── code-explainer-eval ────────────────────────╮
+│ ✅ PASSED                                                           │
+│                                                                     │
+│ Pass Rate: 100.0% (4/4)                                             │
+│ Composite Score: 1.00                                               │
+│ Duration: 1230ms                                                    │
+╰─────────────────────────────────────────────────────────────────────╯
+
+                         Metrics                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┓
+┃ Metric           ┃ Score ┃ Threshold ┃ Weight ┃ Status ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━┩
+│ task_completion  │  1.00 │      0.80 │    0.4 │ ✅     │
+│ trigger_accuracy │  1.00 │      0.90 │    0.3 │ ✅     │
+│ behavior_quality │  1.00 │      0.70 │    0.3 │ ✅     │
+└──────────────────┴───────┴───────────┴────────┴────────┘
+
+                               Task Results                                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Task                           ┃ Status ┃ Score ┃ Duration ┃ Tool Calls ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ Explain SQL JOIN Query         │ ✅     │  1.00 │    101ms │          2 │
+│ Explain List Comprehension     │ ✅     │  1.00 │    102ms │          2 │
+│ Explain JavaScript Async/Await │ ✅     │  1.00 │    102ms │          2 │
+│ Explain Python Recursion       │ ✅     │  1.00 │    102ms │          2 │
+└────────────────────────────────┴────────┴───────┴──────────┴────────────┘
+```
+
+### Explore the Example Structure
+
+```bash
+tree examples/code-explainer
+```
+
+**Structure:**
+```
+code-explainer/
+├── SKILL.md                 # ⭐ Skill definition (source of truth)
+├── eval.yaml                # Main eval config
+├── fixtures/                # Code files the skill will explain
+│   ├── factorial.py         # Python recursion
+│   ├── fetch_user.js        # JavaScript async/await
+│   ├── squares.py           # List comprehension
+│   └── user_orders.sql      # SQL JOIN
+├── tasks/                   # Test tasks
+│   ├── explain-python-recursion.yaml
+│   ├── explain-js-async.yaml
+│   ├── explain-list-comprehension.yaml
+│   └── explain-sql-join.yaml
+├── graders/
+│   └── explanation_quality.py  # Custom grader
+└── trigger_tests.yaml       # Trigger accuracy tests
+```
+
+> "Notice it includes a SKILL.md — this is what you'd generate an eval from. The fixtures directory has real code files for context."
 
 ---
 
@@ -525,16 +619,22 @@ skill-eval run examples/azure-deploy/eval.yaml
 
 ```bash
 # Run with GPT-4o
-skill-eval run examples/azure-deploy/eval.yaml --model gpt-4o -o results-gpt4o.json
+waza run examples/code-explainer/eval.yaml \
+  --context-dir examples/code-explainer/fixtures \
+  --model gpt-4o \
+  -o results-gpt4o.json
 
 # Run with Claude
-skill-eval run examples/azure-deploy/eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json
+waza run examples/code-explainer/eval.yaml \
+  --context-dir examples/code-explainer/fixtures \
+  --model claude-sonnet-4-20250514 \
+  -o results-claude.json
 ```
 
 ### Compare Results
 
 ```bash
-skill-eval compare results-gpt4o.json results-claude.json
+waza compare results-gpt4o.json results-claude.json
 ```
 
 **Expected Output:**
@@ -547,18 +647,20 @@ Model Comparison Report
 ┡━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
 │ Pass Rate       │ 100.0% │          100.0% │
 │ Composite Score │   1.00 │            1.00 │
-│ Tasks Passed    │    2/2 │             2/2 │
-│ Duration        │  203ms │           202ms │
+│ Tasks Passed    │    4/4 │             4/4 │
+│ Duration        │  403ms │           401ms │
 │ Executor        │   mock │            mock │
 └─────────────────┴────────┴─────────────────┘
 
-                  Per-Task Comparison                   
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
-┃ Task                     ┃ gpt-4o  ┃ claude-sonnet-4 ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
-│ deploy-container-app-001 │ ✅ 1.00 │     ✅ 1.00     │
-│ deploy-function-app-001  │ ✅ 1.00 │     ✅ 1.00     │
-└──────────────────────────┴─────────┴─────────────────┘
+                      Per-Task Comparison                       
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Task                           ┃ gpt-4o  ┃ claude-sonnet-4 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ Explain SQL JOIN Query         │ ✅ 1.00 │     ✅ 1.00     │
+│ Explain List Comprehension     │ ✅ 1.00 │     ✅ 1.00     │
+│ Explain JavaScript Async/Await │ ✅ 1.00 │     ✅ 1.00     │
+│ Explain Python Recursion       │ ✅ 1.00 │     ✅ 1.00     │
+└────────────────────────────────┴─────────┴─────────────────┘
 
 🏆 Best: gpt-4o (score: 1.00)
 ```
@@ -576,16 +678,18 @@ Model Comparison Report
 ### Show Executor Options
 
 ```bash
-skill-eval run --help | grep executor
+waza run --help | grep executor
 ```
 
 ### Run with Copilot SDK (requires auth)
 
 ```bash
 # This uses real Copilot SDK - requires authentication
-skill-eval run examples/azure-deploy/eval.yaml \
+waza run examples/code-explainer/eval.yaml \
   --executor copilot-sdk \
-  --model claude-sonnet-4-20250514
+  --context-dir examples/code-explainer/fixtures \
+  --model claude-sonnet-4-20250514 \
+  -v
 ```
 
 > "The mock executor is perfect for CI/CD and fast iteration. The copilot-sdk executor is for real integration testing."
@@ -601,7 +705,7 @@ skill-eval run examples/azure-deploy/eval.yaml \
 ### Show GitHub Actions Workflow
 
 ```bash
-cat .github/workflows/skill-eval.yaml
+cat .github/workflows/waza.yaml
 ```
 
 **Highlight:**
@@ -617,8 +721,8 @@ cat .github/workflows/skill-eval.yaml
 
 > "To recap what we've seen:"
 
-1. **Generate** an eval suite from SKILL.md with `skill-eval generate`
-2. **Initialize** from scratch with `skill-eval init`
+1. **Generate** an eval suite from SKILL.md with `waza generate`
+2. **Initialize** from scratch with `waza init`
 3. **Define tasks** — individual test cases with fixtures
 4. **Define triggers** — when should your skill activate?
 5. **Choose graders** — code, LLM, or human
@@ -635,61 +739,61 @@ cat .github/workflows/skill-eval.yaml
 
 ```bash
 # Initialize new eval suite
-skill-eval init my-skill
+waza init my-skill
 
 # Generate eval from SKILL.md
-skill-eval generate https://example.com/skills/SKILL.md -o ./my-eval
+waza generate https://example.com/skills/SKILL.md -o ./my-eval
 
 # Generate with LLM assistance (better tasks/fixtures)
-skill-eval generate https://example.com/skills/SKILL.md -o ./my-eval --assist --model claude-opus-4.5
+waza generate https://example.com/skills/SKILL.md -o ./my-eval --assist --model claude-opus-4.5
 
 # Run evaluation (basic)
-skill-eval run my-skill/eval.yaml
+waza run my-skill/eval.yaml
 
 # Run with verbose output (see conversation)
-skill-eval run my-skill/eval.yaml -v
+waza run my-skill/eval.yaml -v
 
 # Run with project context (from fixtures or real project)
-skill-eval run my-skill/eval.yaml --context-dir ./my-skill/fixtures
+waza run my-skill/eval.yaml --context-dir ./my-skill/fixtures
 
 # Run with JSON output
-skill-eval run my-skill/eval.yaml -o results.json
+waza run my-skill/eval.yaml -o results.json
 
 # Run with conversation transcript logging
-skill-eval run my-skill/eval.yaml --log transcript.json
+waza run my-skill/eval.yaml --log transcript.json
 
 # Run with LLM suggestions for failures (displays and saves)
-skill-eval run my-skill/eval.yaml --suggestions --suggestions-file suggestions.md
+waza run my-skill/eval.yaml --suggestions --suggestions-file suggestions.md
 
 # Full debugging run with suggestions
-skill-eval run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json --suggestions-file suggestions.md
+waza run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json --suggestions-file suggestions.md
 
 # Run specific task
-skill-eval run my-skill/eval.yaml --task task-id
+waza run my-skill/eval.yaml --task task-id
 
 # Override trials
-skill-eval run my-skill/eval.yaml --trials 5
+waza run my-skill/eval.yaml --trials 5
 
 # Set fail threshold
-skill-eval run my-skill/eval.yaml --fail-threshold 0.9
+waza run my-skill/eval.yaml --fail-threshold 0.9
 
 # Run with specific model
-skill-eval run my-skill/eval.yaml --model gpt-4o
+waza run my-skill/eval.yaml --model gpt-4o
 
 # Run with Copilot SDK (real integration)
-skill-eval run my-skill/eval.yaml --executor copilot-sdk
+waza run my-skill/eval.yaml --executor copilot-sdk
 
 # Compare results across models
-skill-eval compare results-gpt4o.json results-claude.json -o comparison.md
+waza compare results-gpt4o.json results-claude.json -o comparison.md
 
 # Analyze runtime telemetry
-skill-eval analyze telemetry.json --skill azure-deploy
+waza analyze telemetry.json --skill code-explainer
 
 # Generate report from results
-skill-eval report results.json --format markdown
+waza report results.json --format markdown
 
 # List available graders
-skill-eval list-graders
+waza list-graders
 ```
 
 ---
@@ -699,7 +803,7 @@ skill-eval list-graders
 ```bash
 # Remove demo directory
 cd ~
-rm -rf skill-eval-demo
+rm -rf waza-demo
 ```
 
 ---
@@ -707,7 +811,7 @@ rm -rf skill-eval-demo
 ## Key Messages for Demo
 
 1. **"Evals for skills, just like evals for agents"** — Same patterns, same rigor
-2. **"Auto-generate from SKILL.md"** — Get started in seconds with `skill-eval generate`
+2. **"Auto-generate from SKILL.md"** — Get started in seconds with `waza generate`
 3. **"Fixtures for realistic testing"** — Generated project files give context
 4. **"Three core metrics"** — Task completion, trigger accuracy, behavior quality
 5. **"Multiple grader types"** — From deterministic to AI-powered
@@ -721,9 +825,9 @@ rm -rf skill-eval-demo
 
 ## Appendix: Troubleshooting During Demo
 
-### If `skill-eval` command not found
+### If `waza` command not found
 ```bash
-pip install -e /path/to/evals-for-skills
+pip install -e /path/to/waza
 ```
 
 ### If tasks not loading
@@ -735,5 +839,5 @@ python -c "import yaml; yaml.safe_load(open('eval.yaml'))"
 ### If results look wrong
 ```bash
 # Run with verbose
-skill-eval run eval.yaml -v
+waza run eval.yaml -v
 ```

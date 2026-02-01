@@ -1,9 +1,9 @@
-"""Tests for skill_eval graders."""
+"""Tests for waza graders."""
 
 import pytest
 
-from skill_eval.graders.base import GraderContext, GraderRegistry
-from skill_eval.graders.code_graders import CodeGrader, RegexGrader, ToolCallGrader
+from waza.graders.base import GraderContext, GraderRegistry
+from waza.graders.code_graders import CodeGrader, RegexGrader, ToolCallGrader
 
 
 class TestCodeGrader:

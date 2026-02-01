@@ -90,8 +90,8 @@ jobs:
       
       - name: Test CLI
         run: |
-          skill-eval --version
-          skill-eval --help
+          waza --version
+          waza --help
 
   release:
     needs: [build, test-install]
@@ -125,23 +125,23 @@ jobs:
           
           ```bash
           # Install from PyPI (when published)
-          pip install skill-eval
+          pip install waza
           
           # Or install from GitHub release
-          pip install https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/skill_eval-${{ steps.version.outputs.version }}-py3-none-any.whl
+          pip install https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/waza-${{ steps.version.outputs.version }}-py3-none-any.whl
           
           # With Copilot SDK support
-          pip install "skill-eval[copilot]"
+          pip install "waza[copilot]"
           ```
           
           ## Quick Start
           
           ```bash
           # Generate eval from a SKILL.md
-          skill-eval generate https://example.com/SKILL.md -o ./my-eval --assist
+          waza generate https://example.com/SKILL.md -o ./my-eval --assist
           
           # Run eval
-          skill-eval run ./my-eval/eval.yaml --executor copilot-sdk --context-dir ./my-eval/fixtures
+          waza run ./my-eval/eval.yaml --executor copilot-sdk --context-dir ./my-eval/fixtures
           ```
           
           ## What's New
@@ -153,7 +153,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: skill-eval v${{ steps.version.outputs.version }}
+          name: waza v${{ steps.version.outputs.version }}
           body_path: release_notes.md
           files: |
             dist/*
@@ -166,8 +166,8 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     environment: pypi
-    # Only publish to PyPI on tag push, not manual dispatch
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # Disabled until ready to publish
+    if: false
     
     steps:
       - name: Download artifacts
@@ -180,5 +180,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # Uses trusted publishing (OIDC) - no API token needed
-          # Configure at: https://pypi.org/manage/project/skill-eval/settings/publishing/
+          # Configure at: https://pypi.org/manage/project/waza/settings/publishing/
           print-hash: true

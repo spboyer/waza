@@ -12,15 +12,13 @@ tags:
   - beginner
 
 inputs:
-  prompt: |
-    Can you break down what this Python code does?
-    ```python
-    result = [x**2 for x in range(20) if x % 3 == 0]
-    ```
+  prompt: "Can you break down what this Python code does?"
   context:
     language: python
     complexity: beginner
     concept: list-comprehension
+  files:
+    - path: squares.py
 
 expected:
   output_contains:

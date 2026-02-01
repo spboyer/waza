@@ -28,15 +28,15 @@ jobs:
       
       - name: Run linting
         run: |
-          ruff check skill_eval tests
+          ruff check waza tests
       
       - name: Run type checking
         run: |
-          mypy skill_eval --ignore-missing-imports
+          mypy waza --ignore-missing-imports
       
       - name: Run tests
         run: |
-          pytest tests/ -v --cov=skill_eval --cov-report=xml
+          pytest tests/ -v --cov=waza --cov-report=xml
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -56,11 +56,11 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install skill-eval
+      - name: Install waza
         run: |
           pip install -e .
       
       - name: Run example eval
         run: |
-          skill-eval run examples/code-explainer/eval.yaml --output results.json --no-issues
+          waza run examples/code-explainer/eval.yaml --output results.json --no-issues
           cat results.json

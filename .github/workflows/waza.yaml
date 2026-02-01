@@ -1,0 +1,84 @@
+name: Skill Eval
+
+on:
+  workflow_call:
+    inputs:
+      eval-path:
+        description: 'Path to eval.yaml file'
+        required: true
+        type: string
+      fail-threshold:
+        description: 'Minimum pass rate threshold (0-1)'
+        required: false
+        type: number
+        default: 0.8
+      trials:
+        description: 'Override trials per task'
+        required: false
+        type: number
+      output-format:
+        description: 'Output format (json, markdown, github)'
+        required: false
+        type: string
+        default: 'json'
+    outputs:
+      pass-rate:
+        description: 'Overall pass rate'
+        value: ${{ jobs.eval.outputs.pass_rate }}
+      composite-score:
+        description: 'Composite score'
+        value: ${{ jobs.eval.outputs.composite_score }}
+      status:
+        description: 'Eval status (success/failure)'
+        value: ${{ jobs.eval.outputs.status }}
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    outputs:
+      pass_rate: ${{ steps.run-eval.outputs.pass_rate }}
+      composite_score: ${{ steps.run-eval.outputs.composite_score }}
+      status: ${{ steps.run-eval.outputs.status }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install waza
+        run: |
+          pip install waza
+      
+      - name: Run Evaluation
+        id: run-eval
+        run: |
+          waza run "${{ inputs.eval-path }}" \
+            --output results.json \
+            --format json \
+            ${{ inputs.trials && format('--trials {0}', inputs.trials) || '' }} \
+            --fail-threshold ${{ inputs.fail-threshold }}
+          
+          # Extract outputs
+          echo "pass_rate=$(jq -r '.summary.pass_rate' results.json)" >> $GITHUB_OUTPUT
+          echo "composite_score=$(jq -r '.summary.composite_score' results.json)" >> $GITHUB_OUTPUT
+          
+          if [ "$(jq -r '.summary.pass_rate >= ${{ inputs.fail-threshold }}' results.json)" = "true" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate Summary
+        if: always()
+        run: |
+          waza report results.json --format github >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: results.json

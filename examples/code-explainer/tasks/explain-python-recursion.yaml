@@ -12,18 +12,13 @@ tags:
   - beginner
 
 inputs:
-  prompt: |
-    Explain this code:
-    ```python
-    def factorial(n):
-        if n <= 1:
-            return 1
-        return n * factorial(n - 1)
-    ```
+  prompt: "Explain this code to me"
   context:
     language: python
     complexity: beginner
     concept: recursion
+  files:
+    - path: factorial.py
 
 expected:
   # Keywords that should appear in a good explanation

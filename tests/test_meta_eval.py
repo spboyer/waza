@@ -4,38 +4,52 @@ from pathlib import Path
 
 import pytest
 
+<<<<<<< HEAD
 from skill_eval.runner import EvalRunner
 from skill_eval.schemas.eval_spec import EvalSpec
 from skill_eval.schemas.task import Task, TaskInput
+=======
+from waza.runner import EvalRunner
+from waza.schemas.eval_spec import EvalSpec
+from waza.schemas.task import Task, TaskInput
+>>>>>>> refs/remotes/origin/main
 
 
 class TestMetaEvaluation:
-    """Tests for evaluating the skill-eval-runner skill itself."""
+    """Tests for evaluating the waza-runner skill itself."""
 
+    def test_waza_runner_skill_exists(self):
+        """Verify the waza-runner SKILL.md exists and is valid."""
+        skill_path = Path(__file__).parent.parent / "waza-runner" / "SKILL.md"
+        assert skill_path.exists(), "waza-runner/SKILL.md should exist"
+
+<<<<<<< HEAD
     def test_skill_eval_runner_skill_exists(self):
         """Verify the skill-eval-runner SKILL.md exists and is valid."""
         skill_path = Path(__file__).parent.parent / "skill-eval-runner" / "SKILL.md"
         assert skill_path.exists(), "skill-eval-runner/SKILL.md should exist"
 
+=======
+>>>>>>> refs/remotes/origin/main
         content = skill_path.read_text()
         assert "---" in content, "Should have frontmatter"
-        assert "name: skill-eval-runner" in content
+        assert "name: waza-runner" in content
         assert "description:" in content
 
-    def test_skill_eval_runner_references(self):
+    def test_waza_runner_references(self):
         """Verify reference documentation exists."""
-        refs_path = Path(__file__).parent.parent / "skill-eval-runner" / "references"
+        refs_path = Path(__file__).parent.parent / "waza-runner" / "references"
         assert refs_path.exists(), "references/ directory should exist"
 
         eval_spec_ref = refs_path / "EVAL-SPEC.md"
         assert eval_spec_ref.exists(), "EVAL-SPEC.md reference should exist"
 
     def test_can_evaluate_eval_runner_skill(self):
-        """Test that we can create an eval for the skill-eval-runner itself."""
+        """Test that we can create an eval for the waza-runner itself."""
         spec = EvalSpec(
-            name="skill-eval-runner-meta-eval",
-            description="Meta-evaluation of the skill-eval-runner skill",
-            skill="skill-eval-runner",
+            name="waza-runner-meta-eval",
+            description="Meta-evaluation of the waza-runner skill",
+            skill="waza-runner",
             graders=[],
         )
 
@@ -54,15 +68,20 @@ class TestMetaEvaluation:
         runner = EvalRunner(spec=spec)
         result = runner.run(tasks)
 
+<<<<<<< HEAD
         assert result.eval_id.startswith("skill-eval-runner-meta-eval")
         assert result.skill == "skill-eval-runner"
+=======
+        assert result.eval_id.startswith("waza-runner-meta-eval")
+        assert result.skill == "waza-runner"
+>>>>>>> refs/remotes/origin/main
         assert result.summary.total_tasks == 1
 
     def test_eval_runner_can_evaluate_itself(self):
         """Recursive test: eval-runner evaluating itself."""
         spec = EvalSpec(
             name="recursive-meta-eval",
-            skill="skill-eval-runner",
+            skill="waza-runner",
         )
 
         tasks = [
@@ -70,7 +89,7 @@ class TestMetaEvaluation:
                 id="recursive-001",
                 name="Recursive Self-Eval",
                 inputs=TaskInput(
-                    prompt="Evaluate the skill-eval-runner skill for quality",
+                    prompt="Evaluate the waza-runner skill for quality",
                 ),
             ),
         ]
