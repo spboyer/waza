@@ -655,11 +655,11 @@ skill-eval run my-skill/eval.yaml -o results.json
 # Run with conversation transcript logging
 skill-eval run my-skill/eval.yaml --log transcript.json
 
-# Run with LLM suggestions for failures
-skill-eval run my-skill/eval.yaml --suggestions
+# Run with LLM suggestions for failures (displays and saves)
+skill-eval run my-skill/eval.yaml --suggestions --suggestions-file suggestions.md
 
-# Full debugging run
-skill-eval run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json
+# Full debugging run with suggestions
+skill-eval run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json --suggestions-file suggestions.md
 
 # Run specific task
 skill-eval run my-skill/eval.yaml --task task-id

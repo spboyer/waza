@@ -270,8 +270,11 @@ skill-eval run my-awesome-skill/eval.yaml --fail-threshold 0.9
 # Run with real Copilot SDK (requires auth)
 skill-eval run my-awesome-skill/eval.yaml --executor copilot-sdk
 
-# Get LLM suggestions for failed tasks
+# Get LLM suggestions for failed tasks (displays on screen)
 skill-eval run my-awesome-skill/eval.yaml --suggestions
+
+# Save suggestions to markdown file (also displays on screen)
+skill-eval run my-awesome-skill/eval.yaml --suggestions-file suggestions.md
 ```
 
 ### Progress Output

@@ -41,6 +41,7 @@ def main():
 @click.option("--log", "-l", type=click.Path(), help="Save full conversation transcript to JSON file")
 @click.option("--context-dir", "-c", type=click.Path(exists=True), help="Directory with project files to use as context")
 @click.option("--suggestions", "-s", is_flag=True, help="Generate LLM-powered improvement suggestions for failed tasks")
+@click.option("--suggestions-file", type=click.Path(), help="Save suggestions to markdown file (implies --suggestions)")
 def run(
     eval_path: str,
     task: tuple[str, ...],
@@ -55,11 +56,16 @@ def run(
     log: str | None,
     context_dir: str | None,
     suggestions: bool,
+    suggestions_file: str | None,
 ):
     """Run an evaluation suite.
 
     EVAL_PATH: Path to the eval.yaml file
     """
+    # --suggestions-file implies --suggestions
+    if suggestions_file:
+        suggestions = True
+
     console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
     console.print()
 
@@ -347,7 +353,7 @@ def run(
     failed_tasks = [t for t in result.tasks if t.status == "failed"]
     if suggestions and failed_tasks:
         console.print()
-        _generate_suggestions(result, spec, model or spec.config.model, console)
+        _generate_suggestions(result, spec, model or spec.config.model, console, suggestions_file)
     elif failed_tasks and not suggestions:
         console.print()
         console.print("[dim]💡 Tip: Use --suggestions to get LLM-powered improvement recommendations for failed tasks[/dim]")
@@ -1034,8 +1040,11 @@ def _generate_comparison_markdown(results: list) -> str:
     return "\n".join(lines)
 
 
-def _generate_suggestions(result, spec, model: str, console):
+def _generate_suggestions(result, spec, model: str, console, suggestions_file: str | None = None):
     """Generate LLM-powered improvement suggestions for failed tasks."""
+    from datetime import datetime
+    from pathlib import Path
+
     from rich.panel import Panel
     from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -1153,7 +1162,7 @@ Keep suggestions concise and actionable (1-2 sentences each)."""
 
         suggestions = asyncio.run(get_suggestions())
 
-        # Display suggestions
+        # Display suggestions in console
         for _task_id, data in suggestions.items():
             console.print(Panel(
                 data["suggestions"],
@@ -1161,6 +1170,36 @@ Keep suggestions concise and actionable (1-2 sentences each)."""
                 border_style="yellow",
             ))
             console.print()
+
+        # Save to markdown file if requested
+        if suggestions_file and suggestions:
+            md_lines = [
+                f"# Improvement Suggestions for {spec.skill}",
+                "",
+                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Model: {model}",
+                f"Pass Rate: {result.summary.pass_rate:.1%} ({result.summary.passed}/{result.summary.total_tasks})",
+                "",
+                "---",
+                "",
+            ]
+
+            for task_id, data in suggestions.items():
+                md_lines.extend([
+                    f"## {data['name']}",
+                    "",
+                    f"**Task ID:** `{task_id}`",
+                    "",
+                    "### Suggestions",
+                    "",
+                    data["suggestions"],
+                    "",
+                    "---",
+                    "",
+                ])
+
+            Path(suggestions_file).write_text("\n".join(md_lines))
+            console.print(f"[green]✓[/green] Suggestions saved to: {suggestions_file}")
 
     except ImportError:
         console.print("[yellow]⚠ Copilot SDK not available. Install with: pip install github-copilot-sdk[/yellow]")

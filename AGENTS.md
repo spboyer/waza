@@ -230,6 +230,7 @@ skill-eval run ./eval.yaml \
   --context-dir ./fixtures \
   --log transcript.json \
   --output results.json \
+  --suggestions-file suggestions.md \
   -v
 ```
 
@@ -242,3 +243,4 @@ skill-eval run ./eval.yaml \
 - `--model` - LLM model to use
 - `--assist` - Use LLM for better task/fixture generation (generate command only)
 - `--suggestions` - Get LLM-powered improvement suggestions for failed tasks (run command)
+- `--suggestions-file` - Save suggestions to markdown file (implies --suggestions)

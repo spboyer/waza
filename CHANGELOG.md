@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-02-01
+
+### Added
+
+- `--suggestions-file` option to save improvement suggestions to markdown file
+- Improved progress display with step-by-step status (tool counts, activity indicators)
+- Copilot SDK usage guide in AGENTS.md
+
+### Fixed
+
+- Fixed Copilot SDK import (`from copilot import CopilotClient` not `copilot_sdk`)
+- Fixed Windows glob pattern in release workflow
+- Fixed linting issues across codebase (import sorting, exception chaining, etc.)
+- Clarified fixture isolation between tasks (each task gets fresh temp workspace)
+
 ## [0.0.1] - 2026-02-01
 
 ### Added
@@ -50,5 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - YAML escaping for regex patterns with backslashes
 - Progress bar now shows 100% on completion
 
-[Unreleased]: https://github.com/spboyer/evals-for-skills/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/spboyer/evals-for-skills/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/spboyer/evals-for-skills/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/spboyer/evals-for-skills/releases/tag/v0.0.1

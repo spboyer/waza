@@ -1,6 +1,6 @@
 """Skills Eval Framework - Evaluate Agent Skills like you evaluate AI Agents."""
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from skill_eval.executors import BaseExecutor, ExecutionResult, MockExecutor
 from skill_eval.graders.base import Grader, GraderType
