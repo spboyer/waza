@@ -65,6 +65,29 @@ LLM-assisted generation:
 - Produces 5 diverse tasks testing different scenarios
 - Falls back to pattern-based generation if LLM fails
 
+### Option A++: Discover Skills from GitHub Repos
+
+You can scan a GitHub repo to discover all skills and generate evals for them:
+
+```bash
+# Scan a GitHub repo and interactively select skills
+waza generate --repo microsoft/GitHub-Copilot-for-Azure
+
+# Generate evals for ALL discovered skills (CI-friendly)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
+
+# Scan local directory for SKILL.md files
+waza generate --scan
+
+# Scan with LLM-assisted generation
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --assist
+```
+
+This is particularly useful for:
+- Testing entire skill libraries at once
+- CI/CD pipelines with `--all` flag
+- Discovering skills you didn't know existed
+
 ### Option B: Blank Scaffold
 ```bash
 # Create eval scaffolding from scratch
@@ -394,7 +417,38 @@ This gives the skill real code to work with, making tests more realistic.
 }
 ```
 
-## Step 8: Integrate with CI/CD
+## Step 8: Create GitHub Issues from Results
+
+After running an eval, waza can automatically create GitHub issues with your results. This is useful for tracking skill quality over time.
+
+### Interactive Issue Creation
+
+```bash
+# Run eval - prompts to create issues at the end
+waza run ./eval.yaml --executor copilot-sdk
+```
+
+At completion, you'll see:
+```
+Create GitHub issues with results? [y/N]: y
+Target repository [microsoft/GitHub-Copilot-for-Azure]: 
+Create issues for: [F]ailed only, [A]ll skills, [N]one: f
+
+Creating issues...
+✓ Created issue #142: [Eval] azure-nodejs: 2 tasks failed
+  → https://github.com/microsoft/GitHub-Copilot-for-Azure/issues/142
+```
+
+### Skip Prompts in CI
+
+For CI/CD pipelines where you don't want interactive prompts:
+
+```bash
+# Skip issue creation prompt
+waza run ./eval.yaml --no-issues
+```
+
+## Step 9: Integrate with CI/CD
 
 Add to your GitHub Actions workflow:
 
@@ -404,7 +458,8 @@ Add to your GitHub Actions workflow:
     pip install waza
     waza run ./my-skill/eval.yaml \
       --output results.json \
-      --fail-threshold 0.8
+      --fail-threshold 0.8 \
+      --no-issues  # Skip interactive prompts in CI
 ```
 
 Or use the reusable workflow:

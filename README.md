@@ -1,4 +1,4 @@
-# Skills Eval Framework
+# waza
 
 > Evaluate Agent Skills like you evaluate AI Agents
 
@@ -15,10 +15,10 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 - 🤖 **Multiple Grader Types** - Code-based, LLM-as-judge, human review
 - 📈 **JSON Reports** - Machine-readable results aligned with agent eval standards
 - 🔄 **CI/CD Ready** - Run in GitHub Actions or any CI pipeline
-- 🧩 **Eval-as-Skill** - Meta-evaluation capability within skill runtimes
 - 🔬 **Real Integration Testing** - Use Copilot SDK for actual LLM responses
 - 📊 **Model Comparison** - Compare results across different models
-- 📡 **Runtime Telemetry** - Capture and analyze production metrics
+- 🔎 **Skill Discovery** - Scan GitHub repos or local directories for skills
+- 📝 **GitHub Issue Creation** - Create issues with eval results automatically
 
 ---
 
@@ -175,6 +175,8 @@ waza run my-skill/eval.yaml -o results.json
 | `waza run <eval.yaml>` | Run an evaluation suite |
 | `waza init <skill-name>` | Scaffold a new eval suite |
 | `waza generate <SKILL.md>` | Auto-generate eval from a SKILL.md file |
+| `waza generate --repo <org/repo>` | Discover and generate evals from GitHub repo |
+| `waza generate --scan` | Discover skills in current directory |
 | `waza compare <files...>` | Compare results across runs/models |
 | `waza analyze <telemetry>` | Analyze runtime telemetry |
 | `waza report <results.json>` | Generate reports from results |
@@ -192,6 +194,7 @@ waza run eval.yaml \
   --context-dir ./my-project \        # Directory with project files for context
   --suggestions                       # Get LLM-powered improvement suggestions for failures
   --suggestions-file suggestions.md \ # Save suggestions to markdown file
+  --no-issues                         # Skip GitHub issue creation prompt (CI-friendly)
   -v, --verbose                       # Show real-time conversation and details
 
 # Init options
@@ -201,10 +204,15 @@ waza init my-skill \
 
 # Generate options (auto-generate eval from SKILL.md)
 waza generate https://example.com/SKILL.md \
-  --output ./my-waza \          # Output directory
+  --output ./my-eval \                # Output directory
   --force                             # Overwrite existing files
   --assist                            # Use LLM for better task/fixture generation
   --model claude-sonnet-4-20250514    # Model for assisted generation
+
+# Skill discovery options (scan repos for skills)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure  # Scan GitHub repo
+waza generate --scan                                      # Scan current directory
+waza generate --repo org/repo --all --output ./evals     # Generate all (CI-friendly)
 
 # Available models for --assist:
 #   claude-sonnet-4-20250514 (default)

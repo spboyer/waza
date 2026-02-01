@@ -193,6 +193,58 @@ cat azure-functions-eval-assisted/tasks/task-001.yaml
 
 ---
 
+## Part 2c: Skill Discovery from Repos (2 min) ⭐ NEW
+
+### Talking Points
+
+> "What if you want to generate evals for ALL skills in a repository? waza can scan GitHub repos or local directories to discover skills automatically."
+
+### Scan a GitHub Repository
+
+```bash
+# Interactive mode - select which skills to generate
+waza generate --repo microsoft/GitHub-Copilot-for-Azure
+```
+
+**Expected Output:**
+```
+waza v0.2.0
+
+Scanning microsoft/GitHub-Copilot-for-Azure for skills...
+✓ Found 15 skills
+
+Select skills to generate evals for:
+  ◉ azure-functions          Azure Functions development
+  ◯ azure-prepare            Prepare apps for Azure deployment
+  ◉ azure-nodejs-production  Node.js production configuration
+  ... (↑↓ to move, space to select, enter to confirm)
+
+Use LLM-assisted generation? [Y/n]: y
+Output directory [./evals]: 
+
+Generating evals...
+✓ azure-functions-eval created
+✓ azure-nodejs-production-eval created
+```
+
+### Batch Mode (CI-Friendly)
+
+```bash
+# Generate all skills without prompts
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
+```
+
+> "The `--all` flag skips all prompts, perfect for CI/CD pipelines."
+
+### Scan Local Directory
+
+```bash
+# Scan current directory for SKILL.md files
+waza generate --scan
+```
+
+---
+
 ## Part 3: Initialize from Scratch (2 min)
 
 ### Talking Points
@@ -472,6 +524,46 @@ cat results.json | python -m json.tool | head -40
 
 ---
 
+## Part 5b: GitHub Issue Creation (1 min) ⭐ NEW
+
+### Talking Points
+
+> "After running an eval, you can automatically create GitHub issues with the results. This is great for tracking skill quality over time."
+
+### Post-Run Issue Creation
+
+```bash
+# Run eval - prompts to create issues at the end
+waza run ./eval.yaml --executor copilot-sdk
+```
+
+**At completion:**
+```
+╭─────────────────── azure-nodejs-production-eval ───────────────────╮
+│ ❌ FAILED                                                          │
+│ Pass Rate: 60.0% (3/5)                                             │
+╰────────────────────────────────────────────────────────────────────╯
+
+Create GitHub issues with results? [y/N]: y
+Target repository [microsoft/GitHub-Copilot-for-Azure]: 
+Create issues for: [F]ailed only, [A]ll skills, [N]one: f
+
+Creating issues...
+✓ Created issue #142: [Eval] azure-nodejs-production: 2 tasks failed
+  → https://github.com/microsoft/GitHub-Copilot-for-Azure/issues/142
+```
+
+### Skip Prompts in CI
+
+```bash
+# Skip issue creation prompt (CI-friendly)
+waza run ./eval.yaml --no-issues
+```
+
+> "The `--no-issues` flag is essential for CI pipelines where you don't want interactive prompts."
+
+---
+
 ## Part 6: Show Different Grader Types (1 min)
 
 ### Talking Points
@@ -721,15 +813,17 @@ cat .github/workflows/waza.yaml
 
 > "To recap what we've seen:"
 
-1. **Generate** an eval suite from SKILL.md with `waza generate`
-2. **Initialize** from scratch with `waza init`
-3. **Define tasks** — individual test cases with fixtures
-4. **Define triggers** — when should your skill activate?
-5. **Choose graders** — code, LLM, or human
-6. **Run evals** — with `-v` for real-time conversation, `--context-dir` for project files
-7. **Debug** — save transcripts with `--log` for detailed analysis
-8. **Compare models** — benchmark across different LLMs
-9. **Get results** — JSON reports aligned with agent eval standards
+1. **Discover skills** — scan GitHub repos or local directories with `--repo` and `--scan`
+2. **Generate** an eval suite from SKILL.md with `waza generate --assist` for LLM help
+3. **Initialize** from scratch with `waza init`
+4. **Define tasks** — individual test cases with fixtures
+5. **Define triggers** — when should your skill activate?
+6. **Choose graders** — code, LLM, or human
+7. **Run evals** — with `-v` for real-time conversation, `--context-dir` for project files
+8. **Debug** — save transcripts with `--log` for detailed analysis
+9. **Track issues** — create GitHub issues for failed tasks automatically
+10. **Compare models** — benchmark across different LLMs
+11. **Get results** — JSON reports aligned with agent eval standards
 
 > "Skills are becoming as important as agents. Now we can evaluate them with the same rigor."
 
@@ -746,6 +840,15 @@ waza generate https://example.com/skills/SKILL.md -o ./my-eval
 
 # Generate with LLM assistance (better tasks/fixtures)
 waza generate https://example.com/skills/SKILL.md -o ./my-eval --assist --model claude-opus-4.5
+
+# Discover skills in a GitHub repo (interactive)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure
+
+# Discover and generate all skills (CI-friendly)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
+
+# Scan local directory for skills
+waza generate --scan
 
 # Run evaluation (basic)
 waza run my-skill/eval.yaml
@@ -764,6 +867,9 @@ waza run my-skill/eval.yaml --log transcript.json
 
 # Run with LLM suggestions for failures (displays and saves)
 waza run my-skill/eval.yaml --suggestions --suggestions-file suggestions.md
+
+# Skip GitHub issue creation prompt (CI-friendly)
+waza run my-skill/eval.yaml --no-issues
 
 # Full debugging run with suggestions
 waza run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json --suggestions-file suggestions.md

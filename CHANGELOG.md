@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-02
+
+### Added
+
+- **Skill Discovery** (#3)
+  - `waza generate --repo <org/repo>` - Scan GitHub repos for SKILL.md files
+  - `waza generate --scan` - Scan local directory for skills
+  - `waza generate --all` - Generate evals for all discovered skills (CI-friendly)
+  - Interactive skill selection with checkboxes when not using `--all`
+
+- **GitHub Issue Creation** (#3)
+  - Post-run prompt to create GitHub issues with eval results
+  - Options: create for failed tasks only, all tasks, or none
+  - Issues include results table, failed task details, and suggestions
+  - `--no-issues` flag to skip prompts (CI-friendly)
+
+- **New Modules**
+  - `waza/scanner.py` - Skill discovery from GitHub repos and local directories
+  - `waza/issues.py` - GitHub issue creation and formatting
+
+### Changed
+
+- Improved documentation with new feature guides
+- Added skill discovery section to DEMO-SCRIPT.md
+- Updated TUTORIAL.md with discovery and issue creation steps
+
 ## [0.1.0] - 2026-02-02
 
 ### Changed
@@ -89,7 +115,8 @@ pip install waza
 - YAML escaping for regex patterns with backslashes
 - Progress bar now shows 100% on completion
 
-[Unreleased]: https://github.com/spboyer/waza/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/spboyer/waza/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/spboyer/waza/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/spboyer/waza/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/spboyer/waza/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/spboyer/waza/releases/tag/v0.0.1
