@@ -362,9 +362,13 @@ def run(
         console.print("[dim]💡 Tip: Use --suggestions to get LLM-powered improvement recommendations for failed tasks[/dim]")
 
     # Prompt for GitHub issue creation (if not disabled)
-    if not no_issues and (failed_tasks or Confirm.ask("\nCreate GitHub issues with results?", default=False)):
-        console.print()
-        _prompt_issue_creation(result, log, suggestions_file, console)
+    if not no_issues:
+        if failed_tasks:
+            console.print()
+            _prompt_issue_creation(result, log, suggestions_file, console)
+        elif Confirm.ask("\nCreate GitHub issues with results?", default=False):
+            console.print()
+            _prompt_issue_creation(result, log, suggestions_file, console)
 
     # Check threshold
     if result.summary.pass_rate < fail_threshold:
