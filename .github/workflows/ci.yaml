@@ -62,5 +62,5 @@ jobs:
       
       - name: Run example eval
         run: |
-          waza run examples/azure-deploy/eval.yaml --output results.json
+          waza run examples/code-explainer/eval.yaml --output results.json --no-issues
           cat results.json
