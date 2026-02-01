@@ -85,3 +85,8 @@ transcript.json
 azure-validate-eval/
 azure-validate-transcript.json
 tmp/
+
+# Web UI
+web/node_modules/
+web/dist/
+web/.vite/

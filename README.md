@@ -19,6 +19,7 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 - 🔬 **Real Integration Testing** - Use Copilot SDK for actual LLM responses
 - 📊 **Model Comparison** - Compare results across different models
 - 📡 **Runtime Telemetry** - Capture and analyze production metrics
+- 🌐 **Web UI Dashboard** - Visual interface for creating, editing, and running evals
 
 ---
 
@@ -45,6 +46,9 @@ pip install skill-eval[llm]
 
 # With Copilot SDK for real integration tests
 pip install skill-eval[copilot]
+
+# With Web UI dashboard
+pip install skill-eval[web]
 
 # Full installation (all features)
 pip install skill-eval[all]
@@ -179,6 +183,34 @@ skill-eval run my-skill/eval.yaml -o results.json
 | `skill-eval analyze <telemetry>` | Analyze runtime telemetry |
 | `skill-eval report <results.json>` | Generate reports from results |
 | `skill-eval list-graders` | List available grader types |
+| `skill-eval serve` | Launch the Web UI dashboard |
+
+### Web UI Dashboard
+
+Launch a visual interface for creating, editing, and running evals:
+
+```bash
+# Start the Web UI
+skill-eval serve
+
+# Custom port
+skill-eval serve --port 3000
+
+# Development mode with auto-reload
+skill-eval serve --reload
+```
+
+**Access the dashboard at http://localhost:8000**
+
+Features:
+- 📊 **Dashboard Overview** - View metrics and recent runs
+- 📝 **Eval Management** - Create, edit, and delete eval suites
+- ▶️ **Run Evals** - Execute evals with real-time progress
+- 📈 **Results Viewer** - Inspect detailed results and transcripts
+- ⚙️ **Configuration** - Manage model and executor settings
+- 📚 **API Documentation** - Built-in Swagger UI at `/docs`
+
+See [docs/WEB-UI.md](docs/WEB-UI.md) for complete documentation.
 
 ### Common Options
 
