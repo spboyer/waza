@@ -404,10 +404,24 @@ class EvalRunner:
                     details={"role": "assistant", "content": output[:200]},
                 )
             
-            # Build grading context
+            # Build conversation transcript (normalized format for graders and display)
+            conversation = []
+            for event in transcript:
+                event_type = event.get("type", "")
+                data = event.get("data", {})
+                if event_type == "user.message":
+                    conversation.append({"role": "user", "content": data.get("content", "")})
+                elif event_type == "assistant.message":
+                    conversation.append({"role": "assistant", "content": data.get("content", "")})
+                elif event_type.startswith("tool."):
+                    # Try both camelCase and snake_case for tool name
+                    tool_name = data.get("toolName") or data.get("tool_name") or data.get("name") or "tool"
+                    conversation.append({"role": "tool", "name": tool_name, "content": str(data.get("arguments", data))[:500]})
+            
+            # Build grading context with normalized transcript
             context = GraderContext(
                 task=task.model_dump(),
-                transcript=transcript,
+                transcript=conversation,  # Use normalized conversation, not raw events
                 output=output,
                 outcome=outcome,
                 duration_ms=int((time.time() - start_time) * 1000),
@@ -427,27 +441,13 @@ class EvalRunner:
                 )
                 grader_results[task_grader.name] = grader.grade(context)
             
-            # Build transcript summary
+            # Build transcript summary from raw events
             tool_calls = [t for t in transcript if t.get("type") == "tool_call" or t.get("type", "").startswith("tool.")]
             transcript_summary = TranscriptSummary(
                 total_turns=len(transcript),
                 tool_calls=len(tool_calls),
                 tools_used=list(set(t.get("tool", t.get("data", {}).get("toolName", "")) for t in tool_calls if t.get("tool") or t.get("data", {}).get("toolName"))),
             )
-            
-            # Build conversation transcript for display
-            conversation = []
-            for event in transcript:
-                event_type = event.get("type", "")
-                data = event.get("data", {})
-                if event_type == "user.message":
-                    conversation.append({"role": "user", "content": data.get("content", "")})
-                elif event_type == "assistant.message":
-                    conversation.append({"role": "assistant", "content": data.get("content", "")})
-                elif event_type.startswith("tool."):
-                    # Try both camelCase and snake_case for tool name
-                    tool_name = data.get("toolName") or data.get("tool_name") or data.get("name") or "tool"
-                    conversation.append({"role": "tool", "name": tool_name, "content": str(data.get("arguments", data))[:500]})
             
             # Determine trial status
             all_passed = all(g.passed for g in grader_results.values()) if grader_results else True
