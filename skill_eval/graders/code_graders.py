@@ -37,12 +37,13 @@ class CodeGrader(Grader):
         failed_assertions = []
         
         # Build evaluation context
+        # Note: transcript entries use 'role' not 'type', and tool calls have role='tool' with 'name'
         eval_context = {
             "output": context.output,
             "outcome": context.outcome,
             "transcript": context.transcript,
-            "tool_calls": [t for t in context.transcript if t.get("type") == "tool_call"],
-            "errors": [t for t in context.transcript if t.get("type") == "error"],
+            "tool_calls": [t for t in context.transcript if t.get("role") == "tool" or t.get("type") == "tool_call"],
+            "errors": [t for t in context.transcript if t.get("type") == "error" or "error" in str(t.get("content", "")).lower()],
             "duration_ms": context.duration_ms,
             "len": len,
             "any": any,
