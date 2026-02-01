@@ -1,0 +1,59 @@
+# Trigger accuracy tests for azure-functions
+# Auto-generated from SKILL.md - customize as needed
+skill: azure-functions
+
+should_trigger_prompts:
+  - prompt: "deploy), Kubernetes (use AKS skills), static sites (use azure-deploy)"
+    reason: "Skill activation phrase #1"
+
+  - prompt: "create Azure Function"
+    reason: "Skill activation phrase #2"
+
+  - prompt: "HTTP trigger function"
+    reason: "Skill activation phrase #3"
+
+  - prompt: "timer trigger"
+    reason: "Skill activation phrase #4"
+
+  - prompt: "queue trigger"
+    reason: "Skill activation phrase #5"
+
+  - prompt: "Durable Functions"
+    reason: "Skill activation phrase #6"
+
+  - prompt: "func new"
+    reason: "Skill activation phrase #7"
+
+  - prompt: "func start"
+    reason: "Skill activation phrase #8"
+
+  - prompt: "function app"
+    reason: "Skill activation phrase #9"
+
+  - prompt: "serverless API"
+    reason: "Skill activation phrase #10"
+
+  - prompt: "Help me with azure functions"
+    reason: "Generic skill request"
+
+should_not_trigger_prompts:
+  - prompt: "FOR: container apps (use azure-deploy)"
+    reason: "Explicitly excluded use case"
+
+  - prompt: "web apps without functions   (use azure-deploy)"
+    reason: "Explicitly excluded use case"
+
+  - prompt: "Kubernetes (use AKS skills)"
+    reason: "Explicitly excluded use case"
+
+  - prompt: "static sites (use azure-deploy)"
+    reason: "Explicitly excluded use case"
+
+  - prompt: "What is the weather today?"
+    reason: "Unrelated question"
+
+  - prompt: "Tell me a joke"
+    reason: "Entertainment request"
+
+  - prompt: "What time is it?"
+    reason: "General question"

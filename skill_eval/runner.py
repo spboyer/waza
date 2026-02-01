@@ -361,12 +361,25 @@ class EvalRunner:
                 grader_results[task_grader.name] = grader.grade(context)
             
             # Build transcript summary
-            tool_calls = [t for t in transcript if t.get("type") == "tool_call"]
+            tool_calls = [t for t in transcript if t.get("type") == "tool_call" or t.get("type", "").startswith("tool.")]
             transcript_summary = TranscriptSummary(
                 total_turns=len(transcript),
                 tool_calls=len(tool_calls),
-                tools_used=list(set(t.get("tool", "") for t in tool_calls)),
+                tools_used=list(set(t.get("tool", t.get("data", {}).get("toolName", "")) for t in tool_calls if t.get("tool") or t.get("data", {}).get("toolName"))),
             )
+            
+            # Build conversation transcript for display
+            conversation = []
+            for event in transcript:
+                event_type = event.get("type", "")
+                data = event.get("data", {})
+                if event_type == "user.message":
+                    conversation.append({"role": "user", "content": data.get("content", "")})
+                elif event_type == "assistant.message":
+                    conversation.append({"role": "assistant", "content": data.get("content", "")})
+                elif event_type.startswith("tool."):
+                    tool_name = data.get("toolName", "tool")
+                    conversation.append({"role": "tool", "name": tool_name, "content": str(data.get("arguments", data))[:500]})
             
             # Determine trial status
             all_passed = all(g.passed for g in grader_results.values()) if grader_results else True
@@ -377,6 +390,7 @@ class EvalRunner:
                 duration_ms=int((time.time() - start_time) * 1000),
                 grader_results=grader_results,
                 transcript_summary=transcript_summary,
+                transcript=conversation if conversation else None,
                 output=output,
             )
 

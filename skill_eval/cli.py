@@ -847,11 +847,18 @@ Duration: {result.summary.duration_ms}ms
         table.add_column("Metric")
         table.add_column("Score", justify="right")
         table.add_column("Threshold", justify="right")
+        table.add_column("Weight", justify="right")
         table.add_column("Status")
         
         for name, metric in result.metrics.items():
-            status = "✅" if metric.passed else "❌"
-            table.add_row(name, f"{metric.score:.2f}", f"{metric.threshold:.2f}", status)
+            status_icon = "✅" if metric.passed else "❌"
+            table.add_row(
+                name, 
+                f"{metric.score:.2f}", 
+                f"{metric.threshold:.2f}",
+                f"{metric.weight:.1f}",
+                status_icon
+            )
         
         console.print(table)
 
@@ -860,18 +867,88 @@ Duration: {result.summary.duration_ms}ms
     table = Table(title="Task Results")
     table.add_column("Task")
     table.add_column("Status")
-    table.add_column("Pass Rate", justify="right")
     table.add_column("Score", justify="right")
+    table.add_column("Duration", justify="right")
+    if verbose:
+        table.add_column("Tool Calls", justify="right")
+        table.add_column("Tokens", justify="right")
     
     status_icons = {"passed": "✅", "failed": "❌", "partial": "⚠️", "error": "💥"}
     
     for task in result.tasks:
         icon = status_icons.get(task.status, "❓")
-        pass_rate = f"{task.aggregate.pass_rate:.1%}" if task.aggregate else "-"
         score = f"{task.aggregate.mean_score:.2f}" if task.aggregate else "-"
-        table.add_row(task.name[:40], icon, pass_rate, score)
+        duration = f"{task.aggregate.mean_duration_ms}ms" if task.aggregate else "-"
+        
+        if verbose:
+            # Get tool calls and tokens from first trial
+            tool_calls = "-"
+            tokens = "-"
+            if task.trials:
+                trial = task.trials[0]
+                if trial.transcript_summary:
+                    tool_calls = str(trial.transcript_summary.tool_calls)
+                    tokens = str(trial.transcript_summary.tokens_total) if trial.transcript_summary.tokens_total else "-"
+            table.add_row(task.name[:35], icon, score, duration, tool_calls, tokens)
+        else:
+            table.add_row(task.name[:40], icon, score, duration)
     
     console.print(table)
+    
+    # Verbose: Show detailed task info including prompts and responses
+    if verbose and result.tasks:
+        console.print()
+        console.print("[bold]Task Details[/bold]")
+        console.print()
+        
+        for task in result.tasks:
+            # Task header
+            status_icon = status_icons.get(task.status, "❓")
+            console.print(f"[bold]{status_icon} {task.name}[/bold] (id: {task.id})")
+            
+            for trial in task.trials:
+                console.print(f"  [dim]Trial {trial.trial_id}:[/dim] {trial.status} | score: {trial.score:.2f} | {trial.duration_ms}ms")
+                
+                # Show transcript summary
+                if trial.transcript_summary:
+                    ts = trial.transcript_summary
+                    if ts.tools_used:
+                        console.print(f"    [dim]Tools:[/dim] {', '.join(ts.tools_used[:5])}")
+                    if ts.errors:
+                        console.print(f"    [red]Errors:[/red] {', '.join(ts.errors[:3])}")
+                
+                # Show conversation/transcript
+                if trial.transcript:
+                    console.print("    [dim]Conversation:[/dim]")
+                    for i, turn in enumerate(trial.transcript[:6]):  # Show first 6 turns
+                        role = turn.get("role", "unknown")
+                        content = turn.get("content", "")[:200]  # Truncate
+                        if role == "user":
+                            console.print(f"      [cyan]User:[/cyan] {content}")
+                        elif role == "assistant":
+                            console.print(f"      [green]Assistant:[/green] {content}...")
+                        elif role == "tool":
+                            tool_name = turn.get("name", "tool")
+                            console.print(f"      [yellow]Tool ({tool_name}):[/yellow] {content[:100]}...")
+                    if len(trial.transcript) > 6:
+                        console.print(f"      [dim]... and {len(trial.transcript) - 6} more turns[/dim]")
+                
+                # Show grader results
+                if trial.grader_results:
+                    console.print("    [dim]Graders:[/dim]")
+                    for name, gr in trial.grader_results.items():
+                        gr_icon = "✅" if gr.passed else "❌"
+                        console.print(f"      {gr_icon} {name}: {gr.score:.2f} - {gr.message[:60]}")
+                
+                # Show output snippet
+                if trial.output:
+                    output_preview = trial.output[:300].replace('\n', ' ')
+                    console.print(f"    [dim]Output:[/dim] {output_preview}...")
+                
+                if trial.error:
+                    console.print(f"    [red]Error:[/red] {trial.error}")
+                
+                console.print()
 
 
 if __name__ == "__main__":
