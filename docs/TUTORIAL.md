@@ -10,6 +10,9 @@ This tutorial walks you through creating evaluations for your Agent Skills.
 
 ## Step 1: Initialize Your Eval Suite
 
+You have several options to create your eval suite:
+
+### Option A: Blank Scaffold
 ```bash
 # Create eval scaffolding for your skill
 skill-eval init my-awesome-skill
@@ -22,6 +25,27 @@ skill-eval init my-awesome-skill
 # │   └── example-task.yaml
 # └── graders/
 #     └── custom_grader.py
+```
+
+### Option B: Auto-Generate from SKILL.md
+```bash
+# Generate eval from a SKILL.md file (local or URL)
+skill-eval generate ./path/to/SKILL.md --output-dir ./my-skill-eval
+
+# Or from a URL
+skill-eval generate https://raw.githubusercontent.com/org/repo/main/skills/my-skill/SKILL.md
+
+# The generator automatically extracts:
+# - Trigger phrases from activation sections
+# - Anti-triggers from "do not use" sections
+# - CLI commands and tool patterns
+# - Keywords for behavior testing
+```
+
+### Option C: Init with SKILL.md Integration
+```bash
+# Scaffold AND generate from SKILL.md in one step
+skill-eval init my-skill --from-skill ./path/to/SKILL.md
 ```
 
 ## Step 2: Configure Your Eval Specification
@@ -185,6 +209,9 @@ should_not_trigger_prompts:
 # Run all tasks
 skill-eval run my-awesome-skill/eval.yaml
 
+# Run with verbose output (shows real-time progress)
+skill-eval run my-awesome-skill/eval.yaml -v
+
 # Run specific task
 skill-eval run my-awesome-skill/eval.yaml --task deploy-app-001
 
@@ -196,6 +223,26 @@ skill-eval run my-awesome-skill/eval.yaml --trials 5
 
 # Set fail threshold
 skill-eval run my-awesome-skill/eval.yaml --fail-threshold 0.9
+
+# Run with real Copilot SDK (requires auth)
+skill-eval run my-awesome-skill/eval.yaml --executor copilot-sdk
+```
+
+### Progress Output
+
+By default, the CLI shows a progress bar during execution:
+
+```
+Progress: ████████████░░░░░░░░░░░░░░░░░░ 4/10 (40%)
+Running: Deploy Simple App (trial 2/3)
+```
+
+Use `-v/--verbose` for more detail:
+
+```
+Progress: ████████████░░░░░░░░░░░░░░░░░░ 4/10 (40%)
+Running: Deploy Simple App (trial 2/3)
+Last: ✅ Create HTTP Function (245ms)
 ```
 
 ## Step 7: Interpret Results

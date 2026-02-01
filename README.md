@@ -52,8 +52,14 @@ pip install -e ".[dev]"
 ### 2. Create Your First Eval
 
 ```bash
-# Scaffold eval suite for your skill
+# Option A: Scaffold a blank eval suite
 skill-eval init my-skill
+
+# Option B: Auto-generate from a SKILL.md file
+skill-eval generate https://raw.githubusercontent.com/org/repo/main/skills/my-skill/SKILL.md
+
+# Option C: Init with SKILL.md integration
+skill-eval init my-skill --from-skill ./path/to/SKILL.md
 
 # This creates:
 # my-skill/
@@ -99,6 +105,9 @@ tasks:
 ```bash
 # Run with mock executor (fast, no API calls)
 skill-eval run my-skill/eval.yaml
+
+# Run with verbose output (shows progress and details)
+skill-eval run my-skill/eval.yaml -v
 
 # Run with specific model
 skill-eval run my-skill/eval.yaml --model gpt-4o
@@ -151,6 +160,7 @@ skill-eval run my-skill/eval.yaml -o results.json
 |---------|-------------|
 | `skill-eval run <eval.yaml>` | Run an evaluation suite |
 | `skill-eval init <skill-name>` | Scaffold a new eval suite |
+| `skill-eval generate <SKILL.md>` | Auto-generate eval from a SKILL.md file |
 | `skill-eval compare <files...>` | Compare results across runs/models |
 | `skill-eval analyze <telemetry>` | Analyze runtime telemetry |
 | `skill-eval report <results.json>` | Generate reports from results |
@@ -164,12 +174,18 @@ skill-eval run eval.yaml \
   --executor mock|copilot-sdk \    # Execution engine
   --model <model-name> \           # Model to use
   --output results.json \          # Save results
-  --verbose                        # Detailed output
+  -v, --verbose                    # Show detailed progress and results
 
 # Init options
 skill-eval init my-skill \
   --output-dir ./evals \           # Output directory
-  --template minimal|full          # Template type
+  --template minimal|full \        # Template type
+  --from-skill <SKILL.md>          # Generate from SKILL.md file or URL
+
+# Generate options (auto-generate eval from SKILL.md)
+skill-eval generate https://example.com/SKILL.md \
+  --output-dir ./my-skill-eval \   # Output directory
+  --max-tasks 10                   # Maximum tasks to generate
 ```
 
 ---
@@ -460,17 +476,33 @@ jobs:
 
 ## Examples
 
-The repository includes example eval suites:
+The repository includes a sample eval suite:
 
 | Example | Description |
 |---------|-------------|
-| [`azure-deploy`](examples/azure-deploy/) | Azure deployment skill evaluation |
-| [`cli-session-recorder`](examples/cli-session-recorder/) | CLI recording skill evaluation |
 | [`code-explainer`](examples/code-explainer/) | Demo skill with 4 code explanation tasks |
 
-Run an example:
+Run the example:
 ```bash
 skill-eval run examples/code-explainer/eval.yaml
+```
+
+### Generating Evals from SKILL.md
+
+You can auto-generate eval suites from any skill that follows the [Agent Skills specification](https://agentskills.io/specification):
+
+```bash
+# Generate from a URL (e.g., GitHub raw file)
+skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/skills/azure-functions/SKILL.md
+
+# Generate from a local file
+skill-eval generate ./my-skill/SKILL.md --output-dir ./evals/my-skill
+
+# The generator extracts:
+# - Trigger phrases from activation sections
+# - Anti-triggers from "do not use" sections  
+# - CLI commands and tool patterns
+# - Keywords for behavior testing
 ```
 
 ---
