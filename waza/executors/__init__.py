@@ -1,7 +1,7 @@
 """Executors for running skill evaluations."""
 
-from skill_eval.executors.base import BaseExecutor, ExecutionResult, SessionEvent
-from skill_eval.executors.mock import MockExecutor
+from waza.executors.base import BaseExecutor, ExecutionResult, SessionEvent
+from waza.executors.mock import MockExecutor
 
 __all__ = [
     "BaseExecutor",
@@ -14,7 +14,7 @@ __all__ = [
 def get_copilot_executor():
     """Get CopilotExecutor if SDK is available."""
     try:
-        from skill_eval.executors.copilot import CopilotExecutor
+        from waza.executors.copilot import CopilotExecutor
         return CopilotExecutor
     except ImportError:
         return None

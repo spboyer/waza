@@ -1,5 +1,5 @@
 ---
-name: skill-eval-runner
+name: waza-runner
 description: |
   Run evaluations on Agent Skills to measure their effectiveness. 
   USE FOR: "run skill evals", "evaluate my skill", "test skill quality", 
@@ -68,10 +68,10 @@ Generate eval report for <skill-name>
 ### Running Evals
 ```bash
 # From CLI
-skill-eval run ./my-skill/eval.yaml
+waza run ./my-skill/eval.yaml
 
 # Output to file
-skill-eval run ./my-skill/eval.yaml -o results.json
+waza run ./my-skill/eval.yaml -o results.json
 ```
 
 ### Interpreting Results

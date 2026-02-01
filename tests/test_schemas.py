@@ -1,11 +1,9 @@
-"""Tests for skill_eval schemas."""
+"""Tests for waza schemas."""
 
-import pytest
-from datetime import datetime
 
-from skill_eval.schemas.eval_spec import EvalSpec, EvalConfig, MetricConfig, GraderConfig, GraderType
-from skill_eval.schemas.task import Task, TaskInput, TaskExpected, TriggerTestSuite
-from skill_eval.schemas.results import EvalResult, EvalSummary, TaskResult, TrialResult, GraderResult, MetricResult
+from waza.schemas.eval_spec import EvalConfig, EvalSpec, GraderConfig, GraderType, MetricConfig
+from waza.schemas.results import EvalResult, EvalSummary, GraderResult, TaskResult, TrialResult
+from waza.schemas.task import Task, TaskExpected, TaskInput, TriggerTestSuite
 
 
 class TestEvalSpec:

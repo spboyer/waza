@@ -5,13 +5,13 @@ This tutorial walks you through creating evaluations for your Agent Skills.
 ## Prerequisites
 
 - Python 3.11+
-- `skill-eval` installed:
+- `waza` installed:
   ```bash
   # From GitHub releases (recommended)
-  pip install https://github.com/spboyer/evals-for-skills/releases/latest/download/skill_eval-0.0.2-py3-none-any.whl
+  pip install https://github.com/spboyer/waza/releases/latest/download/waza-0.0.2-py3-none-any.whl
   
   # Or from PyPI when available
-  pip install skill-eval
+  pip install waza
   ```
 - An existing skill to evaluate
 
@@ -25,13 +25,13 @@ The fastest way to get started is to generate from an existing SKILL.md:
 
 ```bash
 # Generate eval from a SKILL.md URL
-skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md -o ./azure-functions-eval
+waza generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md -o ./azure-functions-eval
 
 # Or from a local file
-skill-eval generate ./path/to/SKILL.md -o ./my-skill-eval
+waza generate ./path/to/SKILL.md -o ./my-waza
 
 # The generator creates:
-# my-skill-eval/
+# my-waza/
 # ├── eval.yaml           # Main eval configuration
 # ├── trigger_tests.yaml  # Trigger accuracy tests  
 # ├── tasks/              # Generated task definitions
@@ -50,10 +50,10 @@ For more realistic and comprehensive test cases, use LLM-assisted generation:
 
 ```bash
 # Use --assist to have an LLM analyze the skill and generate better tests
-skill-eval generate ./SKILL.md -o ./my-skill-eval --assist
+waza generate ./SKILL.md -o ./my-waza --assist
 
 # Specify a different model if desired
-skill-eval generate ./SKILL.md -o ./my-skill-eval --assist --model gpt-4o
+waza generate ./SKILL.md -o ./my-waza --assist --model gpt-4o
 
 # Available models: claude-sonnet-4-20250514 (default), claude-opus-4.5, gpt-4o, gpt-5
 ```
@@ -68,7 +68,7 @@ LLM-assisted generation:
 ### Option B: Blank Scaffold
 ```bash
 # Create eval scaffolding from scratch
-skill-eval init my-awesome-skill
+waza init my-awesome-skill
 
 # This creates:
 # my-awesome-skill/
@@ -83,7 +83,7 @@ skill-eval init my-awesome-skill
 ### Option C: Init with SKILL.md Integration
 ```bash
 # Scaffold AND generate from SKILL.md in one step
-skill-eval init my-skill --from-skill ./path/to/SKILL.md
+waza init my-skill --from-skill ./path/to/SKILL.md
 ```
 
 ## Step 2: Configure Your Eval Specification
@@ -91,7 +91,7 @@ skill-eval init my-skill --from-skill ./path/to/SKILL.md
 Edit `eval.yaml` to define your evaluation:
 
 ```yaml
-name: my-awesome-skill-eval
+name: my-awesome-waza
 description: Evaluate the my-awesome-skill skill
 skill: my-awesome-skill
 version: "1.0"
@@ -248,40 +248,40 @@ should_not_trigger_prompts:
 
 ```bash
 # Run all tasks
-skill-eval run my-awesome-skill/eval.yaml
+waza run my-awesome-skill/eval.yaml
 
 # Run with verbose output (shows real-time conversation)
-skill-eval run my-awesome-skill/eval.yaml -v
+waza run my-awesome-skill/eval.yaml -v
 
 # Run with project context (use fixtures or your own project)
-skill-eval run my-awesome-skill/eval.yaml --context-dir ./my-awesome-skill/fixtures
+waza run my-awesome-skill/eval.yaml --context-dir ./my-awesome-skill/fixtures
 
 # Save conversation transcript for debugging
-skill-eval run my-awesome-skill/eval.yaml --log transcript.json
+waza run my-awesome-skill/eval.yaml --log transcript.json
 
 # Full debugging run
-skill-eval run my-awesome-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json
+waza run my-awesome-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json
 
 # Run specific task
-skill-eval run my-awesome-skill/eval.yaml --task deploy-app-001
+waza run my-awesome-skill/eval.yaml --task deploy-app-001
 
 # Output to file
-skill-eval run my-awesome-skill/eval.yaml -o results.json
+waza run my-awesome-skill/eval.yaml -o results.json
 
 # Override trials
-skill-eval run my-awesome-skill/eval.yaml --trials 5
+waza run my-awesome-skill/eval.yaml --trials 5
 
 # Set fail threshold
-skill-eval run my-awesome-skill/eval.yaml --fail-threshold 0.9
+waza run my-awesome-skill/eval.yaml --fail-threshold 0.9
 
 # Run with real Copilot SDK (requires auth)
-skill-eval run my-awesome-skill/eval.yaml --executor copilot-sdk
+waza run my-awesome-skill/eval.yaml --executor copilot-sdk
 
 # Get LLM suggestions for failed tasks (displays on screen)
-skill-eval run my-awesome-skill/eval.yaml --suggestions
+waza run my-awesome-skill/eval.yaml --suggestions
 
 # Save suggestions to markdown file (also displays on screen)
-skill-eval run my-awesome-skill/eval.yaml --suggestions-file suggestions.md
+waza run my-awesome-skill/eval.yaml --suggestions-file suggestions.md
 ```
 
 ### Progress Output
@@ -310,7 +310,7 @@ Use `-v/--verbose` for real-time conversation display:
 Save the full conversation transcript for detailed debugging:
 
 ```bash
-skill-eval run eval.yaml --log transcript.json -v
+waza run eval.yaml --log transcript.json -v
 ```
 
 The transcript includes timestamps, task/trial info, and full message content:
@@ -340,10 +340,10 @@ The `--context-dir` option provides project files to the skill:
 
 ```bash
 # Use generated fixtures as default for all tasks
-skill-eval run my-skill/eval.yaml --context-dir ./my-skill/fixtures
+waza run my-skill/eval.yaml --context-dir ./my-skill/fixtures
 
 # Use your real project
-skill-eval run my-skill/eval.yaml --context-dir ~/projects/my-app
+waza run my-skill/eval.yaml --context-dir ~/projects/my-app
 ```
 
 Individual tasks can override the global context with their own `context_dir`:
@@ -364,7 +364,7 @@ This gives the skill real code to work with, making tests more realistic.
 
 ### Console Output
 ```
-╭─────────────────── my-awesome-skill-eval ───────────────────╮
+╭─────────────────── my-awesome-waza ───────────────────╮
 │ ✅ PASSED                                                    │
 │                                                              │
 │ Pass Rate: 85.0% (17/20)                                     │
@@ -376,7 +376,7 @@ This gives the skill real code to work with, making tests more realistic.
 ### JSON Output Structure
 ```json
 {
-  "eval_id": "my-awesome-skill-eval-20260131-001",
+  "eval_id": "my-awesome-waza-20260131-001",
   "skill": "my-awesome-skill",
   "summary": {
     "total_tasks": 20,
@@ -401,8 +401,8 @@ Add to your GitHub Actions workflow:
 ```yaml
 - name: Run Skill Evals
   run: |
-    pip install skill-eval
-    skill-eval run ./my-skill/eval.yaml \
+    pip install waza
+    waza run ./my-skill/eval.yaml \
       --output results.json \
       --fail-threshold 0.8
 ```
@@ -412,7 +412,7 @@ Or use the reusable workflow:
 ```yaml
 jobs:
   eval:
-    uses: your-org/evals-for-skills/.github/workflows/skill-eval.yaml@main
+    uses: your-org/waza/.github/workflows/waza.yaml@main
     with:
       eval-path: ./my-skill/eval.yaml
       fail-threshold: 0.8

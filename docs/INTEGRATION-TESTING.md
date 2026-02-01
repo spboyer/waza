@@ -6,7 +6,7 @@ This guide explains how to run real integration tests using the GitHub Copilot S
 
 1. **Install the Copilot SDK dependency:**
    ```bash
-   pip install skill-eval[copilot]
+   pip install waza[copilot]
    ```
 
 2. **Authenticate with Copilot CLI:**
@@ -22,7 +22,7 @@ This guide explains how to run real integration tests using the GitHub Copilot S
 Update your `eval.yaml` to use the Copilot SDK executor:
 
 ```yaml
-name: my-skill-eval
+name: my-waza
 skill: my-skill
 version: "1.0"
 
@@ -51,19 +51,19 @@ You can override the executor and model at runtime:
 
 ```bash
 # Run with Copilot SDK instead of mock
-skill-eval run eval.yaml --executor copilot-sdk --model claude-sonnet-4-20250514
+waza run eval.yaml --executor copilot-sdk --model claude-sonnet-4-20250514
 
 # Run with verbose output to see conversation in real-time
-skill-eval run eval.yaml --executor copilot-sdk -v
+waza run eval.yaml --executor copilot-sdk -v
 
 # Provide project context files
-skill-eval run eval.yaml --executor copilot-sdk --context-dir ./my-project
+waza run eval.yaml --executor copilot-sdk --context-dir ./my-project
 
 # Save conversation transcript for debugging
-skill-eval run eval.yaml --executor copilot-sdk --log transcript.json
+waza run eval.yaml --executor copilot-sdk --log transcript.json
 
 # Full debugging session
-skill-eval run eval.yaml \
+waza run eval.yaml \
   --executor copilot-sdk \
   --model claude-sonnet-4-20250514 \
   --context-dir ./fixtures \
@@ -72,9 +72,9 @@ skill-eval run eval.yaml \
   -v
 
 # Compare different models
-skill-eval run eval.yaml --model gpt-4o -o results-gpt4o.json
-skill-eval run eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json
-skill-eval compare results-gpt4o.json results-claude.json
+waza run eval.yaml --model gpt-4o -o results-gpt4o.json
+waza run eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json
+waza compare results-gpt4o.json results-claude.json
 ```
 
 ## Executor Types
@@ -119,12 +119,12 @@ Compare results across different models:
 
 ```bash
 # Run the same eval with different models
-skill-eval run eval.yaml --model gpt-4o -o results/gpt-4o.json
-skill-eval run eval.yaml --model claude-sonnet-4-20250514 -o results/claude.json
-skill-eval run eval.yaml --model gpt-4o-mini -o results/gpt-4o-mini.json
+waza run eval.yaml --model gpt-4o -o results/gpt-4o.json
+waza run eval.yaml --model claude-sonnet-4-20250514 -o results/claude.json
+waza run eval.yaml --model gpt-4o-mini -o results/gpt-4o-mini.json
 
 # Generate comparison report
-skill-eval compare results/*.json -o comparison-report.md
+waza compare results/*.json -o comparison-report.md
 ```
 
 ### Comparison Output
@@ -153,11 +153,11 @@ Integration tests require authentication and are typically skipped in CI:
 ```yaml
 # .github/workflows/test.yaml
 - name: Run unit tests
-  run: skill-eval run eval.yaml --executor mock
+  run: waza run eval.yaml --executor mock
   
 - name: Run integration tests (manual only)
   if: github.event_name == 'workflow_dispatch'
-  run: skill-eval run eval.yaml --executor copilot-sdk
+  run: waza run eval.yaml --executor copilot-sdk
 ```
 
 ### Environment Variables
@@ -172,7 +172,7 @@ Integration tests require authentication and are typically skipped in CI:
 ### "Copilot SDK not installed"
 
 ```bash
-pip install skill-eval[copilot]
+pip install waza[copilot]
 # or
 pip install copilot-sdk
 ```
@@ -227,5 +227,5 @@ graders:
 
 ```bash
 # Run with real Copilot SDK
-skill-eval run eval.yaml --executor copilot-sdk -o integration-results.json
+waza run eval.yaml --executor copilot-sdk -o integration-results.json
 ```

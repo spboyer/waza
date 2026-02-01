@@ -1,6 +1,6 @@
-"""Reporters package for skill-eval."""
+"""Reporters package for waza."""
 
-from skill_eval.reporters.json_reporter import (
+from waza.reporters.json_reporter import (
     GitHubReporter,
     JSONReporter,
     MarkdownReporter,

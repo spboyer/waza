@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skill_eval.schemas.results import MetricResult, TaskResult, TrialResult
+from waza.schemas.results import MetricResult, TaskResult, TrialResult
 
 
 class BehaviorQualityMetric:

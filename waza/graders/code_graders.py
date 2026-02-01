@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 import time
 
-from skill_eval.graders.base import Grader, GraderContext, GraderRegistry, GraderType
-from skill_eval.schemas.results import GraderResult
+from waza.graders.base import Grader, GraderContext, GraderRegistry, GraderType
+from waza.schemas.results import GraderResult
 
 
 @GraderRegistry.register("code")

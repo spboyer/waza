@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from skill_eval.schemas.results import GraderResult
+    from waza.schemas.results import GraderResult
 
 
 class GraderType(str, Enum):

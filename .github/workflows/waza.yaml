@@ -48,14 +48,14 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install skill-eval
+      - name: Install waza
         run: |
-          pip install skill-eval
+          pip install waza
       
       - name: Run Evaluation
         id: run-eval
         run: |
-          skill-eval run "${{ inputs.eval-path }}" \
+          waza run "${{ inputs.eval-path }}" \
             --output results.json \
             --format json \
             ${{ inputs.trials && format('--trials {0}', inputs.trials) || '' }} \
@@ -74,7 +74,7 @@ jobs:
       - name: Generate Summary
         if: always()
         run: |
-          skill-eval report results.json --format github >> $GITHUB_STEP_SUMMARY
+          waza report results.json --format github >> $GITHUB_STEP_SUMMARY
       
       - name: Upload Results
         uses: actions/upload-artifact@v4

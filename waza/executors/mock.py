@@ -6,7 +6,7 @@ import asyncio
 import random
 from typing import Any
 
-from skill_eval.executors.base import BaseExecutor, ExecutionResult, SessionEvent
+from waza.executors.base import BaseExecutor, ExecutionResult, SessionEvent
 
 
 class MockExecutor(BaseExecutor):

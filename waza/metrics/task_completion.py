@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skill_eval.schemas.results import MetricResult, TaskResult
+from waza.schemas.results import MetricResult, TaskResult
 
 
 class TaskCompletionMetric:

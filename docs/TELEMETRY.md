@@ -14,7 +14,7 @@ Runtime telemetry enables you to:
 ### Collecting Telemetry
 
 ```python
-from skill_eval.telemetry import RuntimeCollector
+from waza.telemetry import RuntimeCollector
 
 # Create collector
 collector = RuntimeCollector()
@@ -45,13 +45,13 @@ collector.export_to_file("telemetry/sessions-2024-01.json")
 
 ```bash
 # Analyze telemetry file
-skill-eval analyze telemetry/sessions-2024-01.json
+waza analyze telemetry/sessions-2024-01.json
 
 # Filter to specific skill
-skill-eval analyze telemetry/ --skill azure-deploy
+waza analyze telemetry/ --skill azure-deploy
 
 # Export analysis
-skill-eval analyze telemetry/ -o analysis-report.json
+waza analyze telemetry/ -o analysis-report.json
 ```
 
 ### Output
@@ -124,7 +124,7 @@ For skills running in a runtime with hooks:
 
 ```python
 # In your skill runtime
-from skill_eval.telemetry import RuntimeCollector
+from waza.telemetry import RuntimeCollector
 
 collector = RuntimeCollector()
 
@@ -146,7 +146,7 @@ collector.export_to_file(f"telemetry/{date.today()}.json")
 If you have existing logs, parse them into telemetry format:
 
 ```python
-from skill_eval.telemetry import SessionTelemetry, TelemetryEvent
+from waza.telemetry import SessionTelemetry, TelemetryEvent
 from datetime import datetime
 import json
 
@@ -168,7 +168,7 @@ Receive telemetry from remote sources:
 
 ```python
 from flask import Flask, request
-from skill_eval.telemetry import RuntimeCollector
+from waza.telemetry import RuntimeCollector
 
 app = Flask(__name__)
 collector = RuntimeCollector()
@@ -191,7 +191,7 @@ def record_event(session_id):
 Transform runtime sessions into eval tasks for regression testing:
 
 ```python
-from skill_eval.telemetry import TelemetryAnalyzer, RuntimeCollector
+from waza.telemetry import TelemetryAnalyzer, RuntimeCollector
 
 analyzer = TelemetryAnalyzer()
 sessions = RuntimeCollector.load_from_file("telemetry/sessions.json")

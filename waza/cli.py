@@ -1,4 +1,4 @@
-"""CLI entrypoint for skill-eval."""
+"""CLI entrypoint for waza."""
 
 from __future__ import annotations
 
@@ -12,18 +12,18 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from skill_eval import __version__
-from skill_eval.reporters import GitHubReporter, JSONReporter, MarkdownReporter
-from skill_eval.runner import EvalRunner
-from skill_eval.schemas.eval_spec import EvalSpec
+from waza import __version__
+from waza.reporters import GitHubReporter, JSONReporter, MarkdownReporter
+from waza.runner import EvalRunner
+from waza.schemas.eval_spec import EvalSpec
 
 console = Console()
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="skill-eval")
+@click.version_option(version=__version__, prog_name="waza")
 def main():
-    """Skill Eval - Evaluate Agent Skills like you evaluate AI Agents."""
+    """waza (技) - Evaluate Agent Skills with precision."""
     pass
 
 
@@ -66,7 +66,7 @@ def run(
     if suggestions_file:
         suggestions = True
 
-    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
+    console.print(f"[bold blue]waza[/bold blue] v{__version__}")
     console.print()
 
     # Load spec
@@ -86,7 +86,7 @@ def run(
     if model:
         spec.config.model = model
     if executor:
-        from skill_eval.schemas.eval_spec import ExecutorType
+        from waza.schemas.eval_spec import ExecutorType
         spec.config.executor = ExecutorType(executor)
     spec.config.verbose = verbose
 
@@ -528,12 +528,12 @@ should_not_trigger_prompts:
     console.print("Next steps:")
     console.print("  1. Edit [bold]tasks/*.yaml[/bold] to add test cases")
     console.print("  2. Edit [bold]trigger_tests.yaml[/bold] for trigger accuracy tests")
-    console.print(f"  3. Run: [bold]skill-eval run {output_dir}/eval.yaml[/bold]")
+    console.print(f"  3. Run: [bold]waza run {output_dir}/eval.yaml[/bold]")
 
 
 def _generate_from_skill(source: str, output_dir: Path, skill_name: str):
     """Generate eval suite from a SKILL.md file."""
-    from skill_eval.generator import EvalGenerator, SkillParser
+    from waza.generator import EvalGenerator, SkillParser
 
     parser = SkillParser()
 
@@ -593,7 +593,7 @@ def _generate_from_skill(source: str, output_dir: Path, skill_name: str):
     console.print("Next steps:")
     console.print("  1. Review [bold]eval.yaml[/bold] graders and thresholds")
     console.print("  2. Add/edit [bold]tasks/*.yaml[/bold] test cases")
-    console.print(f"  3. Run: [bold]skill-eval run {output_dir}/eval.yaml[/bold]")
+    console.print(f"  3. Run: [bold]waza run {output_dir}/eval.yaml[/bold]")
 
 
 @main.command()
@@ -609,20 +609,20 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
 
     Examples:
 
-      skill-eval generate ./skills/azure-functions/SKILL.md
+      waza generate ./skills/azure-functions/SKILL.md
 
-      skill-eval generate https://github.com/...azure-functions/SKILL.md
+      waza generate https://github.com/...azure-functions/SKILL.md
 
-      skill-eval generate ./SKILL.md -o evals/my-skill
+      waza generate ./SKILL.md -o evals/my-skill
 
       # Use LLM-assisted generation for better tasks:
-      skill-eval generate ./SKILL.md --assist
+      waza generate ./SKILL.md --assist
     """
-    from skill_eval.generator import EvalGenerator, SkillParser
+    from waza.generator import EvalGenerator, SkillParser
 
     parser = SkillParser()
 
-    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
+    console.print(f"[bold blue]waza[/bold blue] v{__version__}")
     console.print()
     console.print(f"Parsing: {skill_source[:80]}{'...' if len(skill_source) > 80 else ''}")
 
@@ -675,7 +675,7 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
     if assist:
         import asyncio
 
-        from skill_eval.generator import AssistedGenerator
+        from waza.generator import AssistedGenerator
 
         console.print(f"[cyan]Using LLM-assisted generation with {model}...[/cyan]")
         console.print()
@@ -781,9 +781,9 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
     console.print(Panel(
         f"Generated eval suite at: [bold]{output_dir}[/bold]\n\n"
         f"Run with:\n"
-        f"  [bold]skill-eval run {output_dir}/eval.yaml[/bold]\n\n"
+        f"  [bold]waza run {output_dir}/eval.yaml[/bold]\n\n"
         f"Or with real LLM and project context:\n"
-        f"  [bold]skill-eval run {output_dir}/eval.yaml --executor copilot-sdk --context-dir {output_dir}/fixtures[/bold]",
+        f"  [bold]waza run {output_dir}/eval.yaml --executor copilot-sdk --context-dir {output_dir}/fixtures[/bold]",
         title="[green]✓ Success[/green]",
         border_style="green"
     ))
@@ -797,7 +797,7 @@ def report(results_path: str, format: str):
 
     RESULTS_PATH: Path to results JSON file
     """
-    from skill_eval.schemas.results import EvalResult
+    from waza.schemas.results import EvalResult
 
     result = EvalResult.from_file(results_path)
 
@@ -851,7 +851,7 @@ def compare(results_files: tuple[str, ...], output: str | None, format: str):
 
     RESULTS_FILES: Two or more results JSON files to compare
     """
-    from skill_eval.schemas.results import EvalResult
+    from waza.schemas.results import EvalResult
 
     if len(results_files) < 2:
         console.print("[red]✗ Need at least 2 results files to compare[/red]")
@@ -961,7 +961,7 @@ def analyze(telemetry_path: str, output: str | None, skill: str | None):
 
     TELEMETRY_PATH: Path to telemetry JSON file or directory
     """
-    from skill_eval.telemetry import TelemetryAnalyzer
+    from waza.telemetry import TelemetryAnalyzer
 
     try:
         analyzer = TelemetryAnalyzer()
@@ -1066,7 +1066,7 @@ def _generate_suggestions(result, spec, model: str, console, suggestions_file: s
             suggestions = {}
 
             # Setup client
-            workspace = tempfile.mkdtemp(prefix="skill-eval-suggestions-")
+            workspace = tempfile.mkdtemp(prefix="waza-suggestions-")
             client = CopilotClient({
                 "cwd": workspace,
                 "log_level": "error",

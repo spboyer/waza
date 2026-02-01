@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from skill_eval.schemas.results import MetricResult
+from waza.schemas.results import MetricResult
 
 
 class CompositeMetric:

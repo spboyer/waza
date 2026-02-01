@@ -4,7 +4,7 @@ This executor uses the github-copilot-sdk to run actual Copilot agent sessions,
 providing real LLM responses for integration testing.
 
 Prerequisites:
-- Install: pip install skill-eval[copilot]
+- Install: pip install waza[copilot]
 - Copilot CLI must be installed and authenticated: https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli
 
 Usage:
@@ -30,7 +30,7 @@ import tempfile
 import time
 from typing import Any
 
-from skill_eval.executors.base import BaseExecutor, ExecutionResult, SessionEvent
+from waza.executors.base import BaseExecutor, ExecutionResult, SessionEvent
 
 # Lazy import for optional dependency
 CopilotClient = None
@@ -45,7 +45,7 @@ def _get_copilot_client():
             CopilotClient = _CopilotClient
         except ImportError as e:
             raise ImportError(
-                "Copilot SDK not installed. Install with: pip install skill-eval[copilot]\n"
+                "Copilot SDK not installed. Install with: pip install waza[copilot]\n"
                 "Or: pip install github-copilot-sdk\n"
                 "Also requires Copilot CLI: https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli"
             ) from e
@@ -91,7 +91,7 @@ class CopilotExecutor(BaseExecutor):
         client_class = _get_copilot_client()
 
         # Create temp workspace
-        self._workspace = tempfile.mkdtemp(prefix="skill-eval-")
+        self._workspace = tempfile.mkdtemp(prefix="waza-")
 
         # Initialize client with workspace
         self._client = client_class({
@@ -127,7 +127,7 @@ class CopilotExecutor(BaseExecutor):
         await self.teardown()
 
         # Create fresh temp workspace for this task
-        self._workspace = tempfile.mkdtemp(prefix="skill-eval-")
+        self._workspace = tempfile.mkdtemp(prefix="waza-")
 
         # Write context files BEFORE initializing client
         if context:

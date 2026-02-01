@@ -15,7 +15,7 @@ Build the foundational components.
 | 1.3 | Implement base Grader interface and code-based graders | ✅ |
 | 1.4 | Implement eval Runner that orchestrates task execution | ✅ |
 | 1.5 | Implement JSON reporter for results output | ✅ |
-| 1.6 | Create CLI entrypoint (`skill-eval run`, `skill-eval init`) | ✅ |
+| 1.6 | Create CLI entrypoint (`waza run`, `waza init`) | ✅ |
 
 **Deliverable**: ✅ Working CLI that can run basic evals with code-based graders.
 
@@ -43,7 +43,7 @@ Make it easy to adopt and use.
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | Create `skill-eval init <skill-name>` scaffolding command | ✅ |
+| 3.1 | Create `waza init <skill-name>` scaffolding command | ✅ |
 | 3.2 | Add markdown reporter for human-readable reports | ✅ |
 | 3.3 | Create GitHub Actions workflow for CI integration | ✅ |
 | 3.4 | Write comprehensive README with examples | ✅ |
@@ -59,7 +59,7 @@ Enable meta-evaluation within skill runtimes.
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 4.1 | Create `skill-eval-runner` skill with SKILL.md | ✅ |
+| 4.1 | Create `waza-runner` skill with SKILL.md | ✅ |
 | 4.2 | Implement skill instructions for running evals | ✅ |
 | 4.3 | Add human review workflow support | ✅ |
 | 4.4 | Test meta-evaluation capability | ✅ |
@@ -93,9 +93,9 @@ Real Copilot SDK testing, model comparison, and runtime telemetry.
 | 6.2 | Create `CopilotExecutor` class wrapping SDK | ✅ |
 | 6.3 | Add `executor` and `model` config options | ✅ |
 | 6.4 | Add `--model` and `--executor` CLI flags | ✅ |
-| 6.5 | Create `skill-eval compare` command | ✅ |
+| 6.5 | Create `waza compare` command | ✅ |
 | 6.6 | Create runtime telemetry module | ✅ |
-| 6.7 | Add `skill-eval analyze` command | ✅ |
+| 6.7 | Add `waza analyze` command | ✅ |
 
 **Deliverable**: ✅ Real integration testing with model comparison and runtime metrics.
 
@@ -104,8 +104,8 @@ Real Copilot SDK testing, model comparison, and runtime telemetry.
 ## Architecture
 
 ```
-evals-for-skills/
-├── skill_eval/                    # Python package
+waza/
+├── waza/                    # Python package
 │   ├── __init__.py
 │   ├── cli.py                     # CLI entrypoint
 │   ├── runner.py                  # Eval orchestration
@@ -127,7 +127,7 @@ evals-for-skills/
 │       ├── eval_spec.py
 │       ├── task.py
 │       └── results.py
-├── skill-eval-runner/             # Eval-as-skill
+├── waza-runner/             # Eval-as-skill
 │   └── SKILL.md
 ├── examples/
 ├── tests/
@@ -159,12 +159,12 @@ evals-for-skills/
 - ✅ **34 tests passing**
 - ✅ **48 files created**
 - ✅ CLI working with new commands:
-  - `skill-eval run` - with `--model` and `--executor` flags
-  - `skill-eval init` - scaffolds complete eval suite
-  - `skill-eval compare` - side-by-side model comparison
-  - `skill-eval analyze` - runtime telemetry analysis
-  - `skill-eval list-graders` - available grader types
-  - `skill-eval report` - generate reports from results
+  - `waza run` - with `--model` and `--executor` flags
+  - `waza init` - scaffolds complete eval suite
+  - `waza compare` - side-by-side model comparison
+  - `waza analyze` - runtime telemetry analysis
+  - `waza list-graders` - available grader types
+  - `waza report` - generate reports from results
 - ✅ Example evals for azure-deploy and cli-session-recorder skills
 - ✅ Created DEMO-SCRIPT.md for video walkthrough
 - ✅ Created Integration Testing and Telemetry documentation

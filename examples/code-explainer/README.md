@@ -11,7 +11,7 @@ See [SKILL.md](./SKILL.md) for the full skill definition. This skill:
 
 ## Complete Workflow
 
-This example demonstrates the full skill-eval workflow:
+This example demonstrates the full waza workflow:
 
 ### 1. View the Skill Definition
 
@@ -23,23 +23,23 @@ cat examples/code-explainer/SKILL.md
 
 ```bash
 # Generate eval from SKILL.md
-skill-eval generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval
+waza generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval
 
 # Or with LLM assistance for better tasks
-skill-eval generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval --assist
+waza generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval --assist
 ```
 
 ### 3. Run the Eval
 
 ```bash
 # Quick test with mock executor
-skill-eval run examples/code-explainer/eval.yaml \
+waza run examples/code-explainer/eval.yaml \
   --executor mock \
   --context-dir examples/code-explainer/fixtures \
   -v
 
 # Full test with Copilot SDK
-skill-eval run examples/code-explainer/eval.yaml \
+waza run examples/code-explainer/eval.yaml \
   --executor copilot-sdk \
   --context-dir examples/code-explainer/fixtures \
   -v

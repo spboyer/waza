@@ -12,13 +12,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
-from skill_eval.executors import BaseExecutor, MockExecutor
-from skill_eval.graders.base import Grader, GraderContext, GraderRegistry
-from skill_eval.schemas.eval_spec import EvalSpec, ExecutorType
-from skill_eval.schemas.results import (
+from waza.executors import BaseExecutor, MockExecutor
+from waza.graders.base import Grader, GraderContext, GraderRegistry
+from waza.schemas.eval_spec import EvalSpec, ExecutorType
+from waza.schemas.results import (
     EvalConfig as ResultEvalConfig,
 )
-from skill_eval.schemas.results import (
+from waza.schemas.results import (
     EvalResult,
     EvalSummary,
     MetricResult,
@@ -26,7 +26,7 @@ from skill_eval.schemas.results import (
     TranscriptSummary,
     TrialResult,
 )
-from skill_eval.schemas.task import Task
+from waza.schemas.task import Task
 
 
 class ProgressCallback(Protocol):
@@ -101,7 +101,7 @@ class EvalRunner:
         if executor_type == ExecutorType.COPILOT_SDK:
             # Try to import Copilot executor
             try:
-                from skill_eval.executors.copilot import CopilotExecutor
+                from waza.executors.copilot import CopilotExecutor
                 return CopilotExecutor(
                     model=model,
                     skill_directories=self.spec.config.skill_directories,
@@ -111,7 +111,7 @@ class EvalRunner:
             except ImportError as e:
                 raise ImportError(
                     "Copilot SDK executor requires copilot-sdk package. "
-                    "Install with: pip install skill-eval[copilot]"
+                    "Install with: pip install waza[copilot]"
                 ) from e
         else:
             # Default to mock executor

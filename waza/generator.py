@@ -873,7 +873,7 @@ class AssistedGenerator:
                 "Or run without --assist for pattern-based generation."
             ) from e
 
-        self._workspace = tempfile.mkdtemp(prefix="skill-eval-assist-")
+        self._workspace = tempfile.mkdtemp(prefix="waza-assist-")
         self._client = CopilotClient({
             "cwd": self._workspace,
             "log_level": "error",

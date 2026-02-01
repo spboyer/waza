@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from skill_eval.schemas.results import MetricResult
-from skill_eval.schemas.task import TriggerTestCase, TriggerTestSuite
+from waza.schemas.results import MetricResult
+from waza.schemas.task import TriggerTestCase, TriggerTestSuite
 
 
 class TriggerAccuracyMetric:

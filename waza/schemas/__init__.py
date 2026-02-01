@@ -1,13 +1,13 @@
-"""Schemas package for skill-eval."""
+"""Schemas package for waza."""
 
-from skill_eval.schemas.eval_spec import (
+from waza.schemas.eval_spec import (
     EvalConfig,
     EvalSpec,
     GraderConfig,
     GraderType,
     MetricConfig,
 )
-from skill_eval.schemas.results import (
+from waza.schemas.results import (
     EvalResult,
     EvalSummary,
     GraderResult,
@@ -17,7 +17,7 @@ from skill_eval.schemas.results import (
     TranscriptSummary,
     TrialResult,
 )
-from skill_eval.schemas.task import (
+from waza.schemas.task import (
     BehaviorExpectation,
     OutcomeExpectation,
     Task,

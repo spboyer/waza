@@ -1,22 +1,22 @@
-"""Graders package for skill-eval."""
+"""Graders package for waza."""
 
-from skill_eval.graders.base import (
+from waza.graders.base import (
     Grader,
     GraderContext,
     GraderRegistry,
     GraderType,
 )
-from skill_eval.graders.code_graders import (
+from waza.graders.code_graders import (
     CodeGrader,
     RegexGrader,
     ScriptGrader,
     ToolCallGrader,
 )
-from skill_eval.graders.human_graders import (
+from waza.graders.human_graders import (
     HumanCalibrationGrader,
     HumanGrader,
 )
-from skill_eval.graders.llm_graders import (
+from waza.graders.llm_graders import (
     LLMComparisonGrader,
     LLMGrader,
 )
