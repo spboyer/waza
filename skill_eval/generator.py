@@ -1090,11 +1090,17 @@ Return ONLY a JSON array with grader configs:
 [
   {{
     "name": "grader_name",
-    "type": "code|llm|regex|tool_use",
-    "assertions": ["assertion1", "assertion2"],
+    "type": "code",
+    "assertions": ["python expression that evaluates to True if passed"],
     "description": "what this grader checks"
   }}
 ]
+
+IMPORTANT: Only use "type": "code" - assertions must be valid Python expressions.
+Examples of good assertions:
+- "len(output) > 0"
+- "'azure' in output.lower()"
+- "'rm -rf' not in output"
 
 Focus on 3-5 key graders that would catch real issues.
 Return ONLY the JSON array, no explanation."""
@@ -1105,12 +1111,17 @@ Return ONLY the JSON array, no explanation."""
         if not graders or not isinstance(graders, list):
             return self._default_graders()
         
+        # Filter to only supported grader types and ensure valid structure
         valid_graders = []
         for g in graders[:5]:
             if isinstance(g, dict) and "name" in g:
+                # Force type to "code" if invalid
+                g_type = g.get("type", "code")
+                if g_type not in ("code", "regex", "llm"):
+                    g_type = "code"
                 valid_graders.append({
                     "name": g.get("name", "check"),
-                    "type": g.get("type", "code"),
+                    "type": g_type,
                     "assertions": g.get("assertions", []),
                     "description": g.get("description", ""),
                 })
@@ -1144,7 +1155,7 @@ Return ONLY the JSON array, no explanation."""
     def format_task_yaml(self, task: dict[str, Any], graders: list[dict[str, Any]]) -> str:
         """Format a task dict as YAML."""
         # Escape and truncate prompt
-        prompt = task.get("prompt", "").replace('"', '\\"').replace('\n', ' ')
+        prompt = task.get("prompt", "").replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
         if len(prompt) > 60:
             prompt = prompt[:57] + "..."
         
@@ -1158,7 +1169,9 @@ Return ONLY the JSON array, no explanation."""
     type: {g.get('type', 'code')}
     assertions:"""
             for a in g.get("assertions", ["len(output) > 0"])[:3]:
-                graders_yaml += f'\n      - "{a}"'
+                # Escape backslashes and quotes in assertions
+                a_escaped = str(a).replace('\\', '\\\\').replace('"', '\\"')
+                graders_yaml += f'\n      - "{a_escaped}"'
         
         return f"""---
 # {task.get('name', 'Task')}
