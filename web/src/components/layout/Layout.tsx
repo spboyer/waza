@@ -19,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <Link to="/" className="text-xl font-bold">
-                skill-eval
+                waza
               </Link>
               <nav className="flex space-x-4">
                 <Link to="/" className={`px-3 py-2 rounded ${isActive('/') ? 'bg-gray-700' : 'hover:bg-gray-700'}`}>

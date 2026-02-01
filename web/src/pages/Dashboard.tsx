@@ -128,7 +128,7 @@ export default function Dashboard() {
           <div className="text-center py-12">
             <p className="text-gray-400 mb-4">No eval suites found</p>
             <p className="text-sm text-gray-500">
-              Create an eval suite with <code className="bg-gray-700 px-2 py-1 rounded">skill-eval init</code>
+              Create an eval suite with <code className="bg-gray-700 px-2 py-1 rounded">waza init</code>
             </p>
           </div>
         ) : (

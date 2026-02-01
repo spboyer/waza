@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  skill-eval:
+  waza:
     build: .
     ports:
       - "8000:8000"
     volumes:
       # Mount local eval storage for persistence
-      - ~/.skill-eval:/root/.skill-eval
+      - ~/.waza:/root/.waza
     environment:
       # Optional: Set GitHub OAuth credentials
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}

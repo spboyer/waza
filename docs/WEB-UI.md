@@ -2,7 +2,7 @@
 
 ## Overview
 
-The skill-eval Web UI provides a modern dashboard for creating, editing, and running eval suites visually with real-time updates.
+The waza Web UI provides a modern dashboard for creating, editing, and running eval suites visually with real-time updates.
 
 ## Quick Start
 
@@ -10,19 +10,19 @@ The skill-eval Web UI provides a modern dashboard for creating, editing, and run
 
 ```bash
 # Install web dependencies (first time only)
-pip install skill-eval[web]
+pip install waza[web]
 
 # Or install manually
 pip install fastapi uvicorn[standard]
 
 # Start the server
-skill-eval serve
+waza serve
 
 # Custom port
-skill-eval serve --port 3000
+waza serve --port 3000
 
 # Development mode with auto-reload
-skill-eval serve --reload
+waza serve --reload
 ```
 
 The server will start on `http://localhost:8000` by default:
@@ -68,13 +68,13 @@ The FastAPI backend provides a RESTful API for all operations:
 
 ## Data Storage
 
-All data is stored in `~/.skill-eval/` as JSON and YAML files:
+All data is stored in `~/.waza/` as JSON and YAML files:
 
 ```
-~/.skill-eval/
+~/.waza/
 ├── config.json              # User preferences
 ├── evals/                   # Eval suite definitions
-│   ├── my-skill-eval.yaml
+│   ├── my-waza.yaml
 │   └── another-eval.yaml
 ├── runs/                    # Run history
 │   ├── 2026-02-01-123456-my-skill/
@@ -116,15 +116,15 @@ The backend is a FastAPI app:
 
 ```bash
 # Start with auto-reload
-skill-eval serve --reload
+waza serve --reload
 
-# The API will reload automatically when you edit files in skill_eval/api/
+# The API will reload automatically when you edit files in waza/api/
 ```
 
 ### Project Structure
 
 ```
-skill_eval/
+waza/
 ├── api/                     # FastAPI backend
 │   ├── __init__.py
 │   ├── main.py             # FastAPI app
@@ -164,7 +164,7 @@ GitHub OAuth will be added to enable authenticated features:
 If port 8000 is already in use:
 
 ```bash
-skill-eval serve --port 8080
+waza serve --port 8080
 ```
 
 ### API Connection Errors
@@ -186,7 +186,7 @@ The API is configured to allow requests from:
 - `http://localhost:5173` (Vite dev server)
 - `http://localhost:3000` (Alternative port)
 
-If you need to add more origins, edit `skill_eval/api/main.py`.
+If you need to add more origins, edit `waza/api/main.py`.
 
 ## Future Features
 
@@ -297,7 +297,7 @@ The dev server runs on http://localhost:5173 with hot reload.
 ### Backend Development
 
 ```bash
-skill-eval serve --reload
+waza serve --reload
 ```
 
 The API server runs on http://localhost:8000 with auto-reload.
@@ -308,7 +308,7 @@ Run both servers simultaneously:
 
 ```bash
 # Terminal 1: Backend
-skill-eval serve --reload
+waza serve --reload
 
 # Terminal 2: Frontend  
 cd web && npm run dev

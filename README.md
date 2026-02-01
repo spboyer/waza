@@ -30,28 +30,28 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 **From GitHub Releases (recommended):**
 ```bash
 # Download and install the latest release
-pip install https://github.com/spboyer/evals-for-skills/releases/latest/download/skill_eval-0.0.2-py3-none-any.whl
+pip install https://github.com/spboyer/evals-for-skills/releases/latest/download/waza-0.0.2-py3-none-any.whl
 
 # Or install a specific version
-pip install https://github.com/spboyer/evals-for-skills/releases/download/v0.0.2/skill_eval-0.0.2-py3-none-any.whl
+pip install https://github.com/spboyer/evals-for-skills/releases/download/v0.0.2/waza-0.0.2-py3-none-any.whl
 ```
 
 **From PyPI (when available):**
 ```bash
 # Basic installation
-pip install skill-eval
+pip install waza
 
 # With LLM grading support (OpenAI/Anthropic)
-pip install skill-eval[llm]
+pip install waza[llm]
 
 # With Copilot SDK for real integration tests
-pip install skill-eval[copilot]
+pip install waza[copilot]
 
 # With Web UI dashboard
-pip install skill-eval[web]
+pip install waza[web]
 
 # Full installation (all features)
-pip install skill-eval[all]
+pip install waza[all]
 ```
 
 **From source (development):**
@@ -67,16 +67,16 @@ pip install -e ".[dev]"
 
 ```bash
 # Option A: Scaffold a blank eval suite
-skill-eval init my-skill
+waza init my-skill
 
 # Option B: Auto-generate from a SKILL.md file
-skill-eval generate https://raw.githubusercontent.com/org/repo/main/skills/my-skill/SKILL.md
+waza generate https://raw.githubusercontent.com/org/repo/main/skills/my-skill/SKILL.md
 
 # Option C: LLM-assisted generation (recommended for better tasks)
-skill-eval generate ./SKILL.md --assist
+waza generate ./SKILL.md --assist
 
 # Option D: Init with SKILL.md integration
-skill-eval init my-skill --from-skill ./path/to/SKILL.md
+waza init my-skill --from-skill ./path/to/SKILL.md
 
 # This creates:
 # my-skill/
@@ -92,7 +92,7 @@ skill-eval init my-skill --from-skill ./path/to/SKILL.md
 Edit `my-skill/eval.yaml`:
 
 ```yaml
-name: my-skill-eval
+name: my-waza
 skill: my-skill
 version: "1.0"
 
@@ -122,25 +122,25 @@ tasks:
 
 ```bash
 # Run with mock executor (fast, no API calls)
-skill-eval run my-skill/eval.yaml
+waza run my-skill/eval.yaml
 
 # Run with verbose output (shows progress and details)
-skill-eval run my-skill/eval.yaml -v
+waza run my-skill/eval.yaml -v
 
 # Run with specific model
-skill-eval run my-skill/eval.yaml --model gpt-4o
+waza run my-skill/eval.yaml --model gpt-4o
 
 # Run with real Copilot SDK (requires authentication)
-skill-eval run my-skill/eval.yaml --executor copilot-sdk
+waza run my-skill/eval.yaml --executor copilot-sdk
 
 # Save results to file
-skill-eval run my-skill/eval.yaml -o results.json
+waza run my-skill/eval.yaml -o results.json
 ```
 
 ### 5. View Results
 
 ```
-╭─────────────────── my-skill-eval ───────────────────╮
+╭─────────────────── my-waza ───────────────────╮
 │ ✅ PASSED                                           │
 │                                                     │
 │ Pass Rate: 100.0% (4/4)                            │
@@ -176,14 +176,14 @@ skill-eval run my-skill/eval.yaml -o results.json
 
 | Command | Description |
 |---------|-------------|
-| `skill-eval run <eval.yaml>` | Run an evaluation suite |
-| `skill-eval init <skill-name>` | Scaffold a new eval suite |
-| `skill-eval generate <SKILL.md>` | Auto-generate eval from a SKILL.md file |
-| `skill-eval compare <files...>` | Compare results across runs/models |
-| `skill-eval analyze <telemetry>` | Analyze runtime telemetry |
-| `skill-eval report <results.json>` | Generate reports from results |
-| `skill-eval list-graders` | List available grader types |
-| `skill-eval serve` | Launch the Web UI dashboard |
+| `waza run <eval.yaml>` | Run an evaluation suite |
+| `waza init <skill-name>` | Scaffold a new eval suite |
+| `waza generate <SKILL.md>` | Auto-generate eval from a SKILL.md file |
+| `waza compare <files...>` | Compare results across runs/models |
+| `waza analyze <telemetry>` | Analyze runtime telemetry |
+| `waza report <results.json>` | Generate reports from results |
+| `waza list-graders` | List available grader types |
+| `waza serve` | Launch the Web UI dashboard |
 
 ### Web UI Dashboard
 
@@ -191,13 +191,13 @@ Launch a visual interface for creating, editing, and running evals:
 
 ```bash
 # Start the Web UI
-skill-eval serve
+waza serve
 
 # Custom port
-skill-eval serve --port 3000
+waza serve --port 3000
 
 # Development mode with auto-reload
-skill-eval serve --reload
+waza serve --reload
 ```
 
 **Access the dashboard at http://localhost:8000**
@@ -216,7 +216,7 @@ See [docs/WEB-UI.md](docs/WEB-UI.md) for complete documentation.
 
 ```bash
 # Run options
-skill-eval run eval.yaml \
+waza run eval.yaml \
   --executor mock|copilot-sdk \       # Execution engine
   --model <model-name> \              # Model to use
   --output results.json \             # Save results
@@ -227,13 +227,13 @@ skill-eval run eval.yaml \
   -v, --verbose                       # Show real-time conversation and details
 
 # Init options
-skill-eval init my-skill \
+waza init my-skill \
   --path ./evals \                    # Output directory
   --from-skill <SKILL.md>             # Generate from SKILL.md file or URL
 
 # Generate options (auto-generate eval from SKILL.md)
-skill-eval generate https://example.com/SKILL.md \
-  --output ./my-skill-eval \          # Output directory
+waza generate https://example.com/SKILL.md \
+  --output ./my-waza \          # Output directory
   --force                             # Overwrite existing files
   --assist                            # Use LLM for better task/fixture generation
   --model claude-sonnet-4-20250514    # Model for assisted generation
@@ -338,7 +338,7 @@ The main `eval.yaml` file configures your evaluation suite:
 
 ```yaml
 # eval.yaml
-name: my-skill-eval
+name: my-waza
 skill: my-skill
 version: "1.0"
 
@@ -384,22 +384,22 @@ Choose how tasks are executed:
 
 ```bash
 # Fast mock execution (default) - no API calls
-skill-eval run eval.yaml
+waza run eval.yaml
 
 # Real Copilot SDK execution - actual LLM responses
-skill-eval run eval.yaml --executor copilot-sdk --model gpt-4o
+waza run eval.yaml --executor copilot-sdk --model gpt-4o
 ```
 
 **Copilot SDK Setup:**
 ```bash
 # Install with copilot support
-pip install skill-eval[copilot]
+pip install waza[copilot]
 
 # Authenticate (one-time)
 copilot auth login
 
 # Run integration tests
-skill-eval run eval.yaml --executor copilot-sdk
+waza run eval.yaml --executor copilot-sdk
 ```
 
 See **[Integration Testing Guide](docs/INTEGRATION-TESTING.md)** for details.
@@ -412,12 +412,12 @@ Compare skill performance across different models:
 
 ```bash
 # Run with different models
-skill-eval run eval.yaml --model gpt-4o -o results-gpt4o.json
-skill-eval run eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json
-skill-eval run eval.yaml --model gpt-4o-mini -o results-mini.json
+waza run eval.yaml --model gpt-4o -o results-gpt4o.json
+waza run eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json
+waza run eval.yaml --model gpt-4o-mini -o results-mini.json
 
 # Generate comparison report
-skill-eval compare results-*.json -o comparison.md
+waza compare results-*.json -o comparison.md
 ```
 
 Output:
@@ -441,7 +441,7 @@ Results are saved as JSON for programmatic use:
 
 ```json
 {
-  "eval_id": "my-skill-eval-20260131",
+  "eval_id": "my-waza-20260131",
   "skill": "my-skill",
   "config": {
     "model": "claude-sonnet-4-20250514",
@@ -470,10 +470,10 @@ Capture metrics from skills running in production:
 
 ```bash
 # Analyze telemetry files
-skill-eval analyze telemetry/sessions.json
+waza analyze telemetry/sessions.json
 
 # Filter to specific skill
-skill-eval analyze telemetry/ --skill azure-deploy -o analysis.json
+waza analyze telemetry/ --skill azure-deploy -o analysis.json
 ```
 
 See [Telemetry Guide](docs/TELEMETRY.md) for integration patterns.
@@ -485,7 +485,7 @@ See [Telemetry Guide](docs/TELEMETRY.md) for integration patterns.
 Add skill evals to your CI/CD pipeline:
 
 ```yaml
-# .github/workflows/skill-eval.yaml
+# .github/workflows/waza.yaml
 name: Skill Evaluation
 
 on:
@@ -504,12 +504,12 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install skill-eval
-        run: pip install skill-eval
+      - name: Install waza
+        run: pip install waza
       
       - name: Run evaluations
         run: |
-          skill-eval run evals/my-skill/eval.yaml \
+          waza run evals/my-skill/eval.yaml \
             --output results.json
       
       - name: Check thresholds
@@ -541,7 +541,7 @@ The repository includes a sample eval suite:
 
 Run the example:
 ```bash
-skill-eval run examples/code-explainer/eval.yaml
+waza run examples/code-explainer/eval.yaml
 ```
 
 ### Generating Evals from SKILL.md
@@ -550,10 +550,10 @@ You can auto-generate eval suites from any skill that follows the [Agent Skills 
 
 ```bash
 # Generate from a URL (e.g., GitHub raw file)
-skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md
+waza generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md
 
 # Generate from a local file  
-skill-eval generate ./my-skill/SKILL.md -o ./evals/my-skill
+waza generate ./my-skill/SKILL.md -o ./evals/my-skill
 
 # The generator creates:
 # - eval.yaml with graders and metrics
@@ -568,16 +568,16 @@ When running evals, provide real project files for more realistic testing:
 
 ```bash
 # Use generated fixtures as default for all tasks
-skill-eval run ./my-eval/eval.yaml --context-dir ./my-eval/fixtures
+waza run ./my-eval/eval.yaml --context-dir ./my-eval/fixtures
 
 # Use your own project
-skill-eval run ./my-eval/eval.yaml --context-dir ~/projects/my-app
+waza run ./my-eval/eval.yaml --context-dir ~/projects/my-app
 
 # With verbose output to see the conversation
-skill-eval run ./my-eval/eval.yaml --context-dir ./fixtures -v
+waza run ./my-eval/eval.yaml --context-dir ./fixtures -v
 
 # Save conversation transcript for debugging
-skill-eval run ./my-eval/eval.yaml --log ./transcript.json
+waza run ./my-eval/eval.yaml --log ./transcript.json
 ```
 
 Tasks can also specify their own `context_dir` to override the global setting:
@@ -617,7 +617,7 @@ MIT
 ## Web UI Screenshots
 
 ### Dashboard
-![skill-eval Dashboard](https://github.com/user-attachments/assets/dda605cf-7ba1-4daf-95ff-c784e208ef6f)
+![waza Dashboard](https://github.com/user-attachments/assets/dda605cf-7ba1-4daf-95ff-c784e208ef6f)
 
 ### Evals List
 ![Evals List Page](https://github.com/user-attachments/assets/237cd232-e7cf-469a-8922-aa18245a864f)

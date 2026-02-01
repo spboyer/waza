@@ -128,7 +128,7 @@ jobs:
           pip install skill-eval
           
           # Or install from GitHub release
-          pip install https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/skill_eval-${{ steps.version.outputs.version }}-py3-none-any.whl
+          pip install https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/waza-${{ steps.version.outputs.version }}-py3-none-any.whl
           
           # With Copilot SDK support
           pip install "skill-eval[copilot]"

@@ -1,4 +1,4 @@
-# Multi-stage build for skill-eval Web UI
+# Multi-stage build for waza Web UI
 
 # Stage 1: Build React frontend
 FROM node:20-alpine AS frontend-builder
@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy Python project files
 COPY pyproject.toml ./
-COPY skill_eval/ ./skill_eval/
+COPY waza/ ./waza/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e ".[web]"
@@ -40,4 +40,4 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 
 # Run the server
-CMD ["skill-eval", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["waza", "serve", "--host", "0.0.0.0", "--port", "8000"]

@@ -79,7 +79,7 @@ export default function EvalsList() {
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
           <p className="text-gray-400 mb-4">No eval suites found</p>
           <p className="text-sm text-gray-500">
-            Create an eval suite with <code className="bg-gray-700 px-2 py-1 rounded">skill-eval init my-skill</code>
+            Create an eval suite with <code className="bg-gray-700 px-2 py-1 rounded">waza init my-skill</code>
           </p>
         </div>
       ) : (

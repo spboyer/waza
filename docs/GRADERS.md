@@ -1,6 +1,6 @@
 # Grader Reference
 
-Complete reference for all available grader types in skill-eval.
+Complete reference for all available grader types in waza.
 
 ## Overview
 
@@ -39,7 +39,7 @@ graders:
 Best for complex, multi-criteria evaluation logic:
 
 ```
-my-skill-eval/
+my-waza/
 ├── eval.yaml
 ├── tasks/
 └── graders/
@@ -326,8 +326,8 @@ graders:
 Extend the `Grader` base class:
 
 ```python
-from skill_eval.graders.base import Grader, GraderContext, GraderType, GraderRegistry
-from skill_eval.schemas.results import GraderResult
+from waza.graders.base import Grader, GraderContext, GraderType, GraderRegistry
+from waza.schemas.results import GraderResult
 
 @GraderRegistry.register("my_custom")
 class MyCustomGrader(Grader):

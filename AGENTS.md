@@ -1,8 +1,8 @@
-# Agent Instructions for skill-eval Repository
+# Agent Instructions for waza Repository
 
 ## Overview
 
-This repository contains `skill-eval`, a CLI tool for evaluating Agent Skills. When making changes, follow these guidelines to maintain consistency and quality.
+This repository contains `waza`, a CLI tool for evaluating Agent Skills. When making changes, follow these guidelines to maintain consistency and quality.
 
 ## Copilot SDK Usage
 
@@ -31,7 +31,7 @@ from copilot import CopilotClient
 async def call_llm(prompt: str, model: str = "claude-sonnet-4-20250514") -> str:
     """Standard pattern for Copilot SDK LLM calls."""
     # Create temp workspace (required by SDK)
-    workspace = tempfile.mkdtemp(prefix="skill-eval-")
+    workspace = tempfile.mkdtemp(prefix="waza-")
     
     # Initialize client
     client = CopilotClient({
@@ -93,7 +93,7 @@ async def call_llm(prompt: str, model: str = "claude-sonnet-4-20250514") -> str:
 Each task execution gets a **fresh temp workspace** with fixtures copied in:
 
 1. Runner reads files from original `--context-dir` (fixtures folder)
-2. Executor creates new temp workspace (e.g., `/tmp/skill-eval-abc123/`)
+2. Executor creates new temp workspace (e.g., `/tmp/waza-abc123/`)
 3. Files copied into temp workspace
 4. Agent works in temp workspace (edits happen here)
 5. Temp workspace destroyed after task
@@ -132,7 +132,7 @@ When adding a new feature:
 ## Code Structure
 
 ```
-skill_eval/
+waza/
 ├── cli.py              # CLI entrypoint (click commands)
 ├── runner.py           # Eval orchestration
 ├── generator.py        # SKILL.md → eval generation (includes AssistedGenerator)
@@ -186,11 +186,11 @@ Falls back to pattern-based `EvalGenerator` if LLM fails.
 pytest tests/
 
 # Run with coverage
-pytest tests/ --cov=skill_eval
+pytest tests/ --cov=waza
 
 # Test CLI manually
-skill-eval --help
-skill-eval run examples/code-explainer/eval.yaml -v
+waza --help
+waza run examples/code-explainer/eval.yaml -v
 ```
 
 ## Commit Messages
@@ -216,15 +216,15 @@ These are generated/temporary and should not be committed:
 ### Generate eval from SKILL.md
 ```bash
 # Pattern-based generation
-skill-eval generate <SKILL.md URL or path> -o ./my-eval
+waza generate <SKILL.md URL or path> -o ./my-eval
 
 # LLM-assisted generation (better quality)
-skill-eval generate <SKILL.md URL or path> -o ./my-eval --assist --model claude-opus-4.5
+waza generate <SKILL.md URL or path> -o ./my-eval --assist --model claude-opus-4.5
 ```
 
 ### Run eval with all options
 ```bash
-skill-eval run ./eval.yaml \
+waza run ./eval.yaml \
   --executor copilot-sdk \
   --model claude-sonnet-4-20250514 \
   --context-dir ./fixtures \

@@ -65,7 +65,7 @@ export default function Settings() {
     <div>
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Settings</h1>
-        <p className="text-gray-400">Configure your skill-eval preferences</p>
+        <p className="text-gray-400">Configure your waza preferences</p>
       </div>
 
       {/* GitHub Authentication */}
@@ -175,7 +175,7 @@ export default function Settings() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Storage Location:</span>
-            <span>~/.skill-eval/</span>
+            <span>~/.waza/</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Current Model:</span>

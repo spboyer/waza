@@ -1,6 +1,6 @@
-# skill-eval Web UI
+# waza Web UI
 
-React + TypeScript frontend for the skill-eval Web UI dashboard.
+React + TypeScript frontend for the waza Web UI dashboard.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ The dev server runs on `http://localhost:5173` and expects the API backend on `h
 ```bash
 # Terminal 1: Start API backend
 cd ..
-skill-eval serve
+waza serve
 
 # Terminal 2: Start frontend dev server
 cd web

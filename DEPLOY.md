@@ -1,11 +1,11 @@
-# skill-eval Web UI - Docker Deployment
+# waza Web UI - Docker Deployment
 
 ## Quick Start with Docker
 
 ```bash
 # Clone the repository
-git clone https://github.com/spboyer/evals-for-skills.git
-cd evals-for-skills
+git clone https://github.com/spboyer/waza.git
+cd waza
 
 # Build and run
 docker-compose up -d
@@ -46,10 +46,10 @@ The Web UI works without GitHub OAuth for:
 
 ## Data Persistence
 
-Eval data is persisted in `~/.skill-eval/` on your host machine:
+Eval data is persisted in `~/.waza/` on your host machine:
 
 ```
-~/.skill-eval/
+~/.waza/
 ├── config.json          # User preferences
 ├── evals/               # Eval suite YAML files
 ├── runs/                # Run results and transcripts
@@ -62,9 +62,9 @@ This directory is mounted as a volume in the Docker container.
 
 The Docker Compose stack includes:
 
-- **skill-eval**: FastAPI backend + React frontend
+- **waza**: FastAPI backend + React frontend
   - Port: 8000
-  - Volumes: `~/.skill-eval` for data persistence
+  - Volumes: `~/.waza` for data persistence
   - Environment: Optional GitHub OAuth credentials
 
 ## Logs
@@ -89,7 +89,7 @@ For production deployment:
 2. Set proper OAuth redirect URI for your domain
 3. Configure firewall rules
 4. Use environment variables for secrets
-5. Set up backup for `~/.skill-eval/`
+5. Set up backup for `~/.waza/`
 
 Example nginx config:
 
@@ -151,7 +151,7 @@ pip install -e ".[web]"
 cd web && npm install
 
 # Run backend
-skill-eval serve --reload
+waza serve --reload
 
 # Run frontend (in another terminal)
 cd web && npm run dev
