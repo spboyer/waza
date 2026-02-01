@@ -502,7 +502,16 @@ Available Grader Types
 
 ### Talking Points
 
-> "Let me show you a complete example — the code-explainer eval."
+> "Let me show you a complete example — the code-explainer eval. This includes a SKILL.md, so you can see the full workflow."
+
+### View the Skill Definition
+
+```bash
+# The example includes a complete SKILL.md
+cat examples/code-explainer/SKILL.md | head -30
+```
+
+> "Every eval starts with a SKILL.md that defines what the skill does, when it should trigger, and how it should behave."
 
 ### Run Code Explainer Eval
 
@@ -568,6 +577,7 @@ tree examples/code-explainer
 **Structure:**
 ```
 code-explainer/
+├── SKILL.md                 # ⭐ Skill definition (source of truth)
 ├── eval.yaml                # Main eval config
 ├── fixtures/                # Code files the skill will explain
 │   ├── factorial.py         # Python recursion
@@ -584,7 +594,7 @@ code-explainer/
 └── trigger_tests.yaml       # Trigger accuracy tests
 ```
 
-> "Notice the fixtures directory — these are real code files the skill has context for."
+> "Notice it includes a SKILL.md — this is what you'd generate an eval from. The fixtures directory has real code files for context."
 
 ---
 
