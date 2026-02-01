@@ -108,7 +108,7 @@ Each task execution gets a **fresh temp workspace** with fixtures copied in:
 | File | Purpose | Update When |
 |------|---------|-------------|
 | `README.md` | Main project overview, CLI commands, examples | Any CLI change, new feature |
-| `DEMO-SCRIPT.md` | Video demo walkthrough | New features, workflow changes |
+| `DEMO-SCRIPT.md` | Video demo walkthrough | New features, workflow changes, version bumps |
 | `docs/TUTORIAL.md` | Step-by-step user guide | New features, config options |
 | `docs/GRADERS.md` | Grader types reference | New grader types |
 | `docs/INTEGRATION-TESTING.md` | Copilot SDK usage | Executor changes, auth changes |
@@ -128,6 +128,46 @@ When adding a new feature:
 - [ ] Add section to `DEMO-SCRIPT.md` if demo-worthy
 - [ ] Add step-by-step in `docs/TUTORIAL.md`
 - [ ] Update any affected reference docs
+
+### DEMO-SCRIPT.md Maintenance
+
+The demo script requires special attention because it contains **hardcoded values** that must be updated:
+
+#### Version Bump Checklist
+When releasing a new version, search and update these in `DEMO-SCRIPT.md`:
+
+- [ ] **Install URL**: `waza-X.Y.Z-py3-none-any.whl` (Pre-Demo Setup section)
+- [ ] **Expected output versions**: `waza vX.Y.Z` in all code block outputs
+- [ ] **Download URLs**: Any GitHub release download links
+
+#### Content Accuracy Checklist
+After any rename or major change, verify:
+
+- [ ] **Product name**: Search for old names (e.g., "skill-eval", "Skill-eval", "Skill Eval")
+- [ ] **Package names**: Search for old package names (e.g., "skill_eval")
+- [ ] **Repo URLs**: Verify all `github.com/...` URLs point to correct repo
+- [ ] **Example paths**: Verify `examples/` paths match actual directory structure
+- [ ] **CLI output examples**: Run actual commands and verify output matches docs
+- [ ] **File structure examples**: Verify `tree` output matches actual structure
+
+#### Quick Verification Commands
+```bash
+# Find version references
+grep -n "waza-[0-9]" DEMO-SCRIPT.md
+grep -n "waza v[0-9]" DEMO-SCRIPT.md
+
+# Find potential old names (adjust pattern as needed)
+grep -in "skill-eval\|skill_eval" DEMO-SCRIPT.md
+
+# Verify example commands work
+waza run examples/code-explainer/eval.yaml --executor mock -v
+```
+
+#### Common Mistakes to Avoid
+1. **Forgetting expected output blocks** - These often have version strings embedded
+2. **Mixed casing** - "Skill-eval" vs "skill-eval" vs "waza"
+3. **Install URLs** - Often overlooked in setup sections
+4. **Workflow file references** - `.github/workflows/` filenames
 
 ## Code Structure
 
