@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Github, Save, Info, Cpu, Zap, LogOut, LogIn, Search, Sparkles } from 'lucide-react'
 
 interface Config {
   model: string
@@ -62,75 +63,102 @@ export default function Settings() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Settings</h1>
-        <p className="text-gray-400">Configure your waza preferences</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Settings
+        </h1>
+        <p className="text-gray-400 text-lg">Configure your waza preferences</p>
       </div>
 
       {/* GitHub Authentication */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
-        <h2 className="text-2xl font-bold mb-4">GitHub Authentication</h2>
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-8 shadow-xl">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-gray-700/50 rounded-lg">
+            <Github className="w-6 h-6 text-gray-300" />
+          </div>
+          <h2 className="text-2xl font-bold">GitHub Authentication</h2>
+        </div>
         
         {authStatus?.authenticated ? (
           <div>
-            <div className="flex items-center space-x-4 mb-4">
+            <div className="flex items-center space-x-4 p-4 bg-gray-700/30 rounded-lg mb-6 border border-green-500/20">
               {authStatus.user?.avatar_url && (
                 <img
                   src={authStatus.user.avatar_url}
                   alt={authStatus.user.name}
-                  className="w-12 h-12 rounded-full"
+                  className="w-16 h-16 rounded-full border-2 border-green-500"
                 />
               )}
-              <div>
-                <p className="font-medium">{authStatus.user?.name || authStatus.user?.login}</p>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">{authStatus.user?.name || authStatus.user?.login}</p>
                 <p className="text-sm text-gray-400">@{authStatus.user?.login}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {authStatus.scopes?.map((scope: string) => (
+                    <span key={scope} className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30">
+                      {scope}
+                    </span>
+                  ))}
+                </div>
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-all border border-red-500/30"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             </div>
-            <p className="text-sm text-gray-400 mb-4">
-              Scopes: {authStatus.scopes?.join(', ') || 'None'}
-            </p>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium"
-            >
-              Logout
-            </button>
           </div>
         ) : (
-          <div>
-            <p className="text-gray-400 mb-4">
-              Login with GitHub to unlock advanced features:
+          <div className="p-6 bg-gray-700/20 rounded-lg border border-gray-600">
+            <p className="text-gray-300 mb-4 font-medium">
+              Unlock advanced features with GitHub OAuth
             </p>
-            <ul className="list-disc list-inside text-sm text-gray-400 mb-4 space-y-1">
-              <li>Run evals with copilot-sdk executor</li>
-              <li>Scan GitHub repos for skills</li>
-              <li>LLM-assisted eval generation</li>
-              <li>Import from GitHub URLs</li>
+            <ul className="space-y-2 text-sm text-gray-400 mb-6">
+              <li className="flex items-center space-x-2">
+                <Zap className="w-4 h-4 text-yellow-400" />
+                <span>Run evals with copilot-sdk executor</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Search className="w-4 h-4 text-blue-400" />
+                <span>Scan GitHub repos for skills</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span>LLM-assisted eval generation</span>
+              </li>
             </ul>
             <button
               onClick={handleLogin}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
+              className="flex items-center justify-center space-x-2 w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/30"
             >
-              Login with GitHub
+              <LogIn className="w-5 h-5" />
+              <span>Login with GitHub</span>
             </button>
           </div>
         )}
       </div>
 
       {/* Model Configuration */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
-        <h2 className="text-2xl font-bold mb-4">Model Configuration</h2>
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-8 shadow-xl">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-gray-700/50 rounded-lg">
+            <Cpu className="w-6 h-6 text-purple-400" />
+          </div>
+          <h2 className="text-2xl font-bold">Model Configuration</h2>
+        </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label className="block text-sm font-semibold text-gray-300 mb-3">
               Model
             </label>
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             >
               <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
               <option value="claude-opus-4.5">Claude Opus 4.5</option>
@@ -140,16 +168,17 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label className="block text-sm font-semibold text-gray-300 mb-3">
               Executor
             </label>
             <select
               value={executor}
               onChange={(e) => setExecutor(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={executor === 'copilot-sdk' && !authStatus?.authenticated}
             >
               <option value="mock">Mock (no authentication required)</option>
-              <option value="copilot-sdk" disabled={!authStatus?.authenticated}>
+              <option value="copilot-sdk">
                 Copilot SDK {!authStatus?.authenticated && '(requires GitHub login)'}
               </option>
             </select>
@@ -158,35 +187,39 @@ export default function Settings() {
           <button
             onClick={handleSave}
             disabled={updateConfig.isPending}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium disabled:opacity-50"
+            className="flex items-center justify-center space-x-2 w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
           >
-            {updateConfig.isPending ? 'Saving...' : 'Save Changes'}
+            <Save className="w-5 h-5" />
+            <span>{updateConfig.isPending ? 'Saving...' : 'Save Changes'}</span>
           </button>
         </div>
       </div>
 
-      {/* System Info */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">System Information</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-400">API Endpoint:</span>
-            <span>http://localhost:8000</span>
+      {/* System Information */}
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-8 shadow-xl">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-gray-700/50 rounded-lg">
+            <Info className="w-6 h-6 text-blue-400" />
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Storage Location:</span>
-            <span>~/.waza/</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Current Model:</span>
-            <span>{config?.model || 'Loading...'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Current Executor:</span>
-            <span>{config?.executor || 'Loading...'}</span>
-          </div>
+          <h2 className="text-2xl font-bold">System Information</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InfoItem label="API Endpoint" value="http://localhost:8000" />
+          <InfoItem label="Storage Location" value="~/.waza/" />
+          <InfoItem label="Current Model" value={config?.model || 'Loading...'} />
+          <InfoItem label="Current Executor" value={config?.executor || 'Loading...'} />
         </div>
       </div>
+    </div>
+  )
+}
+
+// Info Item Component
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="p-4 bg-gray-700/30 rounded-lg border border-gray-600/50">
+      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className="font-mono text-sm text-gray-200 truncate">{value}</p>
     </div>
   )
 }
