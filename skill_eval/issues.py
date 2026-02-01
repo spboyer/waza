@@ -132,7 +132,9 @@ def _format_issue_body(
     lines.append(f"**Skill:** {result.skill}")
     lines.append(f"**Timestamp:** {result.timestamp.isoformat()}")
     lines.append(f"**Model:** {result.config.model or 'default'}")
-    lines.append(f"**Executor:** {result.config.executor.value}")
+    executor = result.config.executor
+    executor_str = executor.value if hasattr(executor, 'value') else str(executor)
+    lines.append(f"**Executor:** {executor_str}")
     lines.append("")
 
     # Summary metrics
@@ -156,7 +158,8 @@ def _format_issue_body(
 
     for task in result.tasks:
         status_icon = "✅" if task.status == "passed" else "❌"
-        duration_ms = task.duration_ms
+        score = task.aggregate.mean_score if task.aggregate else 0.0
+        duration_ms = task.aggregate.mean_duration_ms if task.aggregate else 0
         duration_str = (
             f"{duration_ms / 1000:.1f}s"
             if duration_ms >= 1000
@@ -164,7 +167,7 @@ def _format_issue_body(
         )
         lines.append(
             f"| {task.name} | {status_icon} {task.status} | "
-            f"{task.aggregate_score:.2f} | {duration_str} |"
+            f"{score:.2f} | {duration_str} |"
         )
 
     lines.append("")
@@ -182,7 +185,8 @@ def _format_issue_body(
             lines.append(f"#### {task.name}")
             lines.append("")
             lines.append(f"**Status:** {task.status}")
-            lines.append(f"**Score:** {task.aggregate_score:.2f}")
+            score = task.aggregate.mean_score if task.aggregate else 0.0
+            lines.append(f"**Score:** {score:.2f}")
             lines.append(f"**Trials:** {len(task.trials)}")
             lines.append("")
 
@@ -194,7 +198,7 @@ def _format_issue_body(
                 # Collect unique grader messages
                 messages: set[str] = set()
                 for trial in task.trials:
-                    for grader_result in trial.grader_results:
+                    for grader_result in trial.grader_results.values():
                         if not grader_result.passed and grader_result.message:
                             messages.add(f"- {grader_result.message}")
 
