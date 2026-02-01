@@ -1,6 +1,6 @@
 """Skills Eval Framework - Evaluate Agent Skills like you evaluate AI Agents."""
 
-__version__ = "0.1.0"
+__version__ = "0.0.1"
 
 from skill_eval.schemas.eval_spec import EvalSpec, ExecutorType
 from skill_eval.schemas.task import Task, TaskInput, TaskExpected

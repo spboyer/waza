@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-02-01
+## [0.0.1] - 2026-02-01
 
 ### Added
 
@@ -50,5 +50,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - YAML escaping for regex patterns with backslashes
 - Progress bar now shows 100% on completion
 
-[Unreleased]: https://github.com/spboyer/evals-for-skills/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/spboyer/evals-for-skills/releases/tag/v0.1.0
+[Unreleased]: https://github.com/spboyer/evals-for-skills/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/spboyer/evals-for-skills/releases/tag/v0.0.1
