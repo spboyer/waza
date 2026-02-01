@@ -313,15 +313,14 @@ class EvalGenerator:
         # Build graders based on extracted info
         graders = self._generate_graders()
         
-        # Safely escape description
-        desc = self._escape_yaml_string(self.skill.description) if self.skill.description else ''
+        # Safely escape description - limit to 60 chars for line length
+        desc = self._escape_yaml_string(self.skill.description)[:60] if self.skill.description else ''
         
-        yaml_content = f"""# Auto-generated eval specification for {self.skill.name}
+        yaml_content = f"""---
+# Auto-generated eval specification for {self.skill.name}
 # Generated from SKILL.md - customize as needed
 name: {self._safe_name(self.skill.name)}-eval
-description: >
-  Evaluation suite for the {self.skill.name} skill.
-  {desc}
+description: Evaluation suite for the {self.skill.name} skill.
 skill: {self._safe_name(self.skill.name)}
 version: "1.0"
 
@@ -345,7 +344,7 @@ metrics:
   - name: behavior_quality
     weight: 0.3
     threshold: 0.7
-    description: Tool usage efficiency and best practices adherence
+    description: Tool usage and best practices adherence
 
 graders:
 {self._format_graders(graders)}
@@ -389,6 +388,7 @@ tasks:
         ])
         
         lines = [
+            "---",
             f"# Trigger accuracy tests for {self.skill.name}",
             f"# Auto-generated from SKILL.md - customize as needed",
             f"skill: {self._safe_name(self.skill.name)}",
@@ -397,13 +397,16 @@ tasks:
         ]
         
         for item in should_trigger:
-            lines.append(f'  - prompt: "{self._escape_yaml(item["prompt"])}"')
+            # Truncate long prompts for line length
+            prompt = self._escape_yaml(item["prompt"])[:60]
+            lines.append(f'  - prompt: "{prompt}"')
             lines.append(f'    reason: "{item["reason"]}"')
             lines.append("")
         
         lines.append("should_not_trigger_prompts:")
         for item in should_not_trigger:
-            lines.append(f'  - prompt: "{self._escape_yaml(item["prompt"])}"')
+            prompt = self._escape_yaml(item["prompt"])[:60]
+            lines.append(f'  - prompt: "{prompt}"')
             lines.append(f'    reason: "{item["reason"]}"')
             lines.append("")
         
@@ -415,14 +418,18 @@ tasks:
         expected_keywords = self.skill.keywords[:5] if self.skill.keywords else [self.skill.name.lower()]
         cli_patterns = self.skill.cli_commands[:3] if self.skill.cli_commands else []
         
-        yaml_content = f"""# {task_name}
+        # Truncate prompt for line length
+        escaped_prompt = self._escape_yaml(prompt)[:60]
+        
+        yaml_content = f"""---
+# {task_name}
 # Auto-generated task - customize as needed
 id: {task_id}
 name: {task_name}
 description: Test task for {self.skill.name} skill
 
 inputs:
-  prompt: "{self._escape_yaml(prompt)}"
+  prompt: "{escaped_prompt}"
   context: {{}}
 
 expected:
