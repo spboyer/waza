@@ -1336,7 +1336,7 @@ Duration: {result.summary.duration_ms}ms
 @click.option("--reload", is_flag=True, help="Enable auto-reload for development")
 def serve(port: int, host: str, reload: bool):
     """Launch the Web UI dashboard.
-    
+
     Starts a FastAPI backend server that serves the skill-eval Web UI.
     The UI allows you to create, edit, and run evals visually with real-time updates.
     """
