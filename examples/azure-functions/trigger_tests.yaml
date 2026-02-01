@@ -1,0 +1,112 @@
+# Trigger accuracy tests for azure-functions skill
+# Tests whether the skill activates on appropriate prompts
+skill: azure-functions
+
+should_trigger_prompts:
+  # Explicit function creation
+  - prompt: "Create a new Azure Function"
+    reason: "Direct function creation request"
+
+  - prompt: "Create an HTTP triggered function in Node.js"
+    reason: "Specific trigger type and runtime"
+
+  - prompt: "Create a timer function that runs every 5 minutes"
+    reason: "Timer trigger creation"
+
+  - prompt: "func init a new Python function project"
+    reason: "Explicit func CLI usage"
+
+  - prompt: "Create a serverless API on Azure"
+    reason: "Serverless API implies Azure Functions"
+
+  # Deployment requests
+  - prompt: "Deploy my function to Azure"
+    reason: "Function deployment request"
+
+  - prompt: "Deploy Azure Functions"
+    reason: "Explicit Azure Functions deployment"
+
+  - prompt: "Use azd to deploy my function app"
+    reason: "azd deployment for functions"
+
+  # Trigger-specific requests
+  - prompt: "Set up a timer-triggered function in Azure"
+    reason: "Timer trigger setup"
+
+  - prompt: "Create a queue-triggered function"
+    reason: "Queue trigger creation"
+
+  - prompt: "Set up a blob storage trigger function"
+    reason: "Blob trigger creation"
+
+  - prompt: "Create webhooks in Azure"
+    reason: "Webhooks typically use HTTP-triggered functions"
+
+  # Local development
+  - prompt: "How do I run my Azure Function locally?"
+    reason: "Local function development"
+
+  - prompt: "Start local function development server"
+    reason: "func start request"
+
+  - prompt: "Debug my Azure Function locally"
+    reason: "Local debugging of functions"
+
+  # Configuration
+  - prompt: "Configure function app settings"
+    reason: "Function app configuration"
+
+  - prompt: "Add a Cosmos DB binding to my function"
+    reason: "Function bindings configuration"
+
+  # Durable Functions
+  - prompt: "Create a Durable Function orchestration"
+    reason: "Durable Functions request"
+
+  - prompt: "Set up fan-out/fan-in pattern with Azure Functions"
+    reason: "Durable Functions pattern"
+
+should_not_trigger_prompts:
+  # Container/Kubernetes requests (use azure-deploy or AKS skills)
+  - prompt: "Deploy my container to Azure Container Apps"
+    reason: "Container Apps should use azure-deploy skill"
+
+  - prompt: "Create a Kubernetes deployment on AKS"
+    reason: "AKS should use Kubernetes skills"
+
+  - prompt: "Deploy my Docker image to Azure"
+    reason: "Generic container deployment"
+
+  # Web apps without functions
+  - prompt: "Deploy my Express.js app to Azure App Service"
+    reason: "Web app without functions context"
+
+  - prompt: "Create a static website on Azure"
+    reason: "Static sites use different services"
+
+  # General questions
+  - prompt: "What is Azure?"
+    reason: "General Azure question"
+
+  - prompt: "What are the pricing tiers for Azure?"
+    reason: "Pricing question, not function creation"
+
+  - prompt: "Help me write a Python function"
+    reason: "Generic Python, not Azure Functions"
+
+  # Account/subscription management
+  - prompt: "Create a new Azure subscription"
+    reason: "Account management, not functions"
+
+  - prompt: "List my Azure resource groups"
+    reason: "Resource listing, not function-specific"
+
+  # Other Azure services
+  - prompt: "Create an Azure SQL database"
+    reason: "Database creation, not functions"
+
+  - prompt: "Set up Azure Cosmos DB"
+    reason: "Database setup, not functions"
+
+  - prompt: "Configure Azure Key Vault"
+    reason: "Key Vault config, not function-specific"

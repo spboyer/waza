@@ -1,0 +1,41 @@
+# Create Timer Triggered Function
+id: create-timer-function-001
+name: Create Timer Triggered Function
+description: Test creating a timer-triggered function that runs on a schedule
+
+inputs:
+  prompt: "Create an Azure Function with a timer trigger that runs every 5 minutes"
+  context:
+    project_type: "existing"
+    language: "javascript"
+
+expected:
+  outcomes:
+    - type: function_created
+    - type: schedule_configured
+
+  output_contains:
+    - "timer"
+    - "schedule"
+
+  tool_calls:
+    required:
+      - pattern: "func new|func templates"
+    forbidden:
+      - pattern: "rm -rf"
+
+  behavior:
+    max_tool_calls: 10
+    max_iterations: 5
+
+graders:
+  - name: timer_trigger_created
+    type: code
+    assertions:
+      - "'timer' in output.lower()"
+
+  - name: cron_expression_present
+    type: regex
+    config:
+      pattern: "\\d+\\s+\\*/\\d+|0 \\*/5|cron|schedule"
+      should_match: true

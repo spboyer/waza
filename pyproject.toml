@@ -36,7 +36,7 @@ llm = [
     "anthropic>=0.18.0",
 ]
 copilot = [
-    "copilot-sdk>=0.1.0",  # GitHub Copilot SDK for real integration testing
+    "github-copilot-sdk>=0.1.0",  # GitHub Copilot SDK for real integration testing
 ]
 dev = [
     "pytest>=8.0.0",

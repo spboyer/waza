@@ -1,16 +1,16 @@
 """Copilot SDK executor for real integration testing.
 
-This executor uses the @github/copilot-sdk to run actual Copilot agent sessions,
+This executor uses the github-copilot-sdk to run actual Copilot agent sessions,
 providing real LLM responses for integration testing.
 
 Prerequisites:
 - Install: pip install skill-eval[copilot]
-- Authenticate: Run `copilot` CLI and follow prompts
+- Copilot CLI must be installed and authenticated: https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli
 
 Usage:
     config:
       executor: copilot-sdk
-      model: claude-sonnet-4-20250514
+      model: gpt-5
       skill_directories:
         - ./skills
       mcp_servers:
@@ -40,12 +40,13 @@ def _get_copilot_client():
     global CopilotClient
     if CopilotClient is None:
         try:
-            from copilot_sdk import CopilotClient as _CopilotClient
+            from copilot import CopilotClient as _CopilotClient
             CopilotClient = _CopilotClient
         except ImportError:
             raise ImportError(
                 "Copilot SDK not installed. Install with: pip install skill-eval[copilot]\n"
-                "Or: pip install copilot-sdk"
+                "Or: pip install github-copilot-sdk\n"
+                "Also requires Copilot CLI: https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli"
             )
     return CopilotClient
 
@@ -54,34 +55,32 @@ class CopilotExecutor(BaseExecutor):
     """Executor using GitHub Copilot SDK for real agent sessions.
     
     This provides actual LLM responses and skill invocations for integration testing.
+    Requires Copilot CLI to be installed and authenticated.
     """
     
     def __init__(
         self,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = "gpt-5",
         skill_directories: list[str] | None = None,
         mcp_servers: dict[str, Any] | None = None,
         timeout_seconds: int = 300,
-        yolo_mode: bool = True,
-        non_interactive: bool = True,
+        streaming: bool = True,
         **kwargs: Any,
     ):
         """Initialize Copilot executor.
         
         Args:
-            model: Model to use for responses
+            model: Model to use for responses (e.g., "gpt-5", "claude-sonnet-4.5")
             skill_directories: Directories containing SKILL.md files
             mcp_servers: MCP server configurations
             timeout_seconds: Session timeout
-            yolo_mode: Enable yolo mode (auto-approve actions)
-            non_interactive: Run in non-interactive mode
+            streaming: Enable streaming responses
         """
         super().__init__(model=model, **kwargs)
         self.skill_directories = skill_directories or []
         self.mcp_servers = mcp_servers or {}
         self.timeout_seconds = timeout_seconds
-        self.yolo_mode = yolo_mode
-        self.non_interactive = non_interactive
+        self.streaming = streaming
         
         self._client = None
         self._workspace: str | None = None
@@ -93,24 +92,18 @@ class CopilotExecutor(BaseExecutor):
         # Create temp workspace
         self._workspace = tempfile.mkdtemp(prefix="skill-eval-")
         
-        # Build CLI args
-        cli_args = []
-        if self.yolo_mode:
-            cli_args.append("--yolo")
-        if self.non_interactive:
-            cli_args.append("-p")  # non-interactive/pipe mode
-        
-        self._client = ClientClass(
-            logLevel="error",
-            cwd=self._workspace,
-            cliArgs=cli_args,
-        )
+        # Initialize client with workspace
+        self._client = ClientClass({
+            "cwd": self._workspace,
+            "log_level": "error",
+        })
+        await self._client.start()
     
     async def teardown(self) -> None:
         """Clean up resources."""
         if self._client:
             try:
-                await asyncio.to_thread(self._client.stop)
+                await self._client.stop()
             except Exception:
                 pass
             self._client = None
@@ -142,45 +135,45 @@ class CopilotExecutor(BaseExecutor):
             if context:
                 await self._setup_context(context)
             
-            # Create session
-            session = await asyncio.to_thread(
-                self._client.createSession,
-                {
-                    "model": self.model,
-                    "skillDirectories": self.skill_directories,
-                    "mcpServers": self.mcp_servers,
-                }
-            )
+            # Create session with model config
+            session = await self._client.create_session({
+                "model": self.model,
+                "streaming": self.streaming,
+            })
             
             # Set up event collection
             done_event = asyncio.Event()
             
-            def handle_event(raw_event: dict[str, Any]) -> None:
-                event = SessionEvent(
-                    type=raw_event.get("type", "unknown"),
-                    data=raw_event.get("data", {}),
+            def handle_event(event: Any) -> None:
+                # Convert SDK event to our SessionEvent format
+                event_type = event.type.value if hasattr(event.type, 'value') else str(event.type)
+                session_event = SessionEvent(
+                    type=event_type,
+                    data=event.data.__dict__ if hasattr(event.data, '__dict__') else {},
                 )
-                events.append(event)
+                events.append(session_event)
                 
                 # Collect assistant messages
-                if event.type == "assistant.message" and event.content:
-                    output_parts.append(event.content)
-                elif event.type == "assistant.message_delta" and event.delta_content:
-                    output_parts.append(event.delta_content)
+                if event_type == "assistant.message":
+                    if hasattr(event.data, 'content') and event.data.content:
+                        output_parts.append(event.data.content)
+                elif event_type == "assistant.message_delta":
+                    if hasattr(event.data, 'delta_content') and event.data.delta_content:
+                        output_parts.append(event.data.delta_content)
                 
                 # Check for completion
-                if event.type == "session.idle":
+                if event_type == "session.idle":
                     done_event.set()
-                elif event.type == "session.error":
+                elif event_type == "session.error":
                     nonlocal error
-                    error = event.data.get("message", "Unknown error")
+                    error = getattr(event.data, 'message', 'Unknown error')
                     done_event.set()
             
             # Register event handler
             session.on(handle_event)
             
             # Send prompt
-            await asyncio.to_thread(session.send, {"prompt": prompt})
+            await session.send({"prompt": prompt})
             
             # Wait for completion with timeout
             try:
@@ -193,7 +186,7 @@ class CopilotExecutor(BaseExecutor):
             
             # Cleanup session
             try:
-                await asyncio.to_thread(session.destroy)
+                await session.destroy()
             except Exception:
                 pass
             
@@ -203,9 +196,9 @@ class CopilotExecutor(BaseExecutor):
         duration_ms = int((time.time() - start_time) * 1000)
         output = "".join(output_parts)
         
-        # Extract tool calls
+        # Extract tool calls from events
         tool_calls = [
-            {"name": e.tool_name, "arguments": e.arguments}
+            {"name": getattr(e.data, 'tool_name', ''), "arguments": getattr(e.data, 'arguments', {})}
             for e in events
             if e.type == "tool.execution_start"
         ]

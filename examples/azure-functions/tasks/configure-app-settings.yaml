@@ -1,0 +1,42 @@
+# Configure Application Settings
+id: configure-app-settings-001
+name: Configure Function App Settings
+description: Test configuring application settings and environment variables
+
+inputs:
+  prompt: "Configure my Azure Function app settings to add an API key and connection string"
+  context:
+    project_type: "azure-functions"
+    function_app_name: "func-myapp-001"
+    resource_group: "rg-myapp"
+
+expected:
+  outcomes:
+    - type: settings_configured
+
+  output_contains:
+    - "setting"
+    - "config"
+
+  tool_calls:
+    required:
+      - pattern: "az functionapp config|appsettings"
+    forbidden:
+      - pattern: "rm -rf"
+      - pattern: "delete"
+
+  behavior:
+    max_tool_calls: 10
+    max_iterations: 5
+
+graders:
+  - name: settings_command_used
+    type: code
+    assertions:
+      - "'appsettings' in output.lower() or 'config' in output.lower()"
+
+  - name: secure_practice
+    type: regex
+    config:
+      pattern: "Key Vault|managed identity|RBAC|secret"
+      should_match: true

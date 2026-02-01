@@ -1,0 +1,55 @@
+# Run Functions Locally
+id: run-locally-001
+name: Run Functions Locally
+description: Test starting local Azure Functions development server
+
+inputs:
+  prompt: "How do I run my Azure Function locally for testing?"
+  context:
+    project_type: "azure-functions"
+    has_host_json: true
+  files:
+    - path: host.json
+      content: |
+        {
+          "version": "2.0"
+        }
+    - path: local.settings.json
+      content: |
+        {
+          "IsEncrypted": false,
+          "Values": {
+            "FUNCTIONS_WORKER_RUNTIME": "node",
+            "AzureWebJobsStorage": "UseDevelopmentStorage=true"
+          }
+        }
+
+expected:
+  outcomes:
+    - type: instructions_provided
+    - type: command_suggested
+
+  output_contains:
+    - "func start"
+
+  tool_calls:
+    required: []
+    forbidden:
+      - pattern: "azd up"
+      - pattern: "deploy"
+
+  behavior:
+    max_tool_calls: 10
+    max_iterations: 3
+
+graders:
+  - name: func_start_mentioned
+    type: code
+    assertions:
+      - "'func start' in output.lower()"
+
+  - name: local_url_mentioned
+    type: regex
+    config:
+      pattern: "localhost:7071|127\\.0\\.0\\.1:7071|http://localhost"
+      should_match: true
