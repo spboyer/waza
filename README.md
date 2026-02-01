@@ -180,6 +180,7 @@ skill-eval run eval.yaml \
   --output results.json \             # Save results
   --log transcript.json \             # Save full conversation transcript
   --context-dir ./my-project \        # Directory with project files for context
+  --suggestions                       # Get LLM-powered improvement suggestions for failures
   -v, --verbose                       # Show real-time conversation and details
 
 # Init options

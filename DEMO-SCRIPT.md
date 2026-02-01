@@ -637,6 +637,9 @@ skill-eval init my-skill
 # Generate eval from SKILL.md
 skill-eval generate https://example.com/skills/SKILL.md -o ./my-eval
 
+# Generate with LLM assistance (better tasks/fixtures)
+skill-eval generate https://example.com/skills/SKILL.md -o ./my-eval --assist --model claude-opus-4.5
+
 # Run evaluation (basic)
 skill-eval run my-skill/eval.yaml
 
@@ -651,6 +654,9 @@ skill-eval run my-skill/eval.yaml -o results.json
 
 # Run with conversation transcript logging
 skill-eval run my-skill/eval.yaml --log transcript.json
+
+# Run with LLM suggestions for failures
+skill-eval run my-skill/eval.yaml --suggestions
 
 # Full debugging run
 skill-eval run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json

@@ -144,3 +144,4 @@ skill-eval run ./eval.yaml \
 - `--executor` - mock or copilot-sdk
 - `--model` - LLM model to use
 - `--assist` - Use LLM for better task/fixture generation (generate command only)
+- `--suggestions` - Get LLM-powered improvement suggestions for failed tasks (run command)
