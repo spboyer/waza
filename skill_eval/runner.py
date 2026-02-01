@@ -8,7 +8,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 from skill_eval.graders.base import Grader, GraderContext, GraderRegistry
 from skill_eval.schemas.eval_spec import EvalSpec, GraderConfig, ExecutorType
@@ -26,6 +26,25 @@ from skill_eval.schemas.results import (
 from skill_eval.executors import BaseExecutor, MockExecutor, ExecutionResult
 
 
+class ProgressCallback(Protocol):
+    """Protocol for progress callbacks."""
+    
+    def __call__(
+        self,
+        event: str,
+        task_name: str | None = None,
+        task_num: int | None = None,
+        total_tasks: int | None = None,
+        trial_num: int | None = None,
+        total_trials: int | None = None,
+        status: str | None = None,
+        duration_ms: int | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        """Report progress."""
+        ...
+
+
 class EvalRunner:
     """Orchestrates evaluation execution."""
 
@@ -34,6 +53,7 @@ class EvalRunner:
         spec: EvalSpec,
         executor: BaseExecutor | Callable[[Task], tuple[str, list[dict], dict]] | None = None,
         base_path: Path | None = None,
+        progress_callback: ProgressCallback | None = None,
     ):
         """Initialize eval runner.
         
@@ -41,10 +61,12 @@ class EvalRunner:
             spec: The eval specification
             executor: Optional executor instance or legacy callable
             base_path: Base path for resolving relative paths in spec
+            progress_callback: Optional callback for progress updates
         """
         self.spec = spec
         self._legacy_executor = None
         self._executor: BaseExecutor | None = None
+        self._progress_callback = progress_callback
         
         # Handle different executor types
         if executor is None:
@@ -59,6 +81,11 @@ class EvalRunner:
         self.base_path = base_path or Path.cwd()
         self._graders: dict[str, Grader] = {}
         self._setup_graders()
+
+    def _report_progress(self, event: str, **kwargs) -> None:
+        """Report progress if callback is set."""
+        if self._progress_callback:
+            self._progress_callback(event, **kwargs)
 
     def _create_executor(self) -> BaseExecutor:
         """Create executor based on spec configuration."""
@@ -177,9 +204,29 @@ class EvalRunner:
     async def _run_tasks_sequential(self, tasks: list[Task]) -> list[TaskResult]:
         """Run tasks one at a time."""
         results = []
-        for task in tasks:
-            result = await self._run_task(task)
+        total = len(tasks)
+        
+        for i, task in enumerate(tasks, 1):
+            self._report_progress(
+                "task_start",
+                task_name=task.name,
+                task_num=i,
+                total_tasks=total,
+            )
+            
+            result = await self._run_task(task, task_num=i, total_tasks=total)
             results.append(result)
+            
+            self._report_progress(
+                "task_complete",
+                task_name=task.name,
+                task_num=i,
+                total_tasks=total,
+                status=result.status,
+                duration_ms=result.aggregate.mean_duration_ms if result.aggregate else 0,
+                details={"score": result.aggregate.mean_score if result.aggregate else 0},
+            )
+            
             if self.spec.config.fail_fast and result.status == "failed":
                 break
         return results
@@ -187,20 +234,63 @@ class EvalRunner:
     async def _run_tasks_parallel(self, tasks: list[Task]) -> list[TaskResult]:
         """Run tasks in parallel."""
         semaphore = asyncio.Semaphore(self.spec.config.max_workers)
+        total = len(tasks)
+        completed = 0
         
-        async def run_with_semaphore(task: Task) -> TaskResult:
+        async def run_with_semaphore(task: Task, task_num: int) -> TaskResult:
+            nonlocal completed
             async with semaphore:
-                return await self._run_task(task)
+                self._report_progress(
+                    "task_start",
+                    task_name=task.name,
+                    task_num=task_num,
+                    total_tasks=total,
+                )
+                
+                result = await self._run_task(task, task_num=task_num, total_tasks=total)
+                completed += 1
+                
+                self._report_progress(
+                    "task_complete",
+                    task_name=task.name,
+                    task_num=completed,
+                    total_tasks=total,
+                    status=result.status,
+                    duration_ms=result.aggregate.mean_duration_ms if result.aggregate else 0,
+                )
+                
+                return result
         
-        return await asyncio.gather(*[run_with_semaphore(t) for t in tasks])
+        return await asyncio.gather(*[run_with_semaphore(t, i) for i, t in enumerate(tasks, 1)])
 
-    async def _run_task(self, task: Task) -> TaskResult:
+    async def _run_task(self, task: Task, task_num: int = 0, total_tasks: int = 0) -> TaskResult:
         """Run a single task with all trials."""
         trials = []
+        total_trials = self.spec.config.trials_per_task
         
-        for trial_num in range(1, self.spec.config.trials_per_task + 1):
+        for trial_num in range(1, total_trials + 1):
+            self._report_progress(
+                "trial_start",
+                task_name=task.name,
+                task_num=task_num,
+                total_tasks=total_tasks,
+                trial_num=trial_num,
+                total_trials=total_trials,
+            )
+            
             trial = await self._run_trial(task, trial_num)
             trials.append(trial)
+            
+            self._report_progress(
+                "trial_complete",
+                task_name=task.name,
+                task_num=task_num,
+                total_tasks=total_tasks,
+                trial_num=trial_num,
+                total_trials=total_trials,
+                status=trial.status,
+                duration_ms=trial.duration_ms,
+            )
         
         # Determine overall status
         passed_trials = sum(1 for t in trials if t.passed)

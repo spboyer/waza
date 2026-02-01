@@ -10,6 +10,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from rich.prompt import Prompt, Confirm
 from rich import print as rprint
 
 from skill_eval import __version__
@@ -83,13 +84,13 @@ def run(
     console.print(f"  Executor: {spec.config.executor.value}")
     console.print(f"  Model: {spec.config.model}")
 
-    # Create runner
+    # Create base path for task loading
     base_path = Path(eval_path).parent
-    runner = EvalRunner(spec=spec, base_path=base_path)
 
-    # Load and filter tasks
+    # Load and filter tasks (using temporary runner just for loading)
     try:
-        tasks = runner.load_tasks()
+        temp_runner = EvalRunner(spec=spec, base_path=base_path)
+        tasks = temp_runner.load_tasks()
         if task:
             tasks = [t for t in tasks if t.id in task]
         
@@ -104,9 +105,116 @@ def run(
         console.print(f"[red]✗ Failed to load tasks:[/red] {e}")
         sys.exit(1)
 
-    # Run eval
-    with console.status("[bold green]Running evaluation..."):
-        result = runner.run(tasks)
+    # Create progress display
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
+    from rich.live import Live
+    from rich.table import Table
+    
+    # Track progress state
+    progress_state = {
+        "current_task": "",
+        "current_task_num": 0,
+        "total_tasks": len(tasks),
+        "current_trial": 0,
+        "total_trials": spec.config.trials_per_task,
+        "completed_tasks": [],
+        "status": "running",
+    }
+    
+    def make_progress_table() -> Table:
+        """Create the progress display table."""
+        table = Table.grid(padding=(0, 1))
+        table.add_column(justify="right", width=12)
+        table.add_column()
+        
+        # Progress bar
+        completed = len(progress_state["completed_tasks"])
+        total = progress_state["total_tasks"]
+        pct = (completed / total * 100) if total > 0 else 0
+        bar_width = 30
+        filled = int(bar_width * completed / total) if total > 0 else 0
+        bar = "█" * filled + "░" * (bar_width - filled)
+        
+        table.add_row(
+            "[bold]Progress:[/bold]",
+            f"[green]{bar}[/green] {completed}/{total} ({pct:.0f}%)"
+        )
+        
+        if progress_state["current_task"]:
+            task_name = progress_state["current_task"][:40]
+            trial_info = ""
+            if progress_state["total_trials"] > 1:
+                trial_info = f" (trial {progress_state['current_trial']}/{progress_state['total_trials']})"
+            table.add_row(
+                "[bold]Running:[/bold]",
+                f"[cyan]{task_name}[/cyan]{trial_info}"
+            )
+        
+        # Show last completed task in verbose mode
+        if verbose and progress_state["completed_tasks"]:
+            last = progress_state["completed_tasks"][-1]
+            icon = "✅" if last["status"] == "passed" else "❌"
+            table.add_row(
+                "[bold]Last:[/bold]",
+                f"{icon} {last['name'][:35]} ({last['duration_ms']}ms)"
+            )
+        
+        return table
+    
+    def progress_callback(
+        event: str,
+        task_name: str | None = None,
+        task_num: int | None = None,
+        total_tasks: int | None = None,
+        trial_num: int | None = None,
+        total_trials: int | None = None,
+        status: str | None = None,
+        duration_ms: int | None = None,
+        details: dict | None = None,
+    ):
+        """Handle progress updates from the runner."""
+        if event == "task_start":
+            progress_state["current_task"] = task_name or ""
+            progress_state["current_task_num"] = task_num or 0
+            progress_state["current_trial"] = 1
+        elif event == "trial_start":
+            progress_state["current_trial"] = trial_num or 1
+            progress_state["total_trials"] = total_trials or 1
+        elif event == "task_complete":
+            progress_state["completed_tasks"].append({
+                "name": task_name,
+                "status": status,
+                "duration_ms": duration_ms or 0,
+                "score": details.get("score", 0) if details else 0,
+            })
+            progress_state["current_task"] = ""
+    
+    # Create runner with progress callback
+    runner = EvalRunner(spec=spec, base_path=base_path, progress_callback=progress_callback)
+
+    # Run with live progress display
+    with Live(make_progress_table(), console=console, refresh_per_second=4) as live:
+        import asyncio
+        
+        async def run_with_progress():
+            while True:
+                live.update(make_progress_table())
+                await asyncio.sleep(0.25)
+        
+        async def run_eval():
+            return await runner.run_async(tasks)
+        
+        async def main_loop():
+            eval_task = asyncio.create_task(run_eval())
+            
+            # Update display while eval runs
+            while not eval_task.done():
+                live.update(make_progress_table())
+                await asyncio.sleep(0.1)
+            
+            return await eval_task
+        
+        result = asyncio.run(main_loop())
 
     # Display results
     _display_results(result, verbose)
@@ -134,12 +242,32 @@ def run(
 @main.command()
 @click.argument("skill_name")
 @click.option("--path", "-p", type=click.Path(), default=".", help="Output directory")
-def init(skill_name: str, path: str):
+@click.option("--from-skill", "-s", type=str, help="Path or URL to SKILL.md to generate from")
+def init(skill_name: str, path: str, from_skill: Optional[str]):
     """Initialize a new eval suite for a skill.
     
     SKILL_NAME: Name of the skill to create evals for
     """
     output_dir = Path(path) / skill_name
+    
+    # Check if user wants to generate from SKILL.md
+    if not from_skill:
+        has_skill_md = Confirm.ask(
+            "Do you have a SKILL.md file to generate evals from?",
+            default=False
+        )
+        if has_skill_md:
+            from_skill = Prompt.ask(
+                "Enter path or URL to SKILL.md",
+                default=""
+            )
+    
+    # If we have a skill source, use the generator
+    if from_skill and from_skill.strip():
+        _generate_from_skill(from_skill.strip(), output_dir, skill_name)
+        return
+    
+    # Otherwise, create template structure
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Create eval.yaml
@@ -276,6 +404,173 @@ should_not_trigger_prompts:
     console.print(f"  1. Edit [bold]tasks/*.yaml[/bold] to add test cases")
     console.print(f"  2. Edit [bold]trigger_tests.yaml[/bold] for trigger accuracy tests")
     console.print(f"  3. Run: [bold]skill-eval run {output_dir}/eval.yaml[/bold]")
+
+
+def _generate_from_skill(source: str, output_dir: Path, skill_name: str):
+    """Generate eval suite from a SKILL.md file."""
+    from skill_eval.generator import SkillParser, EvalGenerator
+    
+    parser = SkillParser()
+    
+    console.print(f"[bold blue]Parsing SKILL.md...[/bold blue]")
+    
+    try:
+        # Determine if source is URL or file path
+        if source.startswith(("http://", "https://")):
+            skill = parser.parse_url(source)
+        else:
+            skill = parser.parse_file(source)
+        
+        console.print(f"[green]✓[/green] Parsed skill: [bold]{skill.name}[/bold]")
+        console.print(f"  Triggers found: {len(skill.triggers)}")
+        console.print(f"  CLI commands: {', '.join(skill.cli_commands[:5]) or 'none'}")
+        console.print(f"  Keywords: {', '.join(skill.keywords[:5]) or 'none'}")
+        console.print()
+        
+    except Exception as e:
+        console.print(f"[red]✗ Failed to parse SKILL.md:[/red] {e}")
+        sys.exit(1)
+    
+    # Generate eval files
+    generator = EvalGenerator(skill)
+    
+    output_dir.mkdir(parents=True, exist_ok=True)
+    tasks_dir = output_dir / "tasks"
+    tasks_dir.mkdir(exist_ok=True)
+    graders_dir = output_dir / "graders"
+    graders_dir.mkdir(exist_ok=True)
+    
+    # Write eval.yaml
+    eval_yaml = generator.generate_eval_yaml()
+    (output_dir / "eval.yaml").write_text(eval_yaml)
+    
+    # Write trigger_tests.yaml
+    trigger_tests = generator.generate_trigger_tests()
+    (output_dir / "trigger_tests.yaml").write_text(trigger_tests)
+    
+    # Write example tasks
+    tasks = generator.generate_example_tasks()
+    for filename, content in tasks:
+        (tasks_dir / filename).write_text(content)
+    
+    console.print(f"[green]✓[/green] Generated eval suite at: [bold]{output_dir}[/bold]")
+    console.print()
+    console.print("Structure created:")
+    console.print(f"  {output_dir}/")
+    console.print(f"  ├── eval.yaml [bold](auto-generated)[/bold]")
+    console.print(f"  ├── trigger_tests.yaml [bold](auto-generated)[/bold]")
+    console.print(f"  └── tasks/")
+    for filename, _ in tasks:
+        console.print(f"      └── {filename}")
+    console.print()
+    console.print("[yellow]Review and customize the generated files![/yellow]")
+    console.print()
+    console.print("Next steps:")
+    console.print(f"  1. Review [bold]eval.yaml[/bold] graders and thresholds")
+    console.print(f"  2. Add/edit [bold]tasks/*.yaml[/bold] test cases")
+    console.print(f"  3. Run: [bold]skill-eval run {output_dir}/eval.yaml[/bold]")
+
+
+@main.command()
+@click.argument("skill_source", type=str)
+@click.option("--output", "-o", type=click.Path(), help="Output directory (default: skill name)")
+@click.option("--force", "-f", is_flag=True, help="Overwrite existing files")
+def generate(skill_source: str, output: Optional[str], force: bool):
+    """Generate eval suite from a SKILL.md file.
+    
+    SKILL_SOURCE: Path or URL to SKILL.md file
+    
+    Examples:
+    
+      skill-eval generate ./skills/azure-functions/SKILL.md
+      
+      skill-eval generate https://github.com/microsoft/GitHub-Copilot-for-Azure/blob/main/plugin/skills/azure-functions/SKILL.md
+      
+      skill-eval generate ./SKILL.md -o evals/my-skill
+    """
+    from skill_eval.generator import SkillParser, EvalGenerator
+    
+    parser = SkillParser()
+    
+    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
+    console.print()
+    console.print(f"Parsing: {skill_source[:80]}{'...' if len(skill_source) > 80 else ''}")
+    
+    try:
+        # Determine if source is URL or file path
+        if skill_source.startswith(("http://", "https://")):
+            skill = parser.parse_url(skill_source)
+        else:
+            skill = parser.parse_file(skill_source)
+        
+        console.print(f"[green]✓[/green] Parsed skill: [bold]{skill.name}[/bold]")
+        
+        if skill.description:
+            desc = skill.description[:150] + "..." if len(skill.description) > 150 else skill.description
+            console.print(f"  Description: {desc}")
+        
+        console.print(f"  Triggers extracted: {len(skill.triggers)}")
+        console.print(f"  Anti-triggers: {len(skill.anti_triggers)}")
+        console.print(f"  CLI commands: {len(skill.cli_commands)}")
+        console.print(f"  Keywords: {len(skill.keywords)}")
+        console.print()
+        
+    except Exception as e:
+        console.print(f"[red]✗ Failed to parse SKILL.md:[/red] {e}")
+        sys.exit(1)
+    
+    # Determine output directory
+    if output:
+        output_dir = Path(output)
+    else:
+        safe_name = skill.name.lower().replace(' ', '-')
+        safe_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in safe_name)
+        output_dir = Path(safe_name)
+    
+    # Check for existing files
+    if output_dir.exists() and not force:
+        if (output_dir / "eval.yaml").exists():
+            overwrite = Confirm.ask(
+                f"[yellow]eval.yaml already exists in {output_dir}. Overwrite?[/yellow]",
+                default=False
+            )
+            if not overwrite:
+                console.print("[yellow]Aborted.[/yellow]")
+                return
+    
+    # Generate eval files
+    generator = EvalGenerator(skill)
+    
+    output_dir.mkdir(parents=True, exist_ok=True)
+    tasks_dir = output_dir / "tasks"
+    tasks_dir.mkdir(exist_ok=True)
+    
+    # Write eval.yaml
+    eval_yaml = generator.generate_eval_yaml()
+    (output_dir / "eval.yaml").write_text(eval_yaml)
+    console.print(f"[green]✓[/green] Created eval.yaml")
+    
+    # Write trigger_tests.yaml
+    trigger_tests = generator.generate_trigger_tests()
+    (output_dir / "trigger_tests.yaml").write_text(trigger_tests)
+    console.print(f"[green]✓[/green] Created trigger_tests.yaml")
+    
+    # Write example tasks
+    tasks = generator.generate_example_tasks()
+    for filename, content in tasks:
+        (tasks_dir / filename).write_text(content)
+        console.print(f"[green]✓[/green] Created tasks/{filename}")
+    
+    console.print()
+    console.print(Panel(
+        f"Generated eval suite at: [bold]{output_dir}[/bold]\n\n"
+        f"Run with:\n"
+        f"  [bold]skill-eval run {output_dir}/eval.yaml[/bold]\n\n"
+        f"Or with real LLM:\n"
+        f"  [bold]skill-eval run {output_dir}/eval.yaml --executor copilot-sdk[/bold]",
+        title="[green]✓ Success[/green]",
+        border_style="green"
+    ))
 
 
 @main.command()
