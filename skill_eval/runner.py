@@ -323,10 +323,14 @@ class EvalRunner:
             exec_context = {}
             if task.inputs.files:
                 exec_context["files"] = task.inputs.files
-            if self._context_dir:
-                exec_context["context_dir"] = self._context_dir
+            
+            # Determine context_dir: task-specific overrides global
+            effective_context_dir = task.context_dir or self._context_dir
+            
+            if effective_context_dir:
+                exec_context["context_dir"] = effective_context_dir
                 # Read actual files from context_dir for richer context
-                context_path = Path(self._context_dir)
+                context_path = Path(effective_context_dir)
                 if context_path.exists():
                     project_files = []
                     for ext in ["*.py", "*.js", "*.ts", "*.json", "*.yaml", "*.yml", "*.md"]:

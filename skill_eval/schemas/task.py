@@ -93,6 +93,7 @@ class Task(BaseModel):
     tags: list[str] = Field(default_factory=list, description="Tags for filtering")
     enabled: bool = Field(default=True, description="Whether this task is enabled")
     timeout_seconds: int | None = Field(default=None, description="Task-specific timeout override")
+    context_dir: str | None = Field(default=None, description="Task-specific context directory (overrides global --context-dir)")
 
     @classmethod
     def from_yaml(cls, yaml_content: str) -> Task:

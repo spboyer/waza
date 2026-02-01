@@ -108,6 +108,9 @@ id: deploy-app-001
 name: Deploy Simple App
 description: Test deploying a basic application
 
+# Task-specific context directory (overrides global --context-dir)
+context_dir: ./fixtures/web-app
+
 inputs:
   prompt: "Deploy this app to Azure"
   context:
@@ -302,11 +305,23 @@ The transcript includes timestamps, task/trial info, and full message content:
 The `--context-dir` option provides project files to the skill:
 
 ```bash
-# Use generated fixtures
+# Use generated fixtures as default for all tasks
 skill-eval run my-skill/eval.yaml --context-dir ./my-skill/fixtures
 
 # Use your real project
 skill-eval run my-skill/eval.yaml --context-dir ~/projects/my-app
+```
+
+Individual tasks can override the global context with their own `context_dir`:
+
+```yaml
+# tasks/deploy-app.yaml
+id: deploy-app-001
+name: Deploy Web App
+context_dir: ./fixtures/web-app  # Task-specific, overrides --context-dir
+
+inputs:
+  prompt: "Deploy this web app"
 ```
 
 This gives the skill real code to work with, making tests more realistic.
