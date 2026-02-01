@@ -613,3 +613,14 @@ inputs:
 ## License
 
 MIT
+
+## Web UI Screenshots
+
+### Dashboard
+![skill-eval Dashboard](https://github.com/user-attachments/assets/dda605cf-7ba1-4daf-95ff-c784e208ef6f)
+
+### Evals List
+![Evals List Page](https://github.com/user-attachments/assets/237cd232-e7cf-469a-8922-aa18245a864f)
+
+The Web UI provides a modern, dark-themed interface for managing eval suites, running evaluations, and viewing results in real-time. Built with React 18, TypeScript, and Tailwind CSS, following design principles from the [Spark App Template](https://github.com/github/copilot-plugins/tree/main/plugins/spark/skills/spark-app-template).
+
