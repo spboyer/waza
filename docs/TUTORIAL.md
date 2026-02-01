@@ -8,7 +8,7 @@ This tutorial walks you through creating evaluations for your Agent Skills.
 - `waza` installed:
   ```bash
   # From GitHub releases (recommended)
-  pip install https://github.com/spboyer/waza/releases/latest/download/waza-0.0.2-py3-none-any.whl
+  pip install https://github.com/spboyer/waza/releases/latest/download/waza-0.1.0-py3-none-any.whl
   
   # Or from PyPI when available
   pip install waza

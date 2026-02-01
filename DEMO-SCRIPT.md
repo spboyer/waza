@@ -18,7 +18,7 @@ mkdir waza-demo && cd waza-demo
 
 # Install waza
 uv venv && source .venv/bin/activate
-uv pip install "https://github.com/spboyer/waza/releases/latest/download/waza-0.0.2-py3-none-any.whl"
+uv pip install "https://github.com/spboyer/waza/releases/latest/download/waza-0.1.0-py3-none-any.whl"
 ```
 
 ---
@@ -476,7 +476,7 @@ cat results.json | python -m json.tool | head -40
 
 ### Talking Points
 
-> "Skill-eval supports multiple grader types, just like agent evals."
+> "waza supports multiple grader types, just like agent evals."
 
 ### List Graders
 
@@ -539,7 +539,7 @@ waza run examples/code-explainer/eval.yaml \
 
 **Expected Output:**
 ```
-waza v0.0.2
+waza v0.1.0
 
 ✓ Loaded eval: code-explainer-eval
   Skill: code-explainer
