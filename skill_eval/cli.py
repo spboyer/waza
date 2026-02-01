@@ -1025,34 +1025,45 @@ def _generate_suggestions(result, spec, model: str, console):
 
     try:
         import asyncio
+        import contextlib
+        import tempfile
 
-        from copilot_sdk import create_session
+        from copilot import CopilotClient
 
         async def get_suggestions():
             suggestions = {}
 
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console,
-            ) as progress:
-                task = progress.add_task("Analyzing failed tasks...", total=len(failed_tasks))
+            # Setup client
+            workspace = tempfile.mkdtemp(prefix="skill-eval-suggestions-")
+            client = CopilotClient({
+                "cwd": workspace,
+                "log_level": "error",
+            })
+            await client.start()
 
-                for failed_task in failed_tasks:
-                    progress.update(task, description=f"Analyzing: {failed_task.name[:30]}...")
+            try:
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    console=console,
+                ) as progress:
+                    task = progress.add_task("Analyzing failed tasks...", total=len(failed_tasks))
 
-                    # Build context about what failed
-                    grader_failures = []
-                    for trial in failed_task.trials:
-                        for name, gr in trial.grader_results.items():
-                            if not gr.passed:
-                                grader_failures.append(f"- {name}: {gr.message[:100]}")
+                    for failed_task in failed_tasks:
+                        progress.update(task, description=f"Analyzing: {failed_task.name[:30]}...")
 
-                    output_sample = ""
-                    if failed_task.trials and failed_task.trials[0].output:
-                        output_sample = failed_task.trials[0].output[:500]
+                        # Build context about what failed
+                        grader_failures = []
+                        for trial in failed_task.trials:
+                            for name, gr in trial.grader_results.items():
+                                if not gr.passed:
+                                    grader_failures.append(f"- {name}: {gr.message[:100]}")
 
-                    prompt = f"""Analyze this failed skill evaluation task and suggest improvements for the SKILL being tested.
+                        output_sample = ""
+                        if failed_task.trials and failed_task.trials[0].output:
+                            output_sample = failed_task.trials[0].output[:500]
+
+                        prompt = f"""Analyze this failed skill evaluation task and suggest improvements for the SKILL being tested.
 
 Skill: {spec.skill}
 Task: {failed_task.name}
@@ -1072,23 +1083,48 @@ Focus on:
 
 Keep suggestions concise and actionable (1-2 sentences each)."""
 
-                    session = await create_session(model=model)
-                    response_text = ""
+                        # Create session and get response
+                        session = await client.create_session({
+                            "model": model,
+                            "streaming": True,
+                        })
 
-                    async for event in session.send(prompt):
-                        if event.type == "assistant.message":
-                            response_text = event.data.get("content", "")
-                        elif event.type == "assistant.message_delta":
-                            response_text += event.data.get("delta", "")
-                        elif event.type == "session.idle":
-                            break
+                        output_parts: list[str] = []
+                        done_event = asyncio.Event()
 
-                    suggestions[failed_task.id] = {
-                        "name": failed_task.name,
-                        "suggestions": response_text.strip() if response_text else "Unable to generate suggestions.",
-                    }
+                        def make_handler(parts: list[str], done: asyncio.Event):
+                            def handle_event(event) -> None:
+                                event_type = event.type.value if hasattr(event.type, 'value') else str(event.type)
+                                if event_type == "assistant.message":
+                                    if hasattr(event.data, 'content') and event.data.content:
+                                        parts.append(event.data.content)
+                                elif event_type == "assistant.message_delta" and hasattr(event.data, 'delta_content') and event.data.delta_content:
+                                    parts.append(event.data.delta_content)
+                                if event_type in ("session.idle", "session.error"):
+                                    done.set()
+                            return handle_event
 
-                    progress.advance(task)
+                        session.on(make_handler(output_parts, done_event))
+                        await session.send({"prompt": prompt})
+
+                        with contextlib.suppress(TimeoutError):
+                            await asyncio.wait_for(done_event.wait(), timeout=60)
+
+                        with contextlib.suppress(Exception):
+                            await session.destroy()
+
+                        response_text = "".join(output_parts)
+                        suggestions[failed_task.id] = {
+                            "name": failed_task.name,
+                            "suggestions": response_text.strip() if response_text else "Unable to generate suggestions.",
+                        }
+
+                        progress.advance(task)
+            finally:
+                # Cleanup
+                await client.stop()
+                import shutil
+                shutil.rmtree(workspace, ignore_errors=True)
 
             return suggestions
 
@@ -1104,7 +1140,7 @@ Keep suggestions concise and actionable (1-2 sentences each)."""
             console.print()
 
     except ImportError:
-        console.print("[yellow]⚠ Copilot SDK not available. Install with: pip install copilot-sdk[/yellow]")
+        console.print("[yellow]⚠ Copilot SDK not available. Install with: pip install github-copilot-sdk[/yellow]")
     except Exception as e:
         console.print(f"[yellow]⚠ Could not generate suggestions: {e}[/yellow]")
 
