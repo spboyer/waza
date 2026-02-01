@@ -17,7 +17,11 @@ class StorageManager:
         Args:
             base_path: Base directory for storage (defaults to ~/.skill-eval/)
         """
-        self.base_path = base_path or Path.home() / ".skill-eval"
+        if base_path is None:
+            self.base_path = Path.home() / ".skill-eval"
+        else:
+            self.base_path = Path(base_path) if not isinstance(base_path, Path) else base_path
+        
         self.evals_dir = self.base_path / "evals"
         self.runs_dir = self.base_path / "runs"
         self.cache_dir = self.base_path / "cache"
