@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -42,6 +43,7 @@ def main():
 @click.option("--context-dir", "-c", type=click.Path(exists=True), help="Directory with project files to use as context")
 @click.option("--suggestions", "-s", is_flag=True, help="Generate LLM-powered improvement suggestions for failed tasks")
 @click.option("--suggestions-file", type=click.Path(), help="Save suggestions to markdown file (implies --suggestions)")
+@click.option("--no-issues", is_flag=True, help="Skip GitHub issue creation prompt")
 def run(
     eval_path: str,
     task: tuple[str, ...],
@@ -57,6 +59,7 @@ def run(
     context_dir: str | None,
     suggestions: bool,
     suggestions_file: str | None,
+    no_issues: bool,
 ):
     """Run an evaluation suite.
 
@@ -358,6 +361,11 @@ def run(
         console.print()
         console.print("[dim]💡 Tip: Use --suggestions to get LLM-powered improvement recommendations for failed tasks[/dim]")
 
+    # Prompt for GitHub issue creation (if not disabled)
+    if not no_issues and (failed_tasks or Confirm.ask("\nCreate GitHub issues with results?", default=False)):
+        console.print()
+        _prompt_issue_creation(result, log, suggestions_file, console)
+
     # Check threshold
     if result.summary.pass_rate < fail_threshold:
         console.print(f"\n[red]✗ Pass rate {result.summary.pass_rate:.1%} below threshold {fail_threshold:.1%}[/red]")
@@ -596,66 +604,32 @@ def _generate_from_skill(source: str, output_dir: Path, skill_name: str):
     console.print(f"  3. Run: [bold]skill-eval run {output_dir}/eval.yaml[/bold]")
 
 
-@main.command()
-@click.argument("skill_source", type=str)
-@click.option("--output", "-o", type=click.Path(), help="Output directory (default: skill name)")
-@click.option("--force", "-f", is_flag=True, help="Overwrite existing files")
-@click.option("--assist", "-a", is_flag=True, help="Use LLM to generate better tasks and fixtures")
-@click.option("--model", "-m", type=str, default="claude-sonnet-4-20250514", help="Model for assisted generation")
-def generate(skill_source: str, output: str | None, force: bool, assist: bool, model: str):
-    """Generate eval suite from a SKILL.md file.
+def _generate_single_skill(
+    skill: Any,
+    skill_info: Any | None,
+    output_base: Path,
+    force: bool,
+    assist: bool,
+    model: str,
+    console: Console,
+) -> None:
+    """Generate eval for a single skill.
 
-    SKILL_SOURCE: Path or URL to SKILL.md file
-
-    Examples:
-
-      skill-eval generate ./skills/azure-functions/SKILL.md
-
-      skill-eval generate https://github.com/...azure-functions/SKILL.md
-
-      skill-eval generate ./SKILL.md -o evals/my-skill
-
-      # Use LLM-assisted generation for better tasks:
-      skill-eval generate ./SKILL.md --assist
+    Args:
+        skill: Parsed skill object
+        skill_info: SkillInfo object (for discovery mode)
+        output_base: Base output directory
+        force: Whether to overwrite existing files
+        assist: Whether to use LLM-assisted generation
+        model: Model to use for assisted generation
+        console: Rich console for output
     """
-    from skill_eval.generator import EvalGenerator, SkillParser
-
-    parser = SkillParser()
-
-    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
-    console.print()
-    console.print(f"Parsing: {skill_source[:80]}{'...' if len(skill_source) > 80 else ''}")
-
-    try:
-        # Determine if source is URL or file path
-        if skill_source.startswith(("http://", "https://")):
-            skill = parser.parse_url(skill_source)
-        else:
-            skill = parser.parse_file(skill_source)
-
-        console.print(f"[green]✓[/green] Parsed skill: [bold]{skill.name}[/bold]")
-
-        if skill.description:
-            desc = skill.description[:150] + "..." if len(skill.description) > 150 else skill.description
-            console.print(f"  Description: {desc}")
-
-        console.print(f"  Triggers extracted: {len(skill.triggers)}")
-        console.print(f"  Anti-triggers: {len(skill.anti_triggers)}")
-        console.print(f"  CLI commands: {len(skill.cli_commands)}")
-        console.print(f"  Keywords: {len(skill.keywords)}")
-        console.print()
-
-    except Exception as e:
-        console.print(f"[red]✗ Failed to parse SKILL.md:[/red] {e}")
-        sys.exit(1)
+    from skill_eval.generator import AssistedGenerator, EvalGenerator
 
     # Determine output directory
-    if output:
-        output_dir = Path(output)
-    else:
-        safe_name = skill.name.lower().replace(' ', '-')
-        safe_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in safe_name)
-        output_dir = Path(safe_name)
+    safe_name = skill.name.lower().replace(' ', '-')
+    safe_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in safe_name)
+    output_dir = output_base / safe_name if output_base.name != safe_name else output_base
 
     # Check for existing files
     if output_dir.exists() and not force and (output_dir / "eval.yaml").exists():
@@ -664,7 +638,7 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
             default=False
         )
         if not overwrite:
-            console.print("[yellow]Aborted.[/yellow]")
+            console.print(f"[yellow]Skipped {skill.name}[/yellow]")
             return
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -675,10 +649,7 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
     if assist:
         import asyncio
 
-        from skill_eval.generator import AssistedGenerator
-
-        console.print(f"[cyan]Using LLM-assisted generation with {model}...[/cyan]")
-        console.print()
+        console.print(f"[cyan]Generating {skill.name} with {model}...[/cyan]")
 
         async def run_assisted():
             assisted = AssistedGenerator(skill, model=model, console=console)
@@ -694,8 +665,6 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
             fixtures_data = result.get("fixtures", [])
             graders_data = result.get("graders", [])
 
-            console.print()
-
             if tasks_data:
                 # Write LLM-generated tasks
                 assisted_gen = AssistedGenerator(skill, model=model)
@@ -703,14 +672,13 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
                     task_yaml = assisted_gen.format_task_yaml(task, graders_data)
                     filename = f"task-{i+1:03d}.yaml"
                     (tasks_dir / filename).write_text(task_yaml)
-                    console.print(f"[green]✓[/green] Created tasks/{filename} ({task.get('name', 'Task')})")
+                console.print(f"[green]✓[/green] Created {len(tasks_data)} tasks")
             else:
                 console.print("[yellow]⚠ LLM returned no tasks, using pattern-based generation[/yellow]")
                 generator = EvalGenerator(skill)
                 tasks = generator.generate_example_tasks()
                 for filename, content in tasks:
                     (tasks_dir / filename).write_text(content)
-                    console.print(f"[green]✓[/green] Created tasks/{filename}")
 
             if fixtures_data:
                 # Write LLM-generated fixtures
@@ -720,7 +688,7 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
                     file_path = fixtures_dir / filename
                     file_path.parent.mkdir(parents=True, exist_ok=True)
                     file_path.write_text(content)
-                    console.print(f"[green]✓[/green] Created fixtures/{filename}")
+                console.print(f"[green]✓[/green] Created {len(fixtures_data)} fixtures")
             else:
                 console.print("[yellow]⚠ LLM returned no fixtures, using pattern-based generation[/yellow]")
                 generator = EvalGenerator(skill)
@@ -732,7 +700,6 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
                         file_path = fixtures_dir / filename
                         file_path.parent.mkdir(parents=True, exist_ok=True)
                         file_path.write_text(content)
-                        console.print(f"[green]✓[/green] Created fixtures/{filename}")
 
         except ImportError as e:
             console.print(f"[red]✗ Copilot SDK required for --assist:[/red] {e}")
@@ -745,13 +712,14 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
 
     if not assist:
         # Standard pattern-based generation
+        console.print(f"[cyan]Generating {skill.name}...[/cyan]")
         generator = EvalGenerator(skill)
 
         # Write example tasks
         tasks = generator.generate_example_tasks()
         for filename, content in tasks:
             (tasks_dir / filename).write_text(content)
-            console.print(f"[green]✓[/green] Created tasks/{filename}")
+        console.print(f"[green]✓[/green] Created {len(tasks)} tasks")
 
         # Write fixtures (sample code files for testing context)
         fixtures = generator.generate_fixtures()
@@ -762,7 +730,7 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
                 file_path = fixtures_dir / filename
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.write_text(content)
-                console.print(f"[green]✓[/green] Created fixtures/{filename}")
+            console.print(f"[green]✓[/green] Created {len(fixtures)} fixtures")
 
     # Always write eval.yaml and trigger_tests.yaml using pattern-based generator
     generator = EvalGenerator(skill)
@@ -770,23 +738,219 @@ def generate(skill_source: str, output: str | None, force: bool, assist: bool, m
     # Write eval.yaml
     eval_yaml = generator.generate_eval_yaml()
     (output_dir / "eval.yaml").write_text(eval_yaml)
-    console.print("[green]✓[/green] Created eval.yaml")
 
     # Write trigger_tests.yaml
     trigger_tests = generator.generate_trigger_tests()
     (output_dir / "trigger_tests.yaml").write_text(trigger_tests)
-    console.print("[green]✓[/green] Created trigger_tests.yaml")
 
+    console.print(f"[green]✓[/green] Generated eval suite at: [bold]{output_dir}[/bold]")
+
+
+@main.command()
+@click.argument("skill_source", type=str, required=False)
+@click.option("--output", "-o", type=click.Path(), help="Output directory (default: skill name)")
+@click.option("--force", "-f", is_flag=True, help="Overwrite existing files")
+@click.option("--assist", "-a", is_flag=True, help="Use LLM to generate better tasks and fixtures")
+@click.option("--model", "-m", type=str, default="claude-sonnet-4-20250514", help="Model for assisted generation")
+@click.option("--repo", type=str, help="Scan GitHub repo for skills (e.g., microsoft/GitHub-Copilot-for-Azure)")
+@click.option("--scan", is_flag=True, help="Scan current directory for skills")
+@click.option("--all", "generate_all", is_flag=True, help="Generate evals for all discovered skills (no prompts)")
+def generate(
+    skill_source: str | None,
+    output: str | None,
+    force: bool,
+    assist: bool,
+    model: str,
+    repo: str | None,
+    scan: bool,
+    generate_all: bool,
+):
+    """Generate eval suite from a SKILL.md file or discover skills in repos.
+
+    SKILL_SOURCE: Path or URL to SKILL.md file (optional if using --repo or --scan)
+
+    Examples:
+
+      # From a single SKILL.md file:
+      skill-eval generate ./skills/azure-functions/SKILL.md
+
+      skill-eval generate https://github.com/...azure-functions/SKILL.md
+
+      # Scan a GitHub repo (interactive):
+      skill-eval generate --repo microsoft/GitHub-Copilot-for-Azure
+
+      # Scan and generate all (CI-friendly):
+      skill-eval generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
+
+      # Scan current directory:
+      skill-eval generate --scan
+
+      # Use LLM-assisted generation for better tasks:
+      skill-eval generate ./SKILL.md --assist
+    """
+    from skill_eval.generator import SkillParser
+    from skill_eval.scanner import SkillInfo, SkillScanner, parse_repo_arg
+
+    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
     console.print()
-    console.print(Panel(
-        f"Generated eval suite at: [bold]{output_dir}[/bold]\n\n"
-        f"Run with:\n"
-        f"  [bold]skill-eval run {output_dir}/eval.yaml[/bold]\n\n"
-        f"Or with real LLM and project context:\n"
-        f"  [bold]skill-eval run {output_dir}/eval.yaml --executor copilot-sdk --context-dir {output_dir}/fixtures[/bold]",
-        title="[green]✓ Success[/green]",
-        border_style="green"
-    ))
+
+    # Determine mode: single file, repo scan, or local scan
+    if repo or scan:
+        # Discovery mode
+        scanner = SkillScanner()
+        discovered_skills: list[SkillInfo] = []
+
+        if repo:
+            # Scan GitHub repo
+            try:
+                repo_name = parse_repo_arg(repo)
+                console.print(f"Scanning GitHub repository: [bold]{repo_name}[/bold]")
+                console.print()
+                discovered_skills = scanner.scan_github_repo(repo_name)
+            except Exception as e:
+                console.print(f"[red]✗ Failed to scan repository:[/red] {e}")
+                sys.exit(1)
+        elif scan:
+            # Scan local directory
+            try:
+                console.print("Scanning current directory for skills...")
+                console.print()
+                discovered_skills = scanner.scan_local_repo(".")
+            except Exception as e:
+                console.print(f"[red]✗ Failed to scan directory:[/red] {e}")
+                sys.exit(1)
+
+        if not discovered_skills:
+            console.print("[yellow]No skills found.[/yellow]")
+            sys.exit(0)
+
+        console.print(f"[green]✓[/green] Found {len(discovered_skills)} skill(s)")
+        console.print()
+
+        # Select which skills to generate
+        if generate_all:
+            selected_skills = discovered_skills
+        else:
+            # Interactive selection
+            from rich.prompt import Prompt as RichPrompt
+
+            console.print("Available skills:")
+            for i, skill_info in enumerate(discovered_skills, 1):
+                console.print(f"  {i}. [bold]{skill_info.name}[/bold]")
+                if skill_info.description:
+                    desc = skill_info.description[:100] + "..." if len(skill_info.description) > 100 else skill_info.description
+                    console.print(f"     {desc}")
+            console.print()
+
+            # Ask which skills to generate
+            selection = RichPrompt.ask(
+                "Select skills to generate (comma-separated numbers, or 'all')",
+                default="all",
+            )
+
+            if selection.lower() == "all":
+                selected_skills = discovered_skills
+            else:
+                try:
+                    indices = [int(x.strip()) - 1 for x in selection.split(",")]
+                    selected_skills = [discovered_skills[i] for i in indices if 0 <= i < len(discovered_skills)]
+                except (ValueError, IndexError):
+                    console.print("[red]✗ Invalid selection[/red]")
+                    sys.exit(1)
+
+        if not selected_skills:
+            console.print("[yellow]No skills selected.[/yellow]")
+            sys.exit(0)
+
+        # Prompt for other options if not provided
+        if not output and not generate_all:
+            output = Prompt.ask("Output directory", default="./evals")
+
+        if assist is False and not generate_all:
+            assist = Confirm.ask("Use LLM-assisted generation?", default=True)
+
+        # Generate evals for each selected skill
+        console.print()
+        console.print(f"Generating evals for {len(selected_skills)} skill(s)...")
+        console.print()
+
+        for skill_info in selected_skills:
+            try:
+                # Parse the skill
+                parser = SkillParser()
+                if skill_info.url:
+                    skill = parser.parse_url(skill_info.url)
+                else:
+                    # Local skill - construct path
+                    skill_path = Path(skill_info.path) / "SKILL.md"
+                    skill = parser.parse_file(skill_path)
+
+                # Generate for this skill
+                _generate_single_skill(
+                    skill=skill,
+                    skill_info=skill_info,
+                    output_base=Path(output) if output else None,
+                    force=force,
+                    assist=assist,
+                    model=model,
+                    console=console,
+                )
+                console.print()
+            except Exception as e:
+                console.print(f"[red]✗ Failed to generate for {skill_info.name}:[/red] {e}")
+                continue
+
+        console.print("[green]✓[/green] Generation complete!")
+
+    else:
+        # Single file mode
+        if not skill_source:
+            console.print("[red]✗ Error:[/red] SKILL_SOURCE required (or use --repo/--scan)")
+            sys.exit(1)
+
+        parser = SkillParser()
+        console.print(f"Parsing: {skill_source[:80]}{'...' if len(skill_source) > 80 else ''}")
+
+        try:
+            # Determine if source is URL or file path
+            if skill_source.startswith(("http://", "https://")):
+                skill = parser.parse_url(skill_source)
+            else:
+                skill = parser.parse_file(skill_source)
+
+            console.print(f"[green]✓[/green] Parsed skill: [bold]{skill.name}[/bold]")
+
+            if skill.description:
+                desc = skill.description[:150] + "..." if len(skill.description) > 150 else skill.description
+                console.print(f"  Description: {desc}")
+
+            console.print(f"  Triggers extracted: {len(skill.triggers)}")
+            console.print(f"  Anti-triggers: {len(skill.anti_triggers)}")
+            console.print(f"  CLI commands: {len(skill.cli_commands)}")
+            console.print(f"  Keywords: {len(skill.keywords)}")
+            console.print()
+
+        except Exception as e:
+            console.print(f"[red]✗ Failed to parse SKILL.md:[/red] {e}")
+            sys.exit(1)
+
+        # Determine output directory
+        if output:
+            output_dir = Path(output)
+        else:
+            safe_name = skill.name.lower().replace(' ', '-')
+            safe_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in safe_name)
+            output_dir = Path(safe_name)
+
+        _generate_single_skill(
+            skill=skill,
+            skill_info=None,
+            output_base=output_dir,
+            force=force,
+            assist=assist,
+            model=model,
+            console=console,
+        )
 
 
 @main.command()
@@ -1205,6 +1369,75 @@ Keep suggestions concise and actionable (1-2 sentences each)."""
         console.print("[yellow]⚠ Copilot SDK not available. Install with: pip install github-copilot-sdk[/yellow]")
     except Exception as e:
         console.print(f"[yellow]⚠ Could not generate suggestions: {e}[/yellow]")
+
+
+def _prompt_issue_creation(
+    result: Any,
+    transcript_path: str | None,
+    suggestions_path: str | None,
+    console: Console,
+) -> None:
+    """Prompt user for GitHub issue creation and create issues if desired.
+
+    Args:
+        result: Evaluation result
+        transcript_path: Path to transcript file (if saved)
+        suggestions_path: Path to suggestions file (if saved)
+        console: Rich console for output
+    """
+    from skill_eval.issues import create_eval_issue
+
+    # Check if there are failed tasks
+    failed_count = sum(1 for t in result.tasks if t.status == "failed")
+
+    if failed_count == 0:
+        # No failures - ask if they still want to create an issue
+        create = Confirm.ask("No failures. Create issue anyway?", default=False)
+        if not create:
+            return
+        failed_only = False
+    else:
+        # Ask if they want to create issues
+        create = Confirm.ask("Create GitHub issues with results?", default=False)
+        if not create:
+            return
+
+        # Ask which tasks to include
+        scope_prompt = "Create issues for: [F]ailed only, [A]ll tasks, [N]one"
+        scope = Prompt.ask(scope_prompt, choices=["f", "F", "a", "A", "n", "N"], default="f")
+
+        if scope.lower() == "n":
+            return
+
+        failed_only = scope.lower() == "f"
+
+    # Prompt for target repository
+    repo = Prompt.ask("Target repository (owner/repo)")
+
+    if not repo or "/" not in repo:
+        console.print("[red]✗ Invalid repository format. Use: owner/repo[/red]")
+        return
+
+    # Create the issue
+    try:
+        console.print()
+        console.print("[cyan]Creating GitHub issue...[/cyan]")
+
+        issue_url = create_eval_issue(
+            result=result,
+            repo=repo,
+            transcript_path=transcript_path,
+            suggestions_path=suggestions_path,
+            failed_only=failed_only,
+        )
+
+        if issue_url:
+            console.print(f"[green]✓[/green] Created issue: {issue_url}")
+        else:
+            console.print("[yellow]⚠ Issue creation returned no URL[/yellow]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Failed to create issue:[/red] {e}")
 
 
 def _display_results(result, verbose: bool = False):
