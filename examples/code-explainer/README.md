@@ -1,11 +1,55 @@
 # Code Explainer Eval
 
-Example eval suite for a hypothetical "code-explainer" skill that explains code snippets to users.
+Example eval suite for the "code-explainer" skill that explains code snippets to users.
+
+## The Skill
+
+See [SKILL.md](./SKILL.md) for the full skill definition. This skill:
+- Explains code snippets in plain language
+- Provides step-by-step breakdowns
+- Highlights key concepts and patterns
+
+## Complete Workflow
+
+This example demonstrates the full skill-eval workflow:
+
+### 1. View the Skill Definition
+
+```bash
+cat examples/code-explainer/SKILL.md
+```
+
+### 2. Generate an Eval (optional - already done here)
+
+```bash
+# Generate eval from SKILL.md
+skill-eval generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval
+
+# Or with LLM assistance for better tasks
+skill-eval generate examples/code-explainer/SKILL.md -o ./my-code-explainer-eval --assist
+```
+
+### 3. Run the Eval
+
+```bash
+# Quick test with mock executor
+skill-eval run examples/code-explainer/eval.yaml \
+  --executor mock \
+  --context-dir examples/code-explainer/fixtures \
+  -v
+
+# Full test with Copilot SDK
+skill-eval run examples/code-explainer/eval.yaml \
+  --executor copilot-sdk \
+  --context-dir examples/code-explainer/fixtures \
+  -v
+```
 
 ## Structure
 
 ```
 code-explainer/
+├── SKILL.md                     # ⭐ Skill definition (source of truth)
 ├── eval.yaml                    # Main eval configuration
 ├── fixtures/                    # Code files to explain
 │   ├── factorial.py             # Python recursion example
@@ -20,16 +64,6 @@ code-explainer/
 ├── graders/
 │   └── explanation_quality.py   # Custom grader for explanation quality
 └── trigger_tests.yaml           # Trigger accuracy tests
-```
-
-## Running
-
-```bash
-# Quick test with mock executor
-skill-eval run examples/code-explainer/eval.yaml --executor mock --context-dir examples/code-explainer/fixtures -v
-
-# Full test with Copilot SDK
-skill-eval run examples/code-explainer/eval.yaml --executor copilot-sdk --context-dir examples/code-explainer/fixtures -v
 ```
 
 ## What It Tests
