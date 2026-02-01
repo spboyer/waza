@@ -1330,5 +1330,41 @@ Duration: {result.summary.duration_ms}ms
                 console.print()
 
 
+@main.command()
+@click.option("--port", "-p", type=int, default=8000, help="Port to run the server on")
+@click.option("--host", "-h", type=str, default="127.0.0.1", help="Host to bind the server to")
+@click.option("--reload", is_flag=True, help="Enable auto-reload for development")
+def serve(port: int, host: str, reload: bool):
+    """Launch the Web UI dashboard.
+    
+    Starts a FastAPI backend server that serves the skill-eval Web UI.
+    The UI allows you to create, edit, and run evals visually with real-time updates.
+    """
+    console.print(f"[bold blue]skill-eval[/bold blue] v{__version__}")
+    console.print()
+    console.print("[green]Starting Web UI dashboard...[/green]")
+    console.print(f"  API server: http://{host}:{port}")
+    console.print(f"  API docs: http://{host}:{port}/docs")
+    console.print()
+    console.print("[dim]Press Ctrl+C to stop the server[/dim]")
+    console.print()
+    
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]Error: uvicorn is not installed[/red]")
+        console.print("Install it with: pip install uvicorn")
+        sys.exit(1)
+    
+    # Run the FastAPI server
+    uvicorn.run(
+        "skill_eval.api.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
 if __name__ == "__main__":
     main()
