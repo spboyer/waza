@@ -1,27 +1,9 @@
 """Tests for waza schemas."""
 
 
-<<<<<<< HEAD
-from skill_eval.schemas.eval_spec import (
-    EvalConfig,
-    EvalSpec,
-    GraderConfig,
-    GraderType,
-    MetricConfig,
-)
-from skill_eval.schemas.results import (
-    EvalResult,
-    EvalSummary,
-    GraderResult,
-    TaskResult,
-    TrialResult,
-)
-from skill_eval.schemas.task import Task, TaskExpected, TaskInput, TriggerTestSuite
-=======
 from waza.schemas.eval_spec import EvalConfig, EvalSpec, GraderConfig, GraderType, MetricConfig
 from waza.schemas.results import EvalResult, EvalSummary, GraderResult, TaskResult, TrialResult
 from waza.schemas.task import Task, TaskExpected, TaskInput, TriggerTestSuite
->>>>>>> refs/remotes/origin/main
 
 
 class TestEvalSpec:

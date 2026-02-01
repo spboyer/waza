@@ -4,15 +4,9 @@ from pathlib import Path
 
 import pytest
 
-<<<<<<< HEAD
-from skill_eval.runner import EvalRunner
-from skill_eval.schemas.eval_spec import EvalSpec
-from skill_eval.schemas.task import Task, TaskInput
-=======
 from waza.runner import EvalRunner
 from waza.schemas.eval_spec import EvalSpec
 from waza.schemas.task import Task, TaskInput
->>>>>>> refs/remotes/origin/main
 
 
 class TestMetaEvaluation:
@@ -23,14 +17,6 @@ class TestMetaEvaluation:
         skill_path = Path(__file__).parent.parent / "waza-runner" / "SKILL.md"
         assert skill_path.exists(), "waza-runner/SKILL.md should exist"
 
-<<<<<<< HEAD
-    def test_skill_eval_runner_skill_exists(self):
-        """Verify the skill-eval-runner SKILL.md exists and is valid."""
-        skill_path = Path(__file__).parent.parent / "skill-eval-runner" / "SKILL.md"
-        assert skill_path.exists(), "skill-eval-runner/SKILL.md should exist"
-
-=======
->>>>>>> refs/remotes/origin/main
         content = skill_path.read_text()
         assert "---" in content, "Should have frontmatter"
         assert "name: waza-runner" in content
@@ -68,13 +54,8 @@ class TestMetaEvaluation:
         runner = EvalRunner(spec=spec)
         result = runner.run(tasks)
 
-<<<<<<< HEAD
-        assert result.eval_id.startswith("skill-eval-runner-meta-eval")
-        assert result.skill == "skill-eval-runner"
-=======
         assert result.eval_id.startswith("waza-runner-meta-eval")
         assert result.skill == "waza-runner"
->>>>>>> refs/remotes/origin/main
         assert result.summary.total_tasks == 1
 
     def test_eval_runner_can_evaluate_itself(self):

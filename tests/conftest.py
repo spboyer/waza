@@ -6,11 +6,7 @@ import pytest
 @pytest.fixture
 def sample_eval_spec():
     """Provide a sample eval spec for testing."""
-<<<<<<< HEAD
-    from skill_eval.schemas.eval_spec import EvalSpec, GraderConfig, GraderType, MetricConfig
-=======
     from waza.schemas.eval_spec import EvalSpec, GraderConfig, GraderType, MetricConfig
->>>>>>> refs/remotes/origin/main
 
     return EvalSpec(
         name="sample-eval",
@@ -35,11 +31,7 @@ def sample_eval_spec():
 @pytest.fixture
 def sample_task():
     """Provide a sample task for testing."""
-<<<<<<< HEAD
-    from skill_eval.schemas.task import Task, TaskExpected, TaskInput
-=======
     from waza.schemas.task import Task, TaskExpected, TaskInput
->>>>>>> refs/remotes/origin/main
 
     return Task(
         id="sample-001",
@@ -58,11 +50,7 @@ def sample_task():
 @pytest.fixture
 def sample_grader_context():
     """Provide a sample grader context for testing."""
-<<<<<<< HEAD
-    from skill_eval.graders.base import GraderContext
-=======
     from waza.graders.base import GraderContext
->>>>>>> refs/remotes/origin/main
 
     return GraderContext(
         task={"id": "sample-001", "name": "Sample Task"},

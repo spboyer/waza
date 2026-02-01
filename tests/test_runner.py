@@ -3,15 +3,9 @@
 import tempfile
 from pathlib import Path
 
-<<<<<<< HEAD
-from skill_eval.runner import EvalRunner
-from skill_eval.schemas.eval_spec import EvalSpec, GraderConfig, GraderType
-from skill_eval.schemas.task import Task, TaskInput
-=======
 from waza.runner import EvalRunner
 from waza.schemas.eval_spec import EvalSpec, GraderConfig, GraderType
 from waza.schemas.task import Task, TaskInput
->>>>>>> refs/remotes/origin/main
 
 
 class TestEvalRunner:
