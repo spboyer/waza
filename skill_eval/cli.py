@@ -362,13 +362,9 @@ def run(
         console.print("[dim]💡 Tip: Use --suggestions to get LLM-powered improvement recommendations for failed tasks[/dim]")
 
     # Prompt for GitHub issue creation (if not disabled)
-    if not no_issues:
-        if failed_tasks:
-            console.print()
-            _prompt_issue_creation(result, log, suggestions_file, console)
-        elif Confirm.ask("\nCreate GitHub issues with results?", default=False):
-            console.print()
-            _prompt_issue_creation(result, log, suggestions_file, console)
+    if not no_issues and (failed_tasks or Confirm.ask("\nCreate GitHub issues with results?", default=False)):
+        console.print()
+        _prompt_issue_creation(result, log, suggestions_file, console)
 
     # Check threshold
     if result.summary.pass_rate < fail_threshold:
@@ -609,9 +605,9 @@ def _generate_from_skill(source: str, output_dir: Path, skill_name: str):
 
 
 def _generate_single_skill(
-    skill: Any,
-    skill_info: Any | None,
-    output_base: Path,
+    skill: Any,  # ParsedSkill from generator module
+    skill_info: Any | None,  # SkillInfo from scanner module
+    output_base: Path | None,
     force: bool,
     assist: bool,
     model: str,
@@ -622,7 +618,7 @@ def _generate_single_skill(
     Args:
         skill: Parsed skill object
         skill_info: SkillInfo object (for discovery mode)
-        output_base: Base output directory
+        output_base: Base output directory (can be None)
         force: Whether to overwrite existing files
         assist: Whether to use LLM-assisted generation
         model: Model to use for assisted generation
@@ -633,7 +629,13 @@ def _generate_single_skill(
     # Determine output directory
     safe_name = skill.name.lower().replace(' ', '-')
     safe_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in safe_name)
-    output_dir = output_base / safe_name if output_base.name != safe_name else output_base
+
+    if output_base is None:
+        output_dir = Path(safe_name)
+    elif output_base.name == safe_name:
+        output_dir = output_base
+    else:
+        output_dir = output_base / safe_name
 
     # Check for existing files
     if output_dir.exists() and not force and (output_dir / "eval.yaml").exists():
@@ -801,7 +803,7 @@ def generate(
     # Determine mode: single file, repo scan, or local scan
     if repo or scan:
         # Discovery mode
-        scanner = SkillScanner()
+        scanner = SkillScanner(console=console)
         discovered_skills: list[SkillInfo] = []
 
         if repo:
@@ -1376,7 +1378,7 @@ Keep suggestions concise and actionable (1-2 sentences each)."""
 
 
 def _prompt_issue_creation(
-    result: Any,
+    result: Any,  # EvalResult from schemas.results module
     transcript_path: str | None,
     suggestions_path: str | None,
     console: Console,
@@ -1390,6 +1392,7 @@ def _prompt_issue_creation(
         console: Rich console for output
     """
     from skill_eval.issues import create_eval_issue
+    from skill_eval.scanner import parse_repo_arg
 
     # Check if there are failed tasks
     failed_count = sum(1 for t in result.tasks if t.status == "failed")
@@ -1418,8 +1421,11 @@ def _prompt_issue_creation(
     # Prompt for target repository
     repo = Prompt.ask("Target repository (owner/repo)")
 
-    if not repo or "/" not in repo:
-        console.print("[red]✗ Invalid repository format. Use: owner/repo[/red]")
+    # Validate repository format using parse_repo_arg
+    try:
+        repo = parse_repo_arg(repo)
+    except ValueError as e:
+        console.print(f"[red]✗ Invalid repository format:[/red] {e}")
         return
 
     # Create the issue

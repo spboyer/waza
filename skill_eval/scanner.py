@@ -1,8 +1,8 @@
-"""Scanner for discovering skills in GitHub and local repositories.
+"""Scanner for discovering skills in GitHub repositories and local directories.
 
 Provides functionality to:
 - Scan GitHub repositories for SKILL.md files
-- Scan local git repositories for skills
+- Scan local directories for skills
 - Extract skill metadata from SKILL.md files
 """
 
@@ -11,6 +11,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from skill_eval.generator import SkillParser
 
@@ -35,9 +36,14 @@ class SkillInfo:
 class SkillScanner:
     """Scanner for discovering skills in repositories."""
 
-    def __init__(self) -> None:
-        """Initialize the scanner."""
+    def __init__(self, console: Any | None = None) -> None:
+        """Initialize the scanner.
+
+        Args:
+            console: Optional Rich Console for output. If None, warnings are silently ignored.
+        """
         self.parser = SkillParser()
+        self.console = console
 
     def scan_github_repo(self, repo: str, branch: str = "main") -> list[SkillInfo]:
         """Scan a GitHub repository for SKILL.md files.
@@ -72,6 +78,7 @@ class SkillScanner:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=30,
             )
             skill_paths = [p.strip() for p in result.stdout.strip().split("\n") if p.strip()]
         except subprocess.CalledProcessError as e:
@@ -91,7 +98,8 @@ class SkillScanner:
                     skills.append(skill_info)
             except Exception as e:
                 # Log error but continue with other skills
-                print(f"Warning: Failed to parse {path}: {e}")
+                if self.console:
+                    self.console.print(f"[yellow]Warning: Failed to parse {path}: {e}[/yellow]")
                 continue
 
         return skills
@@ -128,7 +136,8 @@ class SkillScanner:
                 skills.append(skill_info)
             except Exception as e:
                 # Log error but continue with other skills
-                print(f"Warning: Failed to parse {skill_file}: {e}")
+                if self.console:
+                    self.console.print(f"[yellow]Warning: Failed to parse {skill_file}: {e}[/yellow]")
                 continue
 
         return skills
@@ -172,6 +181,7 @@ class SkillScanner:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=30,
             )
             content = result.stdout
 
@@ -192,7 +202,8 @@ class SkillScanner:
                 repo=repo,
             )
         except subprocess.CalledProcessError as e:
-            print(f"Warning: Failed to fetch {path}: {e.stderr}")
+            if self.console:
+                self.console.print(f"[yellow]Warning: Failed to fetch {path}: {e.stderr}[/yellow]")
             return None
 
 
@@ -219,7 +230,8 @@ def parse_repo_arg(repo_arg: str) -> str:
     if repo_arg.startswith(("http://", "https://")):
         # Extract owner/repo from URL
         parts = repo_arg.rstrip("/").split("/")
-        if len(parts) >= 2:
+        # Need at least 5 parts: ['https:', '', 'domain', 'owner', 'repo']
+        if len(parts) >= 5:
             owner = parts[-2]
             repo = parts[-1].replace(".git", "")
             return f"{owner}/{repo}"

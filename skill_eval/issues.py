@@ -51,6 +51,9 @@ def create_eval_issue(
         failed_only=failed_only,
     )
 
+    # Sanitize skill name for use as label (remove special characters)
+    skill_label = "".join(c if c.isalnum() or c in "-_" else "-" for c in result.skill)
+
     # Create issue using gh CLI
     try:
         cmd = [
@@ -68,7 +71,7 @@ def create_eval_issue(
             "--label",
             "skill-eval",
             "--label",
-            result.skill,
+            skill_label,
         ]
 
         result_proc = subprocess.run(
@@ -76,6 +79,7 @@ def create_eval_issue(
             capture_output=True,
             text=True,
             check=True,
+            timeout=30,
         )
 
         # Extract issue URL from output
@@ -132,8 +136,7 @@ def _format_issue_body(
     lines.append(f"**Skill:** {result.skill}")
     lines.append(f"**Timestamp:** {result.timestamp.isoformat()}")
     lines.append(f"**Model:** {result.config.model or 'default'}")
-    executor_str = str(result.config.executor)
-    lines.append(f"**Executor:** {executor_str}")
+    lines.append(f"**Executor:** {str(result.config.executor)}")
     lines.append("")
 
     # Summary metrics

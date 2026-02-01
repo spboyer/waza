@@ -14,12 +14,12 @@ class TestSkillScanner:
     def test_scan_local_repo_finds_skills(self):
         """Test that scanner finds SKILL.md files in local repo."""
         scanner = SkillScanner()
-        
+
         # Create a temp directory with a skill
         with tempfile.TemporaryDirectory() as tmpdir:
             skill_dir = Path(tmpdir) / "test-skill"
             skill_dir.mkdir()
-            
+
             # Create a SKILL.md file
             skill_md = skill_dir / "SKILL.md"
             skill_md.write_text("""---
@@ -31,10 +31,10 @@ description: A test skill for testing
 
 This is a test skill.
 """)
-            
+
             # Scan the directory
             skills = scanner.scan_local_repo(tmpdir)
-            
+
             assert len(skills) == 1
             assert skills[0].name == "test-skill"
             assert skills[0].description == "A test skill for testing"
@@ -43,7 +43,7 @@ This is a test skill.
     def test_scan_local_repo_empty_directory(self):
         """Test that scanner returns empty list for directory with no skills."""
         scanner = SkillScanner()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             skills = scanner.scan_local_repo(tmpdir)
             assert len(skills) == 0
@@ -51,7 +51,7 @@ This is a test skill.
     def test_scan_local_repo_invalid_path(self):
         """Test that scanner raises error for invalid path."""
         scanner = SkillScanner()
-        
+
         with pytest.raises(ValueError, match="Path does not exist"):
             scanner.scan_local_repo("/nonexistent/path")
 
@@ -79,12 +79,10 @@ class TestParseRepoArg:
             parse_repo_arg("invalid")
 
     def test_parse_invalid_url(self):
-        """Test that minimal URL still parses (edge case)."""
-        # Even a minimal URL like https://github.com/ will parse
-        # as long as it has at least 2 parts after splitting by /
-        result = parse_repo_arg("https://github.com/")
-        # This is an edge case - just testing it doesn't crash
-        assert "/" in result or result  # Either has / or is non-empty
+        """Test that URL with insufficient parts raises ValueError."""
+        # URL without owner/repo parts should fail
+        with pytest.raises(ValueError, match="Invalid GitHub URL"):
+            parse_repo_arg("https://github.com/")
 
 
 class TestSkillInfo:
@@ -97,7 +95,7 @@ class TestSkillInfo:
             description="A test skill with a long description that should be truncated",
             path="skills/test-skill",
         )
-        
+
         str_repr = str(skill)
         assert "test-skill" in str_repr
         assert "..." in str_repr  # Should be truncated
@@ -109,7 +107,7 @@ class TestSkillInfo:
             description="",
             path="skills/test-skill",
         )
-        
+
         assert str(skill) == "test-skill"
 
     def test_skill_info_short_description(self):
@@ -119,7 +117,7 @@ class TestSkillInfo:
             description="Short description",
             path="skills/test-skill",
         )
-        
+
         str_repr = str(skill)
         assert "test-skill" in str_repr
         assert "Short description" in str_repr
