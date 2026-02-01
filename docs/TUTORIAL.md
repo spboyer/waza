@@ -73,17 +73,21 @@ You can scan a GitHub repo to discover all skills and generate evals for them:
 # Scan a GitHub repo and interactively select skills
 waza generate --repo microsoft/GitHub-Copilot-for-Azure
 
+# Generate eval for a SPECIFIC skill (recommended - avoids long URLs!)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions -o ./eval
+
 # Generate evals for ALL discovered skills (CI-friendly)
 waza generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
 
 # Scan local directory for SKILL.md files
 waza generate --scan
 
-# Scan with LLM-assisted generation
-waza generate --repo microsoft/GitHub-Copilot-for-Azure --assist
+# Combine with LLM-assisted generation
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions --assist
 ```
 
 This is particularly useful for:
+- Targeting a specific skill without needing the full raw GitHub URL
 - Testing entire skill libraries at once
 - CI/CD pipelines with `--all` flag
 - Discovering skills you didn't know existed

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `waza generate --skill <name>` - Filter to specific skill when using `--repo` or `--scan`
+  - Avoids need for long raw GitHub URLs
+  - Example: `waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions`
+
 ## [0.2.0] - 2026-02-02
 
 ### Added

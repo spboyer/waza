@@ -260,6 +260,9 @@ waza generate <SKILL.md URL or path> -o ./my-eval
 
 # LLM-assisted generation (better quality)
 waza generate <SKILL.md URL or path> -o ./my-eval --assist --model claude-opus-4.5
+
+# Generate from a specific skill in a repo (recommended - no long URLs!)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions -o ./eval
 ```
 
 ### Run eval with all options
@@ -282,5 +285,7 @@ waza run ./eval.yaml \
 - `--executor` - mock or copilot-sdk
 - `--model` - LLM model to use
 - `--assist` - Use LLM for better task/fixture generation (generate command only)
+- `--repo` - Scan GitHub repo for skills (generate command only)
+- `--skill` - Filter to specific skill name (use with --repo or --scan)
 - `--suggestions` - Get LLM-powered improvement suggestions for failed tasks (run command)
 - `--suggestions-file` - Save suggestions to markdown file (implies --suggestions)

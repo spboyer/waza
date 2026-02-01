@@ -176,6 +176,7 @@ waza run my-skill/eval.yaml -o results.json
 | `waza init <skill-name>` | Scaffold a new eval suite |
 | `waza generate <SKILL.md>` | Auto-generate eval from a SKILL.md file |
 | `waza generate --repo <org/repo>` | Discover and generate evals from GitHub repo |
+| `waza generate --repo <org/repo> --skill <name>` | Generate eval for specific skill in repo |
 | `waza generate --scan` | Discover skills in current directory |
 | `waza compare <files...>` | Compare results across runs/models |
 | `waza analyze <telemetry>` | Analyze runtime telemetry |
@@ -210,9 +211,10 @@ waza generate https://example.com/SKILL.md \
   --model claude-sonnet-4-20250514    # Model for assisted generation
 
 # Skill discovery options (scan repos for skills)
-waza generate --repo microsoft/GitHub-Copilot-for-Azure  # Scan GitHub repo
-waza generate --scan                                      # Scan current directory
-waza generate --repo org/repo --all --output ./evals     # Generate all (CI-friendly)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure                    # Scan GitHub repo (interactive)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions  # Specific skill
+waza generate --scan                                                        # Scan current directory
+waza generate --repo org/repo --all --output ./evals                       # Generate all (CI-friendly)
 
 # Available models for --assist:
 #   claude-sonnet-4-20250514 (default)

@@ -227,6 +227,15 @@ Generating evals...
 ✓ azure-nodejs-production-eval created
 ```
 
+### Generate a Specific Skill (Recommended)
+
+```bash
+# Target a specific skill by name - no prompts, no long URLs
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions -o ./eval
+```
+
+> "The `--skill` flag lets you target a specific skill without needing the full raw GitHub URL. Much cleaner!"
+
 ### Batch Mode (CI-Friendly)
 
 ```bash
@@ -843,6 +852,9 @@ waza generate https://example.com/skills/SKILL.md -o ./my-eval --assist --model 
 
 # Discover skills in a GitHub repo (interactive)
 waza generate --repo microsoft/GitHub-Copilot-for-Azure
+
+# Generate eval for a specific skill (recommended - no long URLs!)
+waza generate --repo microsoft/GitHub-Copilot-for-Azure --skill azure-functions -o ./eval
 
 # Discover and generate all skills (CI-friendly)
 waza generate --repo microsoft/GitHub-Copilot-for-Azure --all --output ./evals
