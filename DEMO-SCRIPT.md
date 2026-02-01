@@ -317,11 +317,21 @@ cat code-reviewer/tasks/review-python-code.yaml
 ```
 
 **Highlight:**
-- `inputs.files`: References fixture file (not inline content)
+- `inputs.files.path`: Filename only — resolved via `--context-dir` at runtime
 - `expected`: What success looks like
 - `graders`: How to score the result
 
-> "The task references `example.py` from fixtures. Run with `--context-dir code-reviewer/fixtures` to provide these files."
+> "The `path: example.py` is relative to whatever you pass as `--context-dir`. There's no default — you must specify it when running."
+
+### Run with Fixtures
+
+```bash
+# The --context-dir tells skill-eval where to find the files
+skill-eval run code-reviewer/eval.yaml \
+  --context-dir code-reviewer/fixtures \
+  --executor mock \
+  -v
+```
 
 ---
 
