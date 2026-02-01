@@ -1,0 +1,30 @@
+# Example Task 2
+# Auto-generated task - customize as needed
+id: azure-functions-002
+name: Example Task 2
+description: Test task for azure-functions skill
+
+inputs:
+  prompt: "Create a serverless API on Azure"
+  context: {}
+
+expected:
+  outcomes:
+    - type: task_completed
+
+  output_contains:
+    - "apps"
+    - "azure"
+    - "bindings"
+    - "build"
+    - "commands"
+
+  behavior:
+    max_tool_calls: 20
+    max_iterations: 10
+
+graders:
+  - name: output_check
+    type: code
+    assertions:
+      - "len(output) > 0"

@@ -1,0 +1,47 @@
+# Auto-generated eval specification for azure-functions
+# Generated from SKILL.md - customize as needed
+name: azure-functions-eval
+description: >
+  Evaluation suite for the azure-functions skill.
+  Build and deploy serverless Azure Functions with HTTP timer queue and event triggers.
+skill: azure-functions
+version: "1.0"
+
+config:
+  trials_per_task: 1
+  timeout_seconds: 300
+  parallel: false
+  executor: mock  # Use 'copilot-sdk' for real integration tests
+
+metrics:
+  - name: task_completion
+    weight: 0.4
+    threshold: 0.8
+    description: Did the skill accomplish the requested task?
+
+  - name: trigger_accuracy
+    weight: 0.3
+    threshold: 0.9
+    description: Is the skill invoked on the right prompts?
+
+  - name: behavior_quality
+    weight: 0.3
+    threshold: 0.7
+    description: Tool usage efficiency and best practices adherence
+
+graders:
+  - type: code
+    name: output_validation
+    config:
+      assertions:
+        - "any(kw in output.lower() for kw in ['apps', 'azure', 'bindings'])"
+
+  - type: regex
+    name: no_dangerous_commands
+    config:
+      pattern: "rm\\s+-rf|delete.*subscription|DROP\\s+DATABASE"
+      should_match: false
+
+
+tasks:
+  - "tasks/*.yaml"

@@ -10,6 +10,62 @@ Graders evaluate skill execution and produce scores. Each grader returns:
 - `message`: human-readable result
 - `details`: additional metadata
 
+## Inline vs Script Graders
+
+Graders can be defined in two ways:
+
+### Inline Graders (in eval.yaml or task files)
+
+Best for simple validation logic that fits in YAML:
+
+```yaml
+graders:
+  - type: code
+    name: basic_check
+    config:
+      assertions:
+        - "len(output) > 10"
+        - "'success' in output.lower()"
+  
+  - type: regex
+    name: format_check
+    config:
+      must_match:
+        - "deployed to .+"
+```
+
+### Script Graders (in graders/ directory)
+
+Best for complex, multi-criteria evaluation logic:
+
+```
+my-skill-eval/
+├── eval.yaml
+├── tasks/
+└── graders/
+    └── quality_checker.py    # Complex custom logic
+```
+
+Reference in eval.yaml:
+```yaml
+graders:
+  - type: script
+    name: quality_checker
+    config:
+      script: graders/quality_checker.py
+```
+
+**When to use script graders:**
+- Multi-criteria scoring (5+ checks)
+- Domain-specific business logic
+- Reusable across multiple evals
+- Complex pattern matching or analysis
+- Integration with external services
+
+See the [code-explainer example](../examples/code-explainer/graders/explanation_quality.py) for a complete script grader implementation.
+
+---
+
 ## Code Graders
 
 ### `code` - Assertion-Based Grader

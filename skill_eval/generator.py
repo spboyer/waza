@@ -210,26 +210,55 @@ class SkillParser:
     def _extract_keywords(self, content: str, description: str) -> list[str]:
         """Extract important keywords for grading."""
         keywords = set()
+        priority_keywords = set()  # Keywords directly from skill name/description
         
-        # Add words from description
+        # Add key terms from skill name
+        skill_name_words = re.findall(r'[a-zA-Z]+', self.name.lower() if hasattr(self, 'name') else '')
+        priority_keywords.update(w for w in skill_name_words if len(w) > 3)
+        
+        # Add key terms from description (high priority)
         if description:
+            # Look for capitalized terms (likely proper nouns/product names)
             words = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b', description)
-            keywords.update(w.lower() for w in words)
+            priority_keywords.update(w.lower() for w in words if len(w) > 3)
+            # Also lowercase important terms
+            words = re.findall(r'\b([a-z]{4,})\b', description.lower())
+            priority_keywords.update(words)
         
-        # Extract from headers
+        # Extract from headers (good signal for topic keywords)
         headers = re.findall(r'^#+\s+(.+)$', content, re.MULTILINE)
         for h in headers:
-            keywords.update(w.lower() for w in h.split() if len(w) > 3)
+            # Only alphanumeric words
+            words = re.findall(r'\b([a-zA-Z]{4,})\b', h)
+            keywords.update(w.lower() for w in words)
         
-        # Extract technical terms (CamelCase, specific patterns)
+        # Extract technical terms (CamelCase patterns)
         tech_terms = re.findall(r'\b([A-Z][a-z]+[A-Z]\w+)\b', content)
         keywords.update(t.lower() for t in tech_terms)
         
         # Common filter words to remove
-        stop_words = {'the', 'and', 'for', 'with', 'this', 'that', 'from', 'your', 'when', 'what', 'how'}
-        keywords = {k for k in keywords if k not in stop_words and len(k) > 2}
+        stop_words = {
+            'the', 'and', 'for', 'with', 'this', 'that', 'from', 'your', 
+            'when', 'what', 'how', 'about', 'into', 'which', 'will', 'should',
+            'would', 'could', 'have', 'been', 'being', 'here', 'there', 'where',
+            'example', 'examples', 'section', 'overview', 'introduction', 'note',
+            'important', 'warning', 'skill', 'skills', 'using', 'used', 'uses',
+            'access', 'account', 'actions', 'additional', 'activation'
+        }
         
-        return sorted(keywords)[:20]
+        # Filter: alphanumeric only, not stop words, reasonable length
+        priority_keywords = {
+            k for k in priority_keywords 
+            if k not in stop_words and len(k) >= 4 and k.isalpha()
+        }
+        keywords = {
+            k for k in keywords 
+            if k not in stop_words and len(k) >= 4 and k.isalpha()
+        }
+        
+        # Priority keywords first, then general keywords
+        result = sorted(priority_keywords) + sorted(keywords - priority_keywords)
+        return result[:20]
     
     def _extract_best_practices(self, content: str) -> list[str]:
         """Extract best practices mentioned in the skill."""
@@ -268,17 +297,31 @@ class EvalGenerator:
     def __init__(self, skill: ParsedSkill):
         self.skill = skill
     
+    def _escape_yaml_string(self, s: str) -> str:
+        """Escape a string for safe YAML output."""
+        if not s:
+            return ""
+        # Remove any characters that could break YAML
+        # Keep only the first sentence/line and sanitize
+        s = s.split('\n')[0]  # First line only
+        s = re.sub(r'[:\|>\[\]{}#&*!?,]', '', s)  # Remove YAML special chars
+        s = s[:200]  # Limit length
+        return s.strip()
+    
     def generate_eval_yaml(self) -> str:
         """Generate eval.yaml content."""
         # Build graders based on extracted info
         graders = self._generate_graders()
         
+        # Safely escape description
+        desc = self._escape_yaml_string(self.skill.description) if self.skill.description else ''
+        
         yaml_content = f"""# Auto-generated eval specification for {self.skill.name}
 # Generated from SKILL.md - customize as needed
 name: {self._safe_name(self.skill.name)}-eval
-description: |
+description: >
   Evaluation suite for the {self.skill.name} skill.
-  {self.skill.description[:200] if self.skill.description else ''}
+  {desc}
 skill: {self._safe_name(self.skill.name)}
 version: "1.0"
 
