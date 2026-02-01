@@ -6,8 +6,8 @@ import pytest
 @pytest.fixture
 def sample_eval_spec():
     """Provide a sample eval spec for testing."""
-    from skill_eval.schemas.eval_spec import EvalSpec, MetricConfig, GraderConfig, GraderType
-    
+    from skill_eval.schemas.eval_spec import EvalSpec, GraderConfig, GraderType, MetricConfig
+
     return EvalSpec(
         name="sample-eval",
         description="Sample evaluation for testing",
@@ -31,8 +31,8 @@ def sample_eval_spec():
 @pytest.fixture
 def sample_task():
     """Provide a sample task for testing."""
-    from skill_eval.schemas.task import Task, TaskInput, TaskExpected
-    
+    from skill_eval.schemas.task import Task, TaskExpected, TaskInput
+
     return Task(
         id="sample-001",
         name="Sample Task",
@@ -51,7 +51,7 @@ def sample_task():
 def sample_grader_context():
     """Provide a sample grader context for testing."""
     from skill_eval.graders.base import GraderContext
-    
+
     return GraderContext(
         task={"id": "sample-001", "name": "Sample Task"},
         transcript=[

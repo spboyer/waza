@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 
 from skill_eval.issues import _format_issue_body, _format_issue_title
-from skill_eval.schemas.eval_spec import EvalConfig, ExecutorType
 from skill_eval.schemas.results import (
     EvalResult,
     EvalSummary,

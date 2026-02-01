@@ -1,11 +1,12 @@
 """Tests for meta-evaluation (eval-as-skill) capability."""
 
-import pytest
 from pathlib import Path
 
+import pytest
+
+from skill_eval.runner import EvalRunner
 from skill_eval.schemas.eval_spec import EvalSpec
 from skill_eval.schemas.task import Task, TaskInput
-from skill_eval.runner import EvalRunner
 
 
 class TestMetaEvaluation:
@@ -15,7 +16,7 @@ class TestMetaEvaluation:
         """Verify the skill-eval-runner SKILL.md exists and is valid."""
         skill_path = Path(__file__).parent.parent / "skill-eval-runner" / "SKILL.md"
         assert skill_path.exists(), "skill-eval-runner/SKILL.md should exist"
-        
+
         content = skill_path.read_text()
         assert "---" in content, "Should have frontmatter"
         assert "name: skill-eval-runner" in content
@@ -25,7 +26,7 @@ class TestMetaEvaluation:
         """Verify reference documentation exists."""
         refs_path = Path(__file__).parent.parent / "skill-eval-runner" / "references"
         assert refs_path.exists(), "references/ directory should exist"
-        
+
         eval_spec_ref = refs_path / "EVAL-SPEC.md"
         assert eval_spec_ref.exists(), "EVAL-SPEC.md reference should exist"
 
@@ -37,7 +38,7 @@ class TestMetaEvaluation:
             skill="skill-eval-runner",
             graders=[],
         )
-        
+
         # Create a meta-task: asking the eval skill to run evals
         tasks = [
             Task(
@@ -49,10 +50,10 @@ class TestMetaEvaluation:
                 ),
             ),
         ]
-        
+
         runner = EvalRunner(spec=spec)
         result = runner.run(tasks)
-        
+
         assert result.eval_id.startswith("skill-eval-runner-meta-eval")
         assert result.skill == "skill-eval-runner"
         assert result.summary.total_tasks == 1
@@ -63,7 +64,7 @@ class TestMetaEvaluation:
             name="recursive-meta-eval",
             skill="skill-eval-runner",
         )
-        
+
         tasks = [
             Task(
                 id="recursive-001",
@@ -73,10 +74,10 @@ class TestMetaEvaluation:
                 ),
             ),
         ]
-        
+
         runner = EvalRunner(spec=spec)
         result = runner.run(tasks)
-        
+
         # The mock executor will produce output, proving the pipeline works
         assert result.summary.total_tasks == 1
         assert len(result.tasks) == 1
@@ -91,7 +92,7 @@ class TestExampleEvals:
         eval_path = Path(__file__).parent.parent / "examples" / "azure-deploy" / "eval.yaml"
         if not eval_path.exists():
             pytest.skip("azure-deploy example not found")
-        
+
         spec = EvalSpec.from_file(str(eval_path))
         assert spec.name == "azure-deploy-eval"
         assert spec.skill == "azure-deploy"
@@ -102,13 +103,13 @@ class TestExampleEvals:
         eval_path = Path(__file__).parent.parent / "examples" / "azure-deploy" / "eval.yaml"
         if not eval_path.exists():
             pytest.skip("azure-deploy example not found")
-        
+
         spec = EvalSpec.from_file(str(eval_path))
         runner = EvalRunner(spec=spec, base_path=eval_path.parent)
-        
+
         tasks = runner.load_tasks()
         assert len(tasks) >= 2, "Should have at least 2 tasks"
-        
+
         result = runner.run(tasks)
         assert result.summary.total_tasks >= 2
 
@@ -117,7 +118,7 @@ class TestExampleEvals:
         eval_path = Path(__file__).parent.parent / "examples" / "cli-session-recorder" / "eval.yaml"
         if not eval_path.exists():
             pytest.skip("cli-session-recorder example not found")
-        
+
         spec = EvalSpec.from_file(str(eval_path))
         assert spec.name == "cli-session-recorder-eval"
         assert spec.skill == "cli-session-recorder"
@@ -127,12 +128,12 @@ class TestExampleEvals:
         eval_path = Path(__file__).parent.parent / "examples" / "cli-session-recorder" / "eval.yaml"
         if not eval_path.exists():
             pytest.skip("cli-session-recorder example not found")
-        
+
         spec = EvalSpec.from_file(str(eval_path))
         runner = EvalRunner(spec=spec, base_path=eval_path.parent)
-        
+
         tasks = runner.load_tasks()
         assert len(tasks) >= 2
-        
+
         result = runner.run(tasks)
         assert result.summary.total_tasks >= 2
