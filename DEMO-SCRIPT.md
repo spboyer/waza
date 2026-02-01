@@ -4,7 +4,7 @@
 
 ## Demo Overview
 
-**Duration:** ~10-12 minutes  
+**Duration:** ~12-15 minutes  
 **Goal:** Show how to evaluate Agent Skills using the same patterns as AI agent evals
 
 ---
@@ -56,23 +56,90 @@ Usage: skill-eval [OPTIONS] COMMAND [ARGS]...
 Commands:
   analyze       Analyze runtime telemetry data.
   compare       Compare results across multiple eval runs.
+  generate      Generate eval suite from a SKILL.md file.
   init          Initialize a new eval suite for a skill.
   list-graders  List available grader types.
   report        Generate a report from eval results.
   run           Run an evaluation suite.
 ```
 
-> "Notice we have six commands: run, init, compare, analyze, report, and list-graders."
+> "Notice we have seven commands including the new **generate** command for auto-creating evals from SKILL.md files."
 
 ---
 
-## Part 2: Initialize an Eval Suite (2 min)
+## Part 2: Generate Eval from SKILL.md (2 min) ⭐ NEW
 
 ### Talking Points
 
-> "Let's create an eval suite for a skill called 'code-reviewer'. This skill reviews code and provides feedback."
+> "The fastest way to create an eval is to generate it from an existing SKILL.md file. Let's try it with Azure Functions."
 
-> "The init command scaffolds a complete eval suite with everything you need to get started — no boilerplate writing required."
+### Generate from URL
+
+```bash
+skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md \
+  -o azure-functions-eval
+```
+
+**Expected Output:**
+```
+skill-eval v0.1.0
+
+Parsing: https://raw.githubusercontent.com/microsoft/...
+✓ Parsed skill: azure-functions
+  Description: Build and deploy serverless Azure Functions...
+  Triggers extracted: 15
+  Anti-triggers: 4
+  Keywords: 20
+
+✓ Created eval.yaml
+✓ Created trigger_tests.yaml
+✓ Created tasks/task-001.yaml
+✓ Created tasks/task-002.yaml
+✓ Created tasks/task-003.yaml
+✓ Created fixtures/function_app.py
+✓ Created fixtures/host.json
+✓ Created fixtures/requirements.txt
+✓ Created fixtures/local.settings.json
+
+╭─────────────────── ✓ Success ───────────────────╮
+│ Generated eval suite at: azure-functions-eval   │
+│                                                 │
+│ Run with:                                       │
+│   skill-eval run azure-functions-eval/eval.yaml │
+╰─────────────────────────────────────────────────╯
+```
+
+### Explore the Generated Structure
+
+```bash
+tree azure-functions-eval
+```
+
+**Expected:**
+```
+azure-functions-eval/
+├── eval.yaml
+├── fixtures/
+│   ├── function_app.py
+│   ├── host.json
+│   ├── local.settings.json
+│   └── requirements.txt
+├── tasks/
+│   ├── task-001.yaml
+│   ├── task-002.yaml
+│   └── task-003.yaml
+└── trigger_tests.yaml
+```
+
+> "Notice it created **fixtures/** with sample Azure Functions code. This gives the skill real context to work with."
+
+---
+
+## Part 3: Initialize from Scratch (2 min)
+
+### Talking Points
+
+> "You can also create an eval suite from scratch. Let's create one for a 'code-reviewer' skill."
 
 ### Run Init Command
 
@@ -99,24 +166,6 @@ Next steps:
   3. Run: skill-eval run code-reviewer/eval.yaml
 ```
 
-### Explore the Structure
-
-```bash
-tree code-reviewer
-```
-
-### Explain What Was Scaffolded
-
-> "The init command created four key assets:"
-
-> "**eval.yaml** — The main eval specification. It comes pre-configured with three weighted metrics: task completion at 40%, trigger accuracy at 30%, and behavior quality at 30%. It also includes a starter code grader and runs 3 trials per task for consistency."
-
-> "**trigger_tests.yaml** — A template for testing when your skill should and should NOT trigger. This catches both false negatives and false positives."
-
-> "**tasks/example-task.yaml** — A template task showing the structure: inputs, expected outcomes, and assertions. You'll clone this to create real test cases."
-
-> "**graders/custom_grader.py** — A ready-to-run Python script grader. It reads context from stdin, runs your custom logic, and outputs a score. Drop in your validation logic and you're done."
-
 ### Show the Eval Spec
 
 ```bash
@@ -127,7 +176,6 @@ cat code-reviewer/eval.yaml
 - `trials_per_task: 3` — Multiple runs for consistency
 - Three metrics: task_completion (40%), trigger_accuracy (30%), behavior_quality (30%)
 - Configurable thresholds — fail the eval if quality drops
-- Pre-wired to load tasks from `tasks/*.yaml`
 
 ---
 
@@ -225,19 +273,19 @@ EOF
 
 ---
 
-## Part 5: Run the Eval (2 min)
+## Part 5: Run the Eval with Verbose Output (2 min) ⭐ NEW
 
 ### Talking Points
 
-> "Now let's run the evaluation and see the results."
+> "Now let's run the evaluation. I'll use verbose mode to see the conversation in real-time."
 
 ### Execute the Eval
 
 ```bash
-skill-eval run code-reviewer/eval.yaml
+skill-eval run code-reviewer/eval.yaml -v
 ```
 
-**Expected Output:**
+**Expected Output (verbose shows real-time conversation):**
 ```
 skill-eval v0.1.0
 
@@ -249,6 +297,12 @@ skill-eval v0.1.0
   Trials per task: 3
 
 ⠋ Running evaluation...
+  Task: Example Task [Trial 1/3]
+    Prompt: Tell me about this codebase
+    Response: This is a mock response...
+  Task: Example Task [Trial 2/3]
+    ...
+
 ╭────────────────────────── code-reviewer-eval ──────────────────────────╮
 │ ✅ PASSED                                                               │
 │                                                                         │
@@ -265,17 +319,55 @@ skill-eval v0.1.0
 │ trigger_accuracy │  1.00 │      0.90 │ ✅     │
 │ behavior_quality │  1.00 │      0.70 │ ✅     │
 └──────────────────┴───────┴───────────┴────────┘
-
-                       Task Results                        
-┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━┓
-┃ Task                   ┃ Status ┃ Pass Rate ┃ Score ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━┩
-│ Example Task           │ ✅     │    100.0% │  1.00 │
-│ Review Python Function │ ✅     │    100.0% │  1.00 │
-└────────────────────────┴────────┴───────────┴───────┘
 ```
 
-> "Notice it shows the executor and model being used — by default it's the mock executor for fast, offline testing."
+> "Verbose mode shows you the conversation as it happens - great for debugging!"
+
+### Run with Project Context
+
+```bash
+# Use fixtures (generated code files) as context
+skill-eval run azure-functions-eval/eval.yaml --context-dir azure-functions-eval/fixtures -v
+```
+
+> "The --context-dir option provides real project files to the skill, so it has something to work with."
+
+### Save Conversation Transcript
+
+```bash
+skill-eval run azure-functions-eval/eval.yaml \
+  --context-dir azure-functions-eval/fixtures \
+  --log transcript.json \
+  --output results.json
+```
+
+> "The --log flag saves the full conversation transcript for debugging. The --output saves results."
+
+### View Transcript
+
+```bash
+cat transcript.json | python -m json.tool | head -30
+```
+
+**Expected:**
+```json
+[
+  {
+    "timestamp": "2025-01-20T10:30:00Z",
+    "task": "deploy-function-001",
+    "trial": 1,
+    "role": "user",
+    "content": "Help me create an Azure Function..."
+  },
+  {
+    "timestamp": "2025-01-20T10:30:01Z",
+    "task": "deploy-function-001",
+    "trial": 1,
+    "role": "assistant", 
+    "content": "I'll help you create an Azure Function..."
+  }
+]
+```
 
 ### Save Results to JSON
 
@@ -452,13 +544,15 @@ cat .github/workflows/skill-eval.yaml
 
 > "To recap what we've seen:"
 
-1. **Initialize** an eval suite with `skill-eval init`
-2. **Define tasks** — individual test cases
-3. **Define triggers** — when should your skill activate?
-4. **Choose graders** — code, LLM, or human
-5. **Run evals** — locally or in CI/CD
-6. **Compare models** — benchmark across different LLMs
-7. **Get results** — JSON reports aligned with agent eval standards
+1. **Generate** an eval suite from SKILL.md with `skill-eval generate`
+2. **Initialize** from scratch with `skill-eval init`
+3. **Define tasks** — individual test cases with fixtures
+4. **Define triggers** — when should your skill activate?
+5. **Choose graders** — code, LLM, or human
+6. **Run evals** — with `-v` for real-time conversation, `--context-dir` for project files
+7. **Debug** — save transcripts with `--log` for detailed analysis
+8. **Compare models** — benchmark across different LLMs
+9. **Get results** — JSON reports aligned with agent eval standards
 
 > "Skills are becoming as important as agents. Now we can evaluate them with the same rigor."
 
@@ -470,11 +564,26 @@ cat .github/workflows/skill-eval.yaml
 # Initialize new eval suite
 skill-eval init my-skill
 
-# Run evaluation
+# Generate eval from SKILL.md
+skill-eval generate https://example.com/skills/SKILL.md -o ./my-eval
+
+# Run evaluation (basic)
 skill-eval run my-skill/eval.yaml
+
+# Run with verbose output (see conversation)
+skill-eval run my-skill/eval.yaml -v
+
+# Run with project context (from fixtures or real project)
+skill-eval run my-skill/eval.yaml --context-dir ./my-skill/fixtures
 
 # Run with JSON output
 skill-eval run my-skill/eval.yaml -o results.json
+
+# Run with conversation transcript logging
+skill-eval run my-skill/eval.yaml --log transcript.json
+
+# Full debugging run
+skill-eval run my-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json
 
 # Run specific task
 skill-eval run my-skill/eval.yaml --task task-id
@@ -519,12 +628,15 @@ rm -rf skill-eval-demo
 ## Key Messages for Demo
 
 1. **"Evals for skills, just like evals for agents"** — Same patterns, same rigor
-2. **"Three core metrics"** — Task completion, trigger accuracy, behavior quality
-3. **"Multiple grader types"** — From deterministic to AI-powered
-4. **"Model comparison"** — Benchmark skills across different LLMs
-5. **"Two executor modes"** — Mock for CI/CD, Copilot SDK for real tests
-6. **"CI/CD ready"** — Integrate into your pipeline
-7. **"Developer friendly"** — Easy to set up and customize
+2. **"Auto-generate from SKILL.md"** — Get started in seconds with `skill-eval generate`
+3. **"Fixtures for realistic testing"** — Generated project files give context
+4. **"Three core metrics"** — Task completion, trigger accuracy, behavior quality
+5. **"Multiple grader types"** — From deterministic to AI-powered
+6. **"Real-time verbose output"** — See the conversation as it happens
+7. **"Conversation logging"** — Debug with full transcript via `--log`
+8. **"Model comparison"** — Benchmark skills across different LLMs
+9. **"Two executor modes"** — Mock for CI/CD, Copilot SDK for real tests
+10. **"CI/CD ready"** — Integrate into your pipeline
 
 ---
 

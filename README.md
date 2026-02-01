@@ -171,21 +171,22 @@ skill-eval run my-skill/eval.yaml -o results.json
 ```bash
 # Run options
 skill-eval run eval.yaml \
-  --executor mock|copilot-sdk \    # Execution engine
-  --model <model-name> \           # Model to use
-  --output results.json \          # Save results
-  -v, --verbose                    # Show detailed progress and results
+  --executor mock|copilot-sdk \       # Execution engine
+  --model <model-name> \              # Model to use
+  --output results.json \             # Save results
+  --log transcript.json \             # Save full conversation transcript
+  --context-dir ./my-project \        # Directory with project files for context
+  -v, --verbose                       # Show real-time conversation and details
 
 # Init options
 skill-eval init my-skill \
-  --output-dir ./evals \           # Output directory
-  --template minimal|full \        # Template type
-  --from-skill <SKILL.md>          # Generate from SKILL.md file or URL
+  --path ./evals \                    # Output directory
+  --from-skill <SKILL.md>             # Generate from SKILL.md file or URL
 
 # Generate options (auto-generate eval from SKILL.md)
 skill-eval generate https://example.com/SKILL.md \
-  --output-dir ./my-skill-eval \   # Output directory
-  --max-tasks 10                   # Maximum tasks to generate
+  --output ./my-skill-eval \          # Output directory
+  --force                             # Overwrite existing files
 ```
 
 ---
@@ -493,16 +494,34 @@ You can auto-generate eval suites from any skill that follows the [Agent Skills 
 
 ```bash
 # Generate from a URL (e.g., GitHub raw file)
-skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/skills/azure-functions/SKILL.md
+skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md
 
-# Generate from a local file
-skill-eval generate ./my-skill/SKILL.md --output-dir ./evals/my-skill
+# Generate from a local file  
+skill-eval generate ./my-skill/SKILL.md -o ./evals/my-skill
 
-# The generator extracts:
-# - Trigger phrases from activation sections
-# - Anti-triggers from "do not use" sections  
-# - CLI commands and tool patterns
-# - Keywords for behavior testing
+# The generator creates:
+# - eval.yaml with graders and metrics
+# - trigger_tests.yaml with activation tests
+# - tasks/ with example task files
+# - fixtures/ with sample project files for context
+```
+
+### Using Project Context
+
+When running evals, provide real project files for more realistic testing:
+
+```bash
+# Use generated fixtures
+skill-eval run ./my-eval/eval.yaml --context-dir ./my-eval/fixtures
+
+# Use your own project
+skill-eval run ./my-eval/eval.yaml --context-dir ~/projects/my-app
+
+# With verbose output to see the conversation
+skill-eval run ./my-eval/eval.yaml --context-dir ./fixtures -v
+
+# Save conversation transcript for debugging
+skill-eval run ./my-eval/eval.yaml --log ./transcript.json
 ```
 
 ---

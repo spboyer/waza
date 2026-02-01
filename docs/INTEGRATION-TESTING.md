@@ -53,6 +53,24 @@ You can override the executor and model at runtime:
 # Run with Copilot SDK instead of mock
 skill-eval run eval.yaml --executor copilot-sdk --model claude-sonnet-4-20250514
 
+# Run with verbose output to see conversation in real-time
+skill-eval run eval.yaml --executor copilot-sdk -v
+
+# Provide project context files
+skill-eval run eval.yaml --executor copilot-sdk --context-dir ./my-project
+
+# Save conversation transcript for debugging
+skill-eval run eval.yaml --executor copilot-sdk --log transcript.json
+
+# Full debugging session
+skill-eval run eval.yaml \
+  --executor copilot-sdk \
+  --model claude-sonnet-4-20250514 \
+  --context-dir ./fixtures \
+  --log transcript.json \
+  --output results.json \
+  -v
+
 # Compare different models
 skill-eval run eval.yaml --model gpt-4o -o results-gpt4o.json
 skill-eval run eval.yaml --model claude-sonnet-4-20250514 -o results-claude.json

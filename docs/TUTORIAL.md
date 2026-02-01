@@ -12,9 +12,34 @@ This tutorial walks you through creating evaluations for your Agent Skills.
 
 You have several options to create your eval suite:
 
-### Option A: Blank Scaffold
+### Option A: Auto-Generate from SKILL.md (Recommended)
+
+The fastest way to get started is to generate from an existing SKILL.md:
+
 ```bash
-# Create eval scaffolding for your skill
+# Generate eval from a SKILL.md URL
+skill-eval generate https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/plugin/skills/azure-functions/SKILL.md -o ./azure-functions-eval
+
+# Or from a local file
+skill-eval generate ./path/to/SKILL.md -o ./my-skill-eval
+
+# The generator creates:
+# my-skill-eval/
+# ├── eval.yaml           # Main eval configuration
+# ├── trigger_tests.yaml  # Trigger accuracy tests  
+# ├── tasks/              # Generated task definitions
+# │   ├── task-001.yaml
+# │   ├── task-002.yaml
+# │   └── task-003.yaml
+# └── fixtures/           # Sample project files for context
+#     ├── function_app.py
+#     ├── host.json
+#     └── requirements.txt
+```
+
+### Option B: Blank Scaffold
+```bash
+# Create eval scaffolding from scratch
 skill-eval init my-awesome-skill
 
 # This creates:
@@ -25,21 +50,6 @@ skill-eval init my-awesome-skill
 # │   └── example-task.yaml
 # └── graders/
 #     └── custom_grader.py
-```
-
-### Option B: Auto-Generate from SKILL.md
-```bash
-# Generate eval from a SKILL.md file (local or URL)
-skill-eval generate ./path/to/SKILL.md --output-dir ./my-skill-eval
-
-# Or from a URL
-skill-eval generate https://raw.githubusercontent.com/org/repo/main/skills/my-skill/SKILL.md
-
-# The generator automatically extracts:
-# - Trigger phrases from activation sections
-# - Anti-triggers from "do not use" sections
-# - CLI commands and tool patterns
-# - Keywords for behavior testing
 ```
 
 ### Option C: Init with SKILL.md Integration
@@ -209,8 +219,17 @@ should_not_trigger_prompts:
 # Run all tasks
 skill-eval run my-awesome-skill/eval.yaml
 
-# Run with verbose output (shows real-time progress)
+# Run with verbose output (shows real-time conversation)
 skill-eval run my-awesome-skill/eval.yaml -v
+
+# Run with project context (use fixtures or your own project)
+skill-eval run my-awesome-skill/eval.yaml --context-dir ./my-awesome-skill/fixtures
+
+# Save conversation transcript for debugging
+skill-eval run my-awesome-skill/eval.yaml --log transcript.json
+
+# Full debugging run
+skill-eval run my-awesome-skill/eval.yaml -v --context-dir ./fixtures --log transcript.json -o results.json
 
 # Run specific task
 skill-eval run my-awesome-skill/eval.yaml --task deploy-app-001
@@ -237,13 +256,60 @@ Progress: ████████████░░░░░░░░░░░�
 Running: Deploy Simple App (trial 2/3)
 ```
 
-Use `-v/--verbose` for more detail:
+Use `-v/--verbose` for real-time conversation display:
 
 ```
-Progress: ████████████░░░░░░░░░░░░░░░░░░ 4/10 (40%)
-Running: Deploy Simple App (trial 2/3)
-Last: ✅ Create HTTP Function (245ms)
+⠋ Running evaluation...
+  Task: Deploy Simple App [Trial 1/3]
+    Prompt: Help me deploy my application
+    Response: I'll help you deploy using Azure...
+    Tool: azure-deploy (2 calls)
+  Task: Deploy Simple App [Trial 2/3]
+    ...
 ```
+
+### Conversation Transcript Logging
+
+Save the full conversation transcript for detailed debugging:
+
+```bash
+skill-eval run eval.yaml --log transcript.json -v
+```
+
+The transcript includes timestamps, task/trial info, and full message content:
+
+```json
+[
+  {
+    "timestamp": "2025-01-20T10:30:00Z",
+    "task": "deploy-app-001",
+    "trial": 1,
+    "role": "user",
+    "content": "Help me deploy my application"
+  },
+  {
+    "timestamp": "2025-01-20T10:30:01Z",
+    "task": "deploy-app-001",
+    "trial": 1,
+    "role": "assistant",
+    "content": "I'll help you deploy using Azure..."
+  }
+]
+```
+
+### Using Project Context
+
+The `--context-dir` option provides project files to the skill:
+
+```bash
+# Use generated fixtures
+skill-eval run my-skill/eval.yaml --context-dir ./my-skill/fixtures
+
+# Use your real project
+skill-eval run my-skill/eval.yaml --context-dir ~/projects/my-app
+```
+
+This gives the skill real code to work with, making tests more realistic.
 
 ## Step 7: Interpret Results
 
