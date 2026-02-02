@@ -1,6 +1,6 @@
 [project]
 name = "waza"
-version = "0.3.1"
+version = "0.3.2"
 description = "Evaluate Agent Skills like you evaluate AI Agents"
 readme = "README.md"
 license = { text = "MIT" }
