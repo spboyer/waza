@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50;
+}
+
+/* Status colors */
+.status-passed { @apply text-green-600 bg-green-50 border-green-200; }
+.status-failed { @apply text-red-600 bg-red-50 border-red-200; }
+.status-running { @apply text-blue-600 bg-blue-50 border-blue-200; }
+.status-pending { @apply text-gray-600 bg-gray-50 border-gray-200; }

@@ -19,6 +19,7 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 - 📊 **Model Comparison** - Compare results across different models
 - 🔎 **Skill Discovery** - Scan GitHub repos or local directories for skills
 - 📝 **GitHub Issue Creation** - Create issues with eval results automatically
+- 🌐 **Web UI Dashboard** - Visual interface for running and analyzing evals
 
 ---
 
@@ -233,6 +234,38 @@ waza generate --repo org/repo --all --output ./evals                       # Gen
 #   gpt-4o
 #   gpt-5
 ```
+
+---
+
+## Web UI Dashboard
+
+waza includes an optional web interface for visual eval management:
+
+```bash
+# Install with web dependencies
+pip install waza[web]
+
+# Start the server
+waza serve
+
+# Open http://localhost:8000
+```
+
+**Features:**
+- 📊 Dashboard with eval stats and recent runs
+- 📝 Eval list with run history
+- ▶️ One-click eval execution
+- 📈 Real-time progress streaming
+- 🔍 Detailed results with expandable task/trial views
+- 💡 LLM-generated improvement suggestions
+- ⚙️ Settings for default model and executor
+
+**Docker deployment:**
+```bash
+docker-compose up
+```
+
+See [docs/WEB-UI.md](docs/WEB-UI.md) for full documentation.
 
 ---
 

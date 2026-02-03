@@ -1597,5 +1597,48 @@ Duration: {result.summary.duration_ms}ms
                 console.print()
 
 
+@main.command()
+@click.option("--host", default="127.0.0.1", help="Host to bind to")
+@click.option("--port", "-p", default=8000, help="Port to bind to")
+@click.option("--reload", is_flag=True, help="Enable auto-reload for development")
+def serve(host: str, port: int, reload: bool) -> None:
+    """Launch the waza Web UI dashboard.
+    
+    Starts a local web server with a visual interface for:
+    - Creating and editing eval suites
+    - Running evals and monitoring progress
+    - Viewing results, transcripts, and suggestions
+    - Managing skills and configurations
+    
+    Examples:
+    
+      waza serve                    # Start on localhost:8000
+      
+      waza serve --port 3000        # Custom port
+      
+      waza serve --reload           # Development mode with auto-reload
+    """
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]✗ Web UI dependencies not installed.[/red]")
+        console.print("Install with: [bold]pip install waza[web][/bold]")
+        sys.exit(1)
+    
+    console.print(f"[bold blue]waza[/bold blue] v{__version__}")
+    console.print()
+    console.print(f"Starting Web UI on [bold]http://{host}:{port}[/bold]")
+    console.print()
+    console.print("[dim]Press Ctrl+C to stop[/dim]")
+    console.print()
+    
+    uvicorn.run(
+        "waza.api.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
+
+
 if __name__ == "__main__":
     main()
