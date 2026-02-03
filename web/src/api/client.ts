@@ -87,7 +87,7 @@ export interface GeneratePreview {
   triggers_count: number;
   eval_yaml_preview: string;
   tasks_count: number;
-  tasks_preview: { name: string; prompt: string }[];
+  tasks_preview: { name: string; content: string }[];
 }
 
 export interface GenerateResult {

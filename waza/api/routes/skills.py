@@ -128,7 +128,7 @@ async def generate_preview(data: GenerateRequest) -> dict[str, Any]:
 
         # Generate preview content
         eval_yaml = generator.generate_eval_yaml()
-        tasks = generator.generate_tasks()
+        example_tasks = generator.generate_example_tasks()  # Returns list of (name, yaml_content) tuples
 
         return {
             "skill_name": skill.name,
@@ -136,13 +136,13 @@ async def generate_preview(data: GenerateRequest) -> dict[str, Any]:
             "triggers": skill.triggers[:10],  # First 10 triggers
             "triggers_count": len(skill.triggers),
             "eval_yaml_preview": eval_yaml[:2000],
-            "tasks_count": len(tasks),
+            "tasks_count": len(example_tasks),
             "tasks_preview": [
                 {
-                    "name": t.get("name", ""),
-                    "prompt": t.get("prompt", "")[:200],
+                    "name": name,
+                    "content": content[:200],
                 }
-                for t in tasks[:5]
+                for name, content in example_tasks[:5]
             ],
         }
     except Exception as e:
