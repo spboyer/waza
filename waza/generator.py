@@ -365,28 +365,31 @@ tasks:
         for i, trigger in enumerate(self.skill.triggers[:10]):
             should_trigger.append({
                 "prompt": trigger,
-                "reason": f"Skill activation phrase #{i+1}"
+                "reason": f"Skill activation phrase #{i+1}",
+                "confidence": "high"
             })
 
         # Add generic triggers based on skill name
         skill_words = self.skill.name.lower().replace('-', ' ').split()
         should_trigger.append({
             "prompt": f"Help me with {' '.join(skill_words)}",
-            "reason": "Generic skill request"
+            "reason": "Generic skill request",
+            "confidence": "medium"
         })
 
         # Use extracted anti-triggers
         for anti in self.skill.anti_triggers[:5]:
             should_not_trigger.append({
                 "prompt": anti,
-                "reason": "Explicitly excluded use case"
+                "reason": "Explicitly excluded use case",
+                "confidence": "high"
             })
 
         # Add generic anti-triggers
         should_not_trigger.extend([
-            {"prompt": "What is the weather today?", "reason": "Unrelated question"},
-            {"prompt": "Tell me a joke", "reason": "Entertainment request"},
-            {"prompt": "What time is it?", "reason": "General question"},
+            {"prompt": "What is the weather today?", "reason": "Unrelated question", "confidence": "high"},
+            {"prompt": "Tell me a joke", "reason": "Entertainment request", "confidence": "high"},
+            {"prompt": "What time is it?", "reason": "General question", "confidence": "high"},
         ])
 
         lines = [
@@ -403,6 +406,9 @@ tasks:
             prompt = self._escape_yaml(item["prompt"])[:60]
             lines.append(f'  - prompt: "{prompt}"')
             lines.append(f'    reason: "{item["reason"]}"')
+            # Add confidence level (high for explicit triggers, medium for generic)
+            confidence = item.get("confidence", "high")
+            lines.append(f'    confidence: {confidence}')
             lines.append("")
 
         lines.append("should_not_trigger_prompts:")
@@ -410,6 +416,8 @@ tasks:
             prompt = self._escape_yaml(item["prompt"])[:60]
             lines.append(f'  - prompt: "{prompt}"')
             lines.append(f'    reason: "{item["reason"]}"')
+            confidence = item.get("confidence", "high")
+            lines.append(f'    confidence: {confidence}')
             lines.append("")
 
         return "\n".join(lines)

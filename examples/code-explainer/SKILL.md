@@ -1,12 +1,14 @@
 ---
 name: code-explainer
 description: |
-  Explain code snippets, functions, and algorithms in plain language.
-  USE FOR: explain code, what does this code do, break down this function,
-  help me understand this, walk through this algorithm, clarify this logic,
-  explain this snippet, describe what happens here.
+  **UTILITY SKILL** - Explain code snippets, functions, and algorithms in plain language.
+  USE FOR: "explain code", "what does this code do", "break down this function",
+  "help me understand this", "walk through this algorithm", "clarify this logic",
+  "explain this snippet", "describe what happens here".
   DO NOT USE FOR: writing new code (use code generation), fixing bugs (use debugging),
   refactoring (use refactoring skills), code review with action items.
+  INVOKES: file reading tools to access code, language detection for tailored explanations.
+  FOR SINGLE OPERATIONS: If the user just needs to see file contents, use file reading tools directly.
 ---
 
 # Code Explainer
