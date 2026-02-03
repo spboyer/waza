@@ -171,6 +171,7 @@ waza run my-skill/eval.yaml -o results.json
 | Guide | Description |
 |-------|-------------|
 | **[Tutorial](docs/TUTORIAL.md)** | Step-by-step guide to writing skill evals |
+| **[Skill Best Practices](docs/SKILL-BEST-PRACTICES.md)** | Writing high-compliance SKILL.md files |
 | **[Grader Reference](docs/GRADERS.md)** | All 8 grader types with examples |
 | **[Integration Testing](docs/INTEGRATION-TESTING.md)** | Using Copilot SDK for real tests |
 | **[Telemetry Guide](docs/TELEMETRY.md)** | Capturing production metrics |
