@@ -23,12 +23,14 @@ A well-structured frontmatter helps the LLM correctly route user requests to you
 name: my-skill
 description: |
   **{CLASSIFICATION} SKILL** - One-line description of what the skill does.
-  USE FOR: "trigger phrase 1", "trigger phrase 2", "trigger phrase 3".
+  USE FOR: trigger phrase 1, trigger phrase 2, trigger phrase 3.
   DO NOT USE FOR: scenario1 (use other-skill), scenario2 (use mcp-tool).
   INVOKES: `mcp-tool-1`, `mcp-tool-2` for execution.
   FOR SINGLE OPERATIONS: Use `mcp-tool` directly for simple queries.
 ---
 ```
+
+> **Note:** Don't quote trigger phrases in `USE FOR:` - the parser will strip quotes automatically, but unquoted phrases are cleaner.
 
 ### Element Purposes
 
@@ -62,7 +64,7 @@ description: 'Explain code snippets'
 ```yaml
 description: |
   **UTILITY SKILL** - Explain code snippets, functions, and algorithms in plain language.
-  USE FOR: "explain code", "what does this function do", "break down this algorithm".
+  USE FOR: explain code, what does this function do, break down this algorithm.
   DO NOT USE FOR: writing new code (use code generation), fixing bugs (use debugging).
   INVOKES: file reading tools for code access, language detection for tailored explanations.
   FOR SINGLE OPERATIONS: Use file reading tools directly to just view code.

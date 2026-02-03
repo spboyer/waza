@@ -146,6 +146,8 @@ class SkillParser:
         clean_triggers = []
         for t in triggers:
             t = t.strip().rstrip('.,;')
+            # Strip surrounding quotes (single or double)
+            t = t.strip('"\'')
             if t and t.lower() not in seen and len(t) > 5:
                 seen.add(t.lower())
                 clean_triggers.append(t)
