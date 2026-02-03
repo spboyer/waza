@@ -77,6 +77,10 @@ class StorageManager:
             "raw": eval_path.read_text(),
         }
 
+    def get_eval_dir(self, eval_id: str) -> Path:
+        """Get the directory for an eval (where tasks/ folder is)."""
+        return self.base_dir / "evals" / eval_id
+
     def save_eval(self, eval_id: str, content: str) -> dict[str, Any]:
         """Save eval content."""
         eval_path = self.base_dir / "evals" / f"{eval_id}.yaml"
@@ -199,13 +203,27 @@ class StorageManager:
                 if results_file.exists():
                     try:
                         results = json.loads(results_file.read_text())
+                        # Parse timestamp from directory name (format: YYYYMMDD-HHMMSS-...)
+                        timestamp = results.get("timestamp")
+                        if not timestamp or not timestamp.startswith("20"):
+                            # Extract from dir name: 20260203-175347-...
+                            parts = d.name.split("-")
+                            if len(parts) >= 2:
+                                date_part = parts[0]  # YYYYMMDD
+                                time_part = parts[1]  # HHMMSS
+                                if len(date_part) == 8 and len(time_part) == 6:
+                                    timestamp = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}T{time_part[:2]}:{time_part[2:4]}:{time_part[4:6]}"
+                                else:
+                                    timestamp = d.name
+                            else:
+                                timestamp = d.name
                         runs.append({
                             "id": d.name,
                             "eval_name": results.get("eval_name", ""),
                             "status": results.get("status", "completed"),
                             "pass_rate": results.get("summary", {}).get("pass_rate", 0),
                             "score": results.get("summary", {}).get("composite_score", 0),
-                            "timestamp": results.get("timestamp", d.name[:19]),
+                            "timestamp": timestamp,
                             "duration_ms": results.get("duration_ms", 0),
                         })
                     except Exception:

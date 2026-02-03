@@ -38,20 +38,40 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
     })
 
     try:
-        # Get eval content
+        # Get eval content and path
         eval_data = storage.get_eval(eval_id)
         if not eval_data:
             raise ValueError(f"Eval {eval_id} not found")
 
+        # Get the eval directory path (where tasks/ folder is)
+        eval_dir = storage.get_eval_dir(eval_id)
+
         # Import runner and execute
         from waza.runner import EvalRunner
         from waza.schemas.eval_spec import EvalSpec
+        from waza.executors import MockExecutor, CopilotExecutor
 
         spec = EvalSpec.from_yaml(eval_data["raw"])
-        runner = EvalRunner(spec, executor=executor, model=model)
+
+        # Create executor based on type
+        if executor == "mock":
+            exec_instance = MockExecutor()
+        else:
+            exec_instance = CopilotExecutor(model=model)
+
+        runner = EvalRunner(
+            spec,
+            executor=exec_instance,
+            base_path=eval_dir,  # Pass the eval directory so tasks/*.yaml resolves
+        )
 
         # Run with progress updates
-        total_tasks = len(spec.get_tasks())
+        tasks = runner.load_tasks()
+        total_tasks = len(tasks)
+
+        if total_tasks == 0:
+            raise ValueError(f"No tasks found in {eval_dir}/tasks/")
+
         completed = 0
 
         async def progress_callback(task_name: str) -> None:
@@ -65,7 +85,7 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
             }
 
         # Run the eval
-        results = await runner.run_async()
+        results = await runner.run_async(tasks)
 
         # Convert results to dict
         results_dict = results.model_dump()
