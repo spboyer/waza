@@ -30,7 +30,7 @@ def is_oauth_configured() -> bool:
 async def auth_status(request: Request) -> dict[str, Any]:
     """Get current authentication status."""
     session_id = request.cookies.get("waza_session")
-    
+
     if session_id and session_id in sessions:
         user = sessions[session_id]
         return {
@@ -42,7 +42,7 @@ async def auth_status(request: Request) -> dict[str, Any]:
             },
             "oauth_configured": is_oauth_configured(),
         }
-    
+
     return {
         "authenticated": False,
         "user": None,
@@ -55,11 +55,11 @@ async def login() -> RedirectResponse:
     """Initiate GitHub OAuth login."""
     if not is_oauth_configured():
         raise HTTPException(status_code=400, detail="GitHub OAuth not configured")
-    
+
     state = secrets.token_urlsafe(32)
     # Store state for verification (in production, use Redis with TTL)
     sessions[f"state:{state}"] = {"valid": True}
-    
+
     auth_url = (
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
@@ -67,7 +67,7 @@ async def login() -> RedirectResponse:
         f"&scope=repo,read:user,copilot"
         f"&state={state}"
     )
-    
+
     return RedirectResponse(url=auth_url)
 
 
@@ -79,7 +79,7 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
     if state_key not in sessions:
         raise HTTPException(status_code=400, detail="Invalid state")
     del sessions[state_key]
-    
+
     # Exchange code for token
     async with httpx.AsyncClient() as client:
         token_response = await client.post(
@@ -92,16 +92,16 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
             },
             headers={"Accept": "application/json"},
         )
-        
+
         if token_response.status_code != 200:
             raise HTTPException(status_code=400, detail="Failed to get access token")
-        
+
         token_data = token_response.json()
         access_token = token_data.get("access_token")
-        
+
         if not access_token:
             raise HTTPException(status_code=400, detail="No access token received")
-        
+
         # Get user info
         user_response = await client.get(
             "https://api.github.com/user",
@@ -110,12 +110,12 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
                 "Accept": "application/vnd.github.v3+json",
             },
         )
-        
+
         if user_response.status_code != 200:
             raise HTTPException(status_code=400, detail="Failed to get user info")
-        
+
         user_data = user_response.json()
-    
+
     # Create session
     session_id = secrets.token_urlsafe(32)
     sessions[session_id] = {
@@ -124,7 +124,7 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
         "avatar_url": user_data.get("avatar_url"),
         "access_token": access_token,
     }
-    
+
     # Redirect to frontend with session cookie
     redirect = RedirectResponse(url="/", status_code=302)
     redirect.set_cookie(
@@ -134,7 +134,7 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
         samesite="lax",
         max_age=60 * 60 * 24 * 7,  # 1 week
     )
-    
+
     return redirect
 
 
@@ -142,10 +142,10 @@ async def oauth_callback(code: str, state: str, response: Response) -> RedirectR
 async def logout(request: Request, response: Response) -> dict[str, str]:
     """Log out the current user."""
     session_id = request.cookies.get("waza_session")
-    
+
     if session_id and session_id in sessions:
         del sessions[session_id]
-    
+
     response.delete_cookie("waza_session")
     return {"status": "logged_out"}
 

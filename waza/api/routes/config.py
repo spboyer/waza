@@ -30,13 +30,13 @@ async def update_config(data: ConfigUpdate) -> dict[str, Any]:
     """Update configuration."""
     storage = get_storage()
     config = storage.get_config()
-    
+
     if data.model is not None:
         config["model"] = data.model
     if data.executor is not None:
         config["executor"] = data.executor
     if data.theme is not None:
         config["theme"] = data.theme
-    
+
     storage.save_config(config)
     return config

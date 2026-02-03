@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import uuid
 from datetime import datetime
@@ -127,21 +126,21 @@ class StorageManager:
         run_dir = self.base_dir / "runs" / run_id
         if not run_dir.exists():
             return None
-        
+
         result: dict[str, Any] = {"id": run_id}
-        
+
         results_file = run_dir / "results.json"
         if results_file.exists():
             result["results"] = json.loads(results_file.read_text())
-        
+
         transcript_file = run_dir / "transcript.json"
         if transcript_file.exists():
             result["transcript"] = json.loads(transcript_file.read_text())
-        
+
         suggestions_file = run_dir / "suggestions.md"
         if suggestions_file.exists():
             result["suggestions"] = suggestions_file.read_text()
-        
+
         return result
 
     def create_run(self, eval_id: str) -> str:
@@ -150,14 +149,14 @@ class StorageManager:
         run_id = f"{timestamp}-{eval_id}-{uuid.uuid4().hex[:8]}"
         run_dir = self.base_dir / "runs" / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Write initial status
         (run_dir / "results.json").write_text(json.dumps({
             "eval_name": eval_id,
             "status": "pending",
             "timestamp": datetime.now().isoformat(),
         }))
-        
+
         return run_id
 
     def update_run(self, run_id: str, results: dict[str, Any]) -> None:

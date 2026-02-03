@@ -28,7 +28,7 @@ class RunCreate(BaseModel):
 async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> None:
     """Execute an eval run in the background."""
     storage = get_storage()
-    
+
     # Update status to running
     active_runs[run_id] = {"status": "running", "progress": 0, "current_task": ""}
     storage.update_run(run_id, {
@@ -36,24 +36,24 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
         "status": "running",
         "progress": 0,
     })
-    
+
     try:
         # Get eval content
         eval_data = storage.get_eval(eval_id)
         if not eval_data:
             raise ValueError(f"Eval {eval_id} not found")
-        
+
         # Import runner and execute
         from waza.runner import EvalRunner
         from waza.schemas.eval_spec import EvalSpec
-        
+
         spec = EvalSpec.from_yaml(eval_data["raw"])
         runner = EvalRunner(spec, executor=executor, model=model)
-        
+
         # Run with progress updates
         total_tasks = len(spec.get_tasks())
         completed = 0
-        
+
         async def progress_callback(task_name: str) -> None:
             nonlocal completed
             completed += 1
@@ -63,17 +63,17 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
                 "progress": progress,
                 "current_task": task_name,
             }
-        
+
         # Run the eval
         results = await runner.run_async()
-        
+
         # Convert results to dict
         results_dict = results.model_dump()
         results_dict["status"] = "completed"
-        
+
         storage.update_run(run_id, results_dict)
         active_runs[run_id] = {"status": "completed", "progress": 100}
-        
+
     except Exception as e:
         error_result = {
             "eval_name": eval_id,
@@ -96,11 +96,11 @@ async def get_run(run_id: str) -> dict[str, Any]:
     run = get_storage().get_run(run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     # Include live status if running
     if run_id in active_runs:
         run["live_status"] = active_runs[run_id]
-    
+
     return run
 
 
@@ -108,33 +108,33 @@ async def get_run(run_id: str) -> dict[str, Any]:
 async def create_run(data: RunCreate, background_tasks: BackgroundTasks) -> dict[str, str]:
     """Start a new eval run."""
     storage = get_storage()
-    
+
     # Verify eval exists
     eval_data = storage.get_eval(data.eval_id)
     if not eval_data:
         raise HTTPException(status_code=404, detail="Eval not found")
-    
+
     # Create run
     run_id = storage.create_run(data.eval_id)
-    
+
     # Start background execution
     background_tasks.add_task(execute_run, run_id, data.eval_id, data.executor, data.model)
-    
+
     return {"run_id": run_id, "status": "started"}
 
 
 @router.get("/{run_id}/stream")
 async def stream_run(run_id: str, request: Request) -> StreamingResponse:
     """Stream run progress via SSE."""
-    
+
     async def event_generator():
         last_status = None
-        
+
         while True:
             # Check if client disconnected
             if await request.is_disconnected():
                 break
-            
+
             # Get current status
             if run_id in active_runs:
                 status = active_runs[run_id]
@@ -145,18 +145,18 @@ async def stream_run(run_id: str, request: Request) -> StreamingResponse:
                     status = {"status": run["results"].get("status", "completed")}
                 else:
                     status = {"status": "unknown"}
-            
+
             # Only send if changed
             if status != last_status:
                 yield f"data: {json.dumps(status)}\n\n"
                 last_status = status
-            
+
             # Exit if completed or failed
             if status.get("status") in ("completed", "failed"):
                 break
-            
+
             await asyncio.sleep(0.5)
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
@@ -172,9 +172,9 @@ async def delete_run(run_id: str) -> dict[str, str]:
     """Delete a run."""
     if not get_storage().delete_run(run_id):
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     # Clean up active run if present
     if run_id in active_runs:
         del active_runs[run_id]
-    
+
     return {"status": "deleted"}

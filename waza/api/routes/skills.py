@@ -30,13 +30,13 @@ async def scan_repo(data: ScanRequest, request: Request) -> list[dict[str, Any]]
     """Scan a GitHub repo for skills (requires auth)."""
     user = require_auth(request)
     access_token = user.get("access_token")
-    
+
     try:
         from waza.scanner import SkillScanner
-        
+
         scanner = SkillScanner(github_token=access_token)
         skills = scanner.scan_github_repo(data.repo)
-        
+
         return [
             {
                 "name": s.name,
@@ -47,7 +47,7 @@ async def scan_repo(data: ScanRequest, request: Request) -> list[dict[str, Any]]
             for s in skills
         ]
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/generate")
@@ -56,26 +56,26 @@ async def generate_eval(data: GenerateRequest, request: Request) -> dict[str, An
     # Auth required for LLM-assisted generation
     if data.assist:
         require_auth(request)
-    
+
     try:
         from waza.generator import EvalGenerator, SkillParser
-        
+
         parser = SkillParser()
         skill = parser.parse_url(data.skill_url)
-        
+
         generator = EvalGenerator(skill)
-        
+
         # Generate eval content
         eval_yaml = generator.generate_eval_yaml()
         trigger_tests = generator.generate_trigger_tests()
-        
+
         # Determine name
         name = data.name or skill.name or "generated-eval"
-        
+
         # Save to storage
         storage = get_storage()
         eval_data = storage.create_eval(name, eval_yaml)
-        
+
         return {
             "eval_id": eval_data["id"],
             "skill_name": skill.name,
@@ -84,4 +84,4 @@ async def generate_eval(data: GenerateRequest, request: Request) -> dict[str, An
             "trigger_tests": trigger_tests,
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
