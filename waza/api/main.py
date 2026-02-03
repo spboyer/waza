@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -21,7 +22,7 @@ app = FastAPI(
 # CORS middleware for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,8 +43,24 @@ async def health_check() -> dict[str, str]:
 
 
 # Mount static files for production build (if exists)
-static_dir = Path(__file__).parent.parent.parent / "web" / "dist"
-if static_dir.exists():
+# Check multiple possible locations
+def _find_static_dir() -> Path | None:
+    candidates = [
+        # Development: relative to repo root
+        Path(__file__).parent.parent.parent / "web" / "dist",
+        # Installed package with bundled frontend
+        Path(__file__).parent / "static",
+        # Environment variable override
+        Path(os.environ.get("WAZA_STATIC_DIR", "")) if os.environ.get("WAZA_STATIC_DIR") else None,
+    ]
+    for candidate in candidates:
+        if candidate and candidate.exists() and (candidate / "index.html").exists():
+            return candidate
+    return None
+
+
+static_dir = _find_static_dir()
+if static_dir:
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 
 
