@@ -8,7 +8,19 @@ export interface Eval {
   created_at: string;
   updated_at: string;
   path?: string;
+  content?: Record<string, unknown>;
+  raw?: string;
   last_run?: Run;
+}
+
+export interface Task {
+  id: string;
+  name: string;
+  prompt?: string;
+  graders?: string[];
+  path?: string;
+  content?: Record<string, unknown>;
+  raw?: string;
 }
 
 export interface Run {

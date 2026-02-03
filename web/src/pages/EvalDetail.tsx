@@ -1,32 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, 
-  Play, 
-  Clock, 
-  CheckCircle2, 
+import { useState } from 'react'
+import {
+  ArrowLeft,
+  Play,
+  Clock,
+  CheckCircle2,
   XCircle,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Edit,
+  Copy,
+  Trash2,
+  FileText
 } from 'lucide-react'
-import { getEval, listRuns, startRun } from '../api/client'
+import { getEval, listRuns, startRun, listTasks, duplicateTask, deleteTask, getTask } from '../api/client'
+import TaskEditor from '../components/TaskEditor'
+import type { Task } from '../types'
 
 export default function EvalDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  
+  const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined) // undefined = closed, null = new, Task = edit
+
   const { data: evalData, isLoading: evalLoading } = useQuery({
     queryKey: ['eval', id],
     queryFn: () => getEval(id!),
     enabled: !!id,
   })
-  
+
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks', id],
+    queryFn: () => listTasks(id!),
+    enabled: !!id,
+  })
+
   const { data: runs = [] } = useQuery({
     queryKey: ['runs', id],
     queryFn: () => listRuns(id),
     enabled: !!id,
   })
-  
+
   const runMutation = useMutation({
     mutationFn: () => startRun(id!),
     onSuccess: (run) => {
@@ -34,7 +49,27 @@ export default function EvalDetail() {
       navigate(`/runs/${run.id}`)
     },
   })
-  
+
+  const duplicateMutation = useMutation({
+    mutationFn: (taskId: string) => duplicateTask(id!, taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (taskId: string) => deleteTask(id!, taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
+    },
+  })
+
+  const handleEditTask = async (task: Task) => {
+    // Fetch full task content
+    const fullTask = await getTask(id!, task.id)
+    setEditingTask(fullTask)
+  }
+
   if (evalLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -42,7 +77,7 @@ export default function EvalDetail() {
       </div>
     )
   }
-  
+
   if (!evalData) {
     return (
       <div className="text-center py-12">
@@ -59,8 +94,8 @@ export default function EvalDetail() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <Link 
-            to="/evals" 
+          <Link
+            to="/evals"
             className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -68,7 +103,7 @@ export default function EvalDetail() {
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">{evalData.name}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {evalData.skill} • {evalData.task_count} tasks
+            {evalData.content?.skill as string || evalData.skill} • {tasks.length} tasks
           </p>
         </div>
         <button
@@ -80,13 +115,89 @@ export default function EvalDetail() {
           {runMutation.isPending ? 'Starting...' : 'Run Eval'}
         </button>
       </div>
-      
+
+      {/* Tasks */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-gray-900">Tasks</h2>
+          <button
+            onClick={() => setEditingTask(null)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-waza-600 text-white rounded-lg hover:bg-waza-700"
+          >
+            <Plus className="w-4 h-4" />
+            Add Task
+          </button>
+        </div>
+
+        {tasksLoading ? (
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-waza-600 mx-auto" />
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+            <p>No tasks yet. Add a task to get started.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {tasks.map(task => (
+              <div
+                key={task.id}
+                className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50"
+              >
+                <FileText className="w-4 h-4 text-gray-400" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900">{task.name}</div>
+                  {task.prompt && (
+                    <div className="text-sm text-gray-500 truncate">{task.prompt}</div>
+                  )}
+                  {task.graders && task.graders.length > 0 && (
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      Graders: {task.graders.join(', ')}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleEditTask(task)}
+                    className="p-1.5 text-gray-400 hover:text-waza-600 hover:bg-waza-50 rounded"
+                    title="Edit task"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => duplicateMutation.mutate(task.id)}
+                    disabled={duplicateMutation.isPending}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                    title="Duplicate task"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Delete task "${task.name}"?`)) {
+                        deleteMutation.mutate(task.id)
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                    title="Delete task"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Run History */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">Run History</h2>
         </div>
-        
+
         {runs.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             No runs yet. Click "Run Eval" to start!
@@ -110,7 +221,7 @@ export default function EvalDetail() {
                 </div>
                 {run.results && (
                   <div className={`text-sm font-medium ${
-                    run.results.pass_rate === 1 ? 'text-green-600' : 
+                    run.results.pass_rate === 1 ? 'text-green-600' :
                     run.results.pass_rate >= 0.5 ? 'text-yellow-600' : 'text-red-600'
                   }`}>
                     {(run.results.pass_rate * 100).toFixed(0)}% passed
@@ -122,6 +233,15 @@ export default function EvalDetail() {
           </div>
         )}
       </div>
+
+      {/* Task Editor Modal */}
+      {editingTask !== undefined && (
+        <TaskEditor
+          evalId={id!}
+          task={editingTask}
+          onClose={() => setEditingTask(undefined)}
+        />
+      )}
     </div>
   )
 }

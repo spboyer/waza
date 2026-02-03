@@ -1,39 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { 
-  FileText, 
-  Play, 
-  Trash2, 
+import {
+  FileText,
+  Play,
+  Trash2,
   ChevronRight,
-  Plus,
-  FolderOpen
+  FolderOpen,
+  Sparkles
 } from 'lucide-react'
 import { listEvals, deleteEval, startRun } from '../api/client'
 import { useState } from 'react'
+import GenerateModal from '../components/GenerateModal'
 
 export default function Evals() {
   const queryClient = useQueryClient()
-  const [importing, setImporting] = useState(false)
-  
+  const [showGenerate, setShowGenerate] = useState(false)
+
   const { data: evals = [], isLoading } = useQuery({
     queryKey: ['evals'],
     queryFn: listEvals,
   })
-  
+
   const deleteMutation = useMutation({
     mutationFn: deleteEval,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['evals'] })
     },
   })
-  
+
   const runMutation = useMutation({
     mutationFn: (evalId: string) => startRun(evalId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['runs'] })
     },
   })
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -53,17 +54,17 @@ export default function Evals() {
           </p>
         </div>
         <button
-          onClick={() => setImporting(true)}
+          onClick={() => setShowGenerate(true)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-waza-600 text-white rounded-lg hover:bg-waza-700 transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Import Eval
+          <Sparkles className="w-4 h-4" />
+          Generate Eval
         </button>
       </div>
       
       {/* Eval list */}
       {evals.length === 0 ? (
-        <EmptyState onImport={() => setImporting(true)} />
+        <EmptyState onGenerate={() => setShowGenerate(true)} />
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {evals.map(evalItem => (
@@ -130,15 +131,15 @@ export default function Evals() {
         </div>
       )}
       
-      {/* Import modal placeholder */}
-      {importing && (
-        <ImportModal onClose={() => setImporting(false)} />
+      {/* Generate modal */}
+      {showGenerate && (
+        <GenerateModal onClose={() => setShowGenerate(false)} />
       )}
     </div>
   )
 }
 
-function EmptyState({ onImport }: { onImport: () => void }) {
+function EmptyState({ onGenerate }: { onGenerate: () => void }) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
       <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
@@ -146,49 +147,15 @@ function EmptyState({ onImport }: { onImport: () => void }) {
       </div>
       <h3 className="text-lg font-medium text-gray-900 mb-2">No evaluations yet</h3>
       <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-        Import an eval from your local machine or generate one from a SKILL.md file
+        Generate an eval from a SKILL.md file to get started
       </p>
       <button
-        onClick={onImport}
+        onClick={onGenerate}
         className="inline-flex items-center gap-2 px-4 py-2 bg-waza-600 text-white rounded-lg hover:bg-waza-700 transition-colors"
       >
-        <Plus className="w-4 h-4" />
-        Import Eval
+        <Sparkles className="w-4 h-4" />
+        Generate Eval
       </button>
-    </div>
-  )
-}
-
-function ImportModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Import Evaluation</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            ×
-          </button>
-        </div>
-        <div className="p-6">
-          <p className="text-sm text-gray-500 mb-4">
-            To import an eval, use the CLI:
-          </p>
-          <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-            waza generate &lt;SKILL.md&gt; -o ./my-eval
-          </pre>
-          <p className="text-sm text-gray-500 mt-4">
-            Then restart the server to see your eval.
-          </p>
-        </div>
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

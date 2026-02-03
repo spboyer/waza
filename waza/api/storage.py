@@ -84,10 +84,13 @@ class StorageManager:
         return self.get_eval(eval_id)  # type: ignore
 
     def delete_eval(self, eval_id: str) -> bool:
-        """Delete an eval."""
+        """Delete an eval and its tasks directory."""
         eval_path = self.base_dir / "evals" / f"{eval_id}.yaml"
+        tasks_dir = self.base_dir / "evals" / eval_id
         if eval_path.exists():
             eval_path.unlink()
+            if tasks_dir.exists():
+                shutil.rmtree(tasks_dir)
             return True
         return False
 
@@ -96,6 +99,94 @@ class StorageManager:
         eval_id = name.lower().replace(" ", "-")
         eval_id = "".join(c if c.isalnum() or c == "-" else "" for c in eval_id)
         return self.save_eval(eval_id, content)
+
+    # Task management
+    def list_tasks(self, eval_id: str) -> list[dict[str, Any]]:
+        """List all tasks in an eval."""
+        import yaml
+        tasks_dir = self.base_dir / "evals" / eval_id / "tasks"
+        if not tasks_dir.exists():
+            # Check if eval references external tasks
+            eval_data = self.get_eval(eval_id)
+            if eval_data and eval_data.get("content"):
+                # Return inline tasks if any
+                inline_tasks = eval_data["content"].get("tasks", [])
+                if isinstance(inline_tasks, list) and inline_tasks:
+                    # Check if they're file patterns or inline task dicts
+                    tasks = []
+                    for i, t in enumerate(inline_tasks):
+                        if isinstance(t, dict):
+                            tasks.append({
+                                "id": t.get("id", f"task-{i}"),
+                                "name": t.get("name", f"Task {i+1}"),
+                                "prompt": t.get("prompt", "")[:100],
+                                "graders": list(t.get("graders", {}).keys()) if isinstance(t.get("graders"), dict) else [],
+                            })
+                    return tasks
+            return []
+
+        tasks = []
+        for f in tasks_dir.glob("*.yaml"):
+            try:
+                content = yaml.safe_load(f.read_text())
+                tasks.append({
+                    "id": f.stem,
+                    "name": content.get("name", f.stem),
+                    "prompt": content.get("prompt", "")[:100],
+                    "graders": list(content.get("graders", {}).keys()) if isinstance(content.get("graders"), dict) else [],
+                    "path": str(f),
+                })
+            except Exception:
+                continue
+        return sorted(tasks, key=lambda x: x["name"])
+
+    def get_task(self, eval_id: str, task_id: str) -> dict[str, Any] | None:
+        """Get a single task by ID."""
+        import yaml
+        task_path = self.base_dir / "evals" / eval_id / "tasks" / f"{task_id}.yaml"
+        if not task_path.exists():
+            return None
+        content = yaml.safe_load(task_path.read_text())
+        return {
+            "id": task_id,
+            "path": str(task_path),
+            "content": content,
+            "raw": task_path.read_text(),
+        }
+
+    def save_task(self, eval_id: str, task_id: str, content: str) -> dict[str, Any]:
+        """Save task content."""
+        tasks_dir = self.base_dir / "evals" / eval_id / "tasks"
+        tasks_dir.mkdir(parents=True, exist_ok=True)
+        task_path = tasks_dir / f"{task_id}.yaml"
+        task_path.write_text(content)
+        return self.get_task(eval_id, task_id)  # type: ignore
+
+    def create_task(self, eval_id: str, name: str, content: str) -> dict[str, Any]:
+        """Create a new task."""
+        task_id = name.lower().replace(" ", "-")
+        task_id = "".join(c if c.isalnum() or c == "-" else "" for c in task_id)
+        # Ensure unique ID
+        tasks_dir = self.base_dir / "evals" / eval_id / "tasks"
+        if tasks_dir.exists() and (tasks_dir / f"{task_id}.yaml").exists():
+            task_id = f"{task_id}-{uuid.uuid4().hex[:6]}"
+        return self.save_task(eval_id, task_id, content)
+
+    def duplicate_task(self, eval_id: str, task_id: str) -> dict[str, Any] | None:
+        """Duplicate a task with a new ID."""
+        original = self.get_task(eval_id, task_id)
+        if not original:
+            return None
+        new_id = f"{task_id}-copy-{uuid.uuid4().hex[:6]}"
+        return self.save_task(eval_id, new_id, original["raw"])
+
+    def delete_task(self, eval_id: str, task_id: str) -> bool:
+        """Delete a task."""
+        task_path = self.base_dir / "evals" / eval_id / "tasks" / f"{task_id}.yaml"
+        if task_path.exists():
+            task_path.unlink()
+            return True
+        return False
 
     # Runs management
     def list_runs(self, limit: int = 50) -> list[dict[str, Any]]:

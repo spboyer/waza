@@ -1,5 +1,7 @@
 /** API client for waza backend */
 
+import type { Task } from '../types';
+
 const BASE_URL = '/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -10,11 +12,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       ...options?.headers,
     },
   });
-  
+
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    const error = await response.text();
+    throw new Error(error || `API error: ${response.status} ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
@@ -32,7 +35,7 @@ export async function getEval(id: string): Promise<import('../types').Eval> {
   return request(`/evals/${id}`);
 }
 
-export async function createEval(data: { name: string; skill: string; yaml_content: string }): Promise<import('../types').Eval> {
+export async function createEval(data: { name: string; content: string }): Promise<import('../types').Eval> {
   return request('/evals', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -41,6 +44,72 @@ export async function createEval(data: { name: string; skill: string; yaml_conte
 
 export async function deleteEval(id: string): Promise<void> {
   await request(`/evals/${id}`, { method: 'DELETE' });
+}
+
+// Tasks
+export async function listTasks(evalId: string): Promise<Task[]> {
+  return request(`/evals/${evalId}/tasks`);
+}
+
+export async function getTask(evalId: string, taskId: string): Promise<Task> {
+  return request(`/evals/${evalId}/tasks/${taskId}`);
+}
+
+export async function createTask(evalId: string, data: { name: string; content: string }): Promise<Task> {
+  return request(`/evals/${evalId}/tasks`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateTask(evalId: string, taskId: string, content: string): Promise<Task> {
+  return request(`/evals/${evalId}/tasks/${taskId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function duplicateTask(evalId: string, taskId: string): Promise<Task> {
+  return request(`/evals/${evalId}/tasks/${taskId}/duplicate`, {
+    method: 'POST',
+  });
+}
+
+export async function deleteTask(evalId: string, taskId: string): Promise<void> {
+  await request(`/evals/${evalId}/tasks/${taskId}`, { method: 'DELETE' });
+}
+
+// Skills / Generate
+export interface GeneratePreview {
+  skill_name: string;
+  description: string;
+  triggers: string[];
+  triggers_count: number;
+  eval_yaml_preview: string;
+  tasks_count: number;
+  tasks_preview: { name: string; prompt: string }[];
+}
+
+export interface GenerateResult {
+  eval_id: string;
+  skill_name: string;
+  triggers_count: number;
+  tasks_created: string[];
+  message: string;
+}
+
+export async function generatePreview(skillUrl: string): Promise<GeneratePreview> {
+  return request('/skills/generate-preview', {
+    method: 'POST',
+    body: JSON.stringify({ skill_url: skillUrl }),
+  });
+}
+
+export async function generateEval(skillUrl: string, name?: string, assist?: boolean): Promise<GenerateResult> {
+  return request('/skills/generate', {
+    method: 'POST',
+    body: JSON.stringify({ skill_url: skillUrl, name, assist }),
+  });
 }
 
 // Runs
@@ -67,16 +136,16 @@ export async function stopRun(id: string): Promise<void> {
 // SSE stream for run progress
 export function streamRun(runId: string, onProgress: (data: import('../types').RunProgress | import('../types').RunResults) => void): () => void {
   const eventSource = new EventSource(`${BASE_URL}/runs/${runId}/stream`);
-  
+
   eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
     onProgress(data);
   };
-  
+
   eventSource.onerror = () => {
     eventSource.close();
   };
-  
+
   return () => eventSource.close();
 }
 
