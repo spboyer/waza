@@ -61,7 +61,21 @@ def _find_static_dir() -> Path | None:
 
 static_dir = _find_static_dir()
 if static_dir:
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    from fastapi.responses import FileResponse
+
+    # Mount static assets (js, css, etc.)
+    app.mount("/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
+
+    # Serve favicon
+    @app.get("/favicon.svg")
+    async def favicon() -> FileResponse:
+        return FileResponse(static_dir / "favicon.svg")
+
+    # SPA catch-all - serve index.html for all non-API routes
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str) -> FileResponse:
+        # Return index.html for SPA routing
+        return FileResponse(static_dir / "index.html")
 
 
 def create_app() -> FastAPI:
