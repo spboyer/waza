@@ -12,8 +12,7 @@ import {
   Edit,
   Copy,
   Trash2,
-  FileText,
-  Settings
+  FileText
 } from 'lucide-react'
 import { getEval, listRuns, startRun, listTasks, duplicateTask, deleteTask, getTask } from '../api/client'
 import TaskEditor from '../components/TaskEditor'
@@ -104,16 +103,7 @@ export default function EvalDetail() {
             <ArrowLeft className="w-4 h-4" />
             Back to evals
           </Link>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-gray-900">{evalData.name}</h1>
-            <button
-              onClick={() => setEditingEval(true)}
-              className="p-1.5 text-gray-400 hover:text-waza-600 hover:bg-waza-50 rounded"
-              title="Edit eval configuration"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+          <h1 className="text-2xl font-semibold text-gray-900">{evalData.name}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {evalData.content?.skill as string || evalData.skill} • {tasks.length} tasks
           </p>
@@ -126,6 +116,50 @@ export default function EvalDetail() {
           <Play className="w-4 h-4" />
           {runMutation.isPending ? 'Starting...' : 'Run Eval'}
         </button>
+      </div>
+
+      {/* Configuration */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-gray-900">Configuration</h2>
+          <button
+            onClick={() => setEditingEval(true)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-waza-600 hover:bg-waza-50 rounded-lg"
+          >
+            <Edit className="w-4 h-4" />
+            Edit
+          </button>
+        </div>
+        <div className="px-6 py-4">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">Name</dt>
+              <dd className="font-medium text-gray-900 mt-0.5">{evalData.name}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Skill</dt>
+              <dd className="font-medium text-gray-900 mt-0.5">
+                {(evalData.content?.skill as string) || evalData.skill || '—'}
+              </dd>
+            </div>
+            {typeof evalData.content?.description === 'string' && evalData.content.description && (
+              <div className="sm:col-span-2">
+                <dt className="text-gray-500">Description</dt>
+                <dd className="font-medium text-gray-900 mt-0.5">
+                  {evalData.content.description}
+                </dd>
+              </div>
+            )}
+            {typeof evalData.content?.context_dir === 'string' && evalData.content.context_dir && (
+              <div>
+                <dt className="text-gray-500">Context Directory</dt>
+                <dd className="font-mono text-gray-900 mt-0.5 text-xs">
+                  {evalData.content.context_dir}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
       </div>
 
       {/* Tasks */}

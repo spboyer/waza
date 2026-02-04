@@ -610,8 +610,8 @@ class TestTaskCRUD:
 class TestEvalEditor:
     """Test eval.yaml editor functionality."""
     
-    def test_edit_eval_button_exists(self, browser_context):
-        """Test that edit eval config button exists."""
+    def test_configuration_section_exists(self, browser_context):
+        """Test that Configuration section exists on eval detail."""
         context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
@@ -622,9 +622,31 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            assert edit_btn, "Edit eval config button not found"
+            heading = page.query_selector("h2:has-text('Configuration')")
+            assert heading, "Configuration section not found"
+        
+        page.close()
+    
+    def test_edit_eval_button_exists(self, browser_context):
+        """Test that edit eval config button exists in Configuration section."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
+            
+            # Look for Edit button (not Edit task)
+            edit_btns = page.query_selector_all("button:has-text('Edit')")
+            # First Edit button is in Configuration section
+            assert len(edit_btns) >= 1, "Edit button not found"
         
         page.close()
     
@@ -640,10 +662,12 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            if edit_btn:
-                edit_btn.click()
+            # Find the first Edit button (Configuration section)
+            edit_btns = page.query_selector_all("button:has-text('Edit')")
+            if edit_btns:
+                edit_btns[0].click()
                 time.sleep(0.5)
                 
                 modal = page.query_selector(".fixed.inset-0")
@@ -663,10 +687,11 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            if edit_btn:
-                edit_btn.click()
+            edit_btns = page.query_selector_all("button:has-text('Edit')")
+            if edit_btns:
+                edit_btns[0].click()
                 time.sleep(1)  # Wait for Monaco to load
                 
                 content = page.content()
@@ -688,10 +713,11 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            if edit_btn:
-                edit_btn.click()
+            edit_btns = page.query_selector_all("button:has-text('Edit')")
+            if edit_btns:
+                edit_btns[0].click()
                 time.sleep(0.5)
                 
                 save_btn = page.query_selector("button:has-text('Save Changes')")
@@ -713,10 +739,11 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            if edit_btn:
-                edit_btn.click()
+            edit_btns = page.query_selector_all("button:has-text('Edit')")
+            if edit_btns:
+                edit_btns[0].click()
                 time.sleep(0.5)
                 
                 cancel_btn = page.query_selector("button:has-text('Cancel')")
@@ -729,8 +756,8 @@ class TestEvalEditor:
         
         page.close()
     
-    def test_eval_editor_info_message(self, browser_context):
-        """Test that eval editor shows info about editable fields."""
+    def test_configuration_shows_name(self, browser_context):
+        """Test that configuration section shows eval name."""
         context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
@@ -741,16 +768,29 @@ class TestEvalEditor:
         if eval_link:
             eval_link.click()
             page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
             
-            edit_btn = page.query_selector("button[title='Edit eval configuration']")
-            if edit_btn:
-                edit_btn.click()
-                time.sleep(0.5)
-                
-                content = page.content()
-                # Check for info message about editable fields
-                has_info = "name" in content and "skill" in content
-                assert has_info, "Info message about editable fields not found"
+            content = page.content()
+            assert "Name" in content, "Name field not shown in Configuration"
+        
+        page.close()
+    
+    def test_configuration_shows_skill(self, browser_context):
+        """Test that configuration section shows skill name."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)  # Wait for React to render
+            
+            content = page.content()
+            assert "Skill" in content, "Skill field not shown in Configuration"
         
         page.close()
 
