@@ -18,7 +18,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(error || `API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  // Handle empty responses (like DELETE)
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+  return JSON.parse(text);
 }
 
 // Health

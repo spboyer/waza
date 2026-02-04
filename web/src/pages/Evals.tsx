@@ -26,6 +26,9 @@ export default function Evals() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['evals'] })
     },
+    onError: (err: Error) => {
+      alert(`Failed to delete: ${err.message}`)
+    },
   })
 
   const runMutation = useMutation({
@@ -91,7 +94,7 @@ export default function Evals() {
                     <>
                       <span>•</span>
                       <span>
-                        Last run: {new Date(evalItem.last_run.started_at).toLocaleDateString()}
+                        Last run: {evalItem.last_run.timestamp ? new Date(evalItem.last_run.timestamp).toLocaleDateString() : 'Unknown'}
                       </span>
                     </>
                   )}

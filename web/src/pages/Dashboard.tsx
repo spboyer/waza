@@ -102,15 +102,15 @@ export default function Dashboard() {
                 <StatusIcon status={run.status} />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 truncate">
-                    {run.eval_id}
+                    {run.eval_name || run.eval_id || 'Unknown'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {run.model} • {new Date(run.started_at).toLocaleString()}
+                    {run.timestamp ? new Date(run.timestamp).toLocaleString() : 'No date'}
                   </div>
                 </div>
-                {run.results && (
+                {run.pass_rate !== undefined && (
                   <div className="text-sm font-medium">
-                    {(run.results.pass_rate * 100).toFixed(0)}%
+                    {(run.pass_rate * 100).toFixed(0)}%
                   </div>
                 )}
               </Link>

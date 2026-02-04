@@ -78,7 +78,7 @@ export default function RunDetail() {
       {/* Header */}
       <div>
         <Link 
-          to={`/evals/${run.eval_id}`}
+          to={run.eval_id ? `/evals/${run.eval_id}` : `/evals/${run.eval_name}`}
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -91,7 +91,7 @@ export default function RunDetail() {
           </h1>
         </div>
         <p className="text-sm text-gray-500 mt-1">
-          {run.model} • {run.executor} • Started {new Date(run.started_at).toLocaleString()}
+          {run.eval_name || run.eval_id} • {run.timestamp ? new Date(run.timestamp).toLocaleString() : 'No date'}
         </p>
       </div>
       

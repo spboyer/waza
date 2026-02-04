@@ -213,18 +213,18 @@ export default function EvalDetail() {
                 <StatusIcon status={run.status} />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900">
-                    {new Date(run.started_at).toLocaleString()}
+                    {run.timestamp ? new Date(run.timestamp).toLocaleString() : 'No date'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {run.model} • {run.executor}
+                    {run.status} {run.pass_rate !== undefined ? `• ${(run.pass_rate * 100).toFixed(0)}%` : ''}
                   </div>
                 </div>
-                {run.results && (
+                {run.pass_rate !== undefined && (
                   <div className={`text-sm font-medium ${
-                    run.results.pass_rate === 1 ? 'text-green-600' :
-                    run.results.pass_rate >= 0.5 ? 'text-yellow-600' : 'text-red-600'
+                    run.pass_rate === 1 ? 'text-green-600' :
+                    run.pass_rate >= 0.5 ? 'text-yellow-600' : 'text-red-600'
                   }`}>
-                    {(run.results.pass_rate * 100).toFixed(0)}% passed
+                    {(run.pass_rate * 100).toFixed(0)}% passed
                   </div>
                 )}
                 <ChevronRight className="w-4 h-4 text-gray-400" />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Save, Loader2, AlertCircle } from 'lucide-react'
+import Editor from '@monaco-editor/react'
 import { createTask, updateTask } from '../api/client'
 import type { Task } from '../types'
 
@@ -82,7 +83,7 @@ export default function TaskEditor({ evalId, task, onClose }: TaskEditorProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-medium text-gray-900">
@@ -125,18 +126,31 @@ export default function TaskEditor({ evalId, task, onClose }: TaskEditorProps) {
             </div>
           )}
 
-          {/* YAML Editor */}
+          {/* YAML Editor with Monaco */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Task YAML
             </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={20}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-waza-500 focus:border-waza-500 resize-none"
-              placeholder="Enter task YAML..."
-            />
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              <Editor
+                height="400px"
+                defaultLanguage="yaml"
+                value={content}
+                onChange={(value) => setContent(value || '')}
+                theme="vs-light"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  wrappingIndent: 'indent',
+                  automaticLayout: true,
+                  tabSize: 2,
+                  insertSpaces: true,
+                }}
+              />
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Define the task prompt, expected behavior, and graders in YAML format
             </p>

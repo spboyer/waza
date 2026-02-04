@@ -25,12 +25,17 @@ export interface Task {
 
 export interface Run {
   id: string;
-  eval_id: string;
+  eval_id?: string;
+  eval_name?: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
-  started_at: string;
+  started_at?: string;
+  timestamp?: string;
   completed_at?: string;
-  model: string;
-  executor: string;
+  model?: string;
+  executor?: string;
+  pass_rate?: number;
+  score?: number;
+  duration_ms?: number;
   results?: RunResults;
   progress?: RunProgress;
 }
