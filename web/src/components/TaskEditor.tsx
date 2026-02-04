@@ -158,30 +158,62 @@ export default function TaskEditor({ evalId, task, onClose }: TaskEditorProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isPending || (!isEditing && !name.trim())}
-            className="px-4 py-2 bg-waza-600 text-white rounded-lg hover:bg-waza-700 disabled:opacity-50 flex items-center gap-2"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                {isEditing ? 'Save Changes' : 'Create Task'}
-              </>
-            )}
-          </button>
+        <div className="px-6 py-4 border-t border-gray-200 flex items-start justify-between gap-4">
+          {/* Hints */}
+          <div className="text-xs text-gray-500 max-w-md">
+            <details className="mb-2">
+              <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
+                Task Fields
+              </summary>
+              <ul className="mt-1 ml-4 space-y-0.5 text-gray-500">
+                <li><code className="bg-gray-100 px-1 rounded">name</code> — Task identifier</li>
+                <li><code className="bg-gray-100 px-1 rounded">prompt</code> — The instruction sent to the agent</li>
+                <li><code className="bg-gray-100 px-1 rounded">expected_behavior</code> — List of expected outcomes</li>
+                <li><code className="bg-gray-100 px-1 rounded">difficulty</code> — <code>easy</code>, <code>medium</code>, or <code>hard</code></li>
+                <li><code className="bg-gray-100 px-1 rounded">context_files</code> — Files to include as context</li>
+                <li><code className="bg-gray-100 px-1 rounded">timeout</code> — Max seconds for task execution</li>
+              </ul>
+            </details>
+            <details>
+              <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
+                Task Graders
+              </summary>
+              <ul className="mt-1 ml-4 space-y-0.5 text-gray-500">
+                <li><code className="bg-gray-100 px-1 rounded">regex</code> — Match pattern in output</li>
+                <li><code className="bg-gray-100 px-1 rounded">contains_text</code> — Check for specific text</li>
+                <li><code className="bg-gray-100 px-1 rounded">file_exists</code> — Verify file was created</li>
+                <li><code className="bg-gray-100 px-1 rounded">json_schema</code> — Validate JSON structure</li>
+                <li><code className="bg-gray-100 px-1 rounded">llm</code> — LLM-based evaluation</li>
+              </ul>
+            </details>
+          </div>
+          
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isPending || (!isEditing && !name.trim())}
+              className="px-4 py-2 bg-waza-600 text-white rounded-lg hover:bg-waza-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {isEditing ? 'Save Changes' : 'Create Task'}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

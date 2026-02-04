@@ -131,10 +131,12 @@ export default function EvalDetail() {
           </button>
         </div>
         <div className="px-6 py-4">
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">Name</dt>
-              <dd className="font-medium text-gray-900 mt-0.5">{evalData.name}</dd>
+              <dd className="font-medium text-gray-900 mt-0.5">
+                {(evalData.content?.name as string) || evalData.name || '—'}
+              </dd>
             </div>
             <div>
               <dt className="text-gray-500">Skill</dt>
@@ -142,19 +144,74 @@ export default function EvalDetail() {
                 {(evalData.content?.skill as string) || evalData.skill || '—'}
               </dd>
             </div>
+            <div>
+              <dt className="text-gray-500">Version</dt>
+              <dd className="font-medium text-gray-900 mt-0.5">
+                {(evalData.content?.version as string) || '—'}
+              </dd>
+            </div>
             {typeof evalData.content?.description === 'string' && evalData.content.description && (
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-3">
                 <dt className="text-gray-500">Description</dt>
                 <dd className="font-medium text-gray-900 mt-0.5">
                   {evalData.content.description}
                 </dd>
               </div>
             )}
+            {/* Config section */}
+            {typeof evalData.content?.config === 'object' && evalData.content.config && (
+              <>
+                <div>
+                  <dt className="text-gray-500">Trials per Task</dt>
+                  <dd className="font-medium text-gray-900 mt-0.5">
+                    {String((evalData.content.config as Record<string, unknown>).trials_per_task ?? 1)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500">Timeout</dt>
+                  <dd className="font-medium text-gray-900 mt-0.5">
+                    {String((evalData.content.config as Record<string, unknown>).timeout_seconds ?? 300)}s
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500">Executor</dt>
+                  <dd className="font-medium text-gray-900 mt-0.5">
+                    {String((evalData.content.config as Record<string, unknown>).executor ?? 'mock')}
+                  </dd>
+                </div>
+              </>
+            )}
             {typeof evalData.content?.context_dir === 'string' && evalData.content.context_dir && (
-              <div>
+              <div className="sm:col-span-2 lg:col-span-3">
                 <dt className="text-gray-500">Context Directory</dt>
                 <dd className="font-mono text-gray-900 mt-0.5 text-xs">
                   {evalData.content.context_dir}
+                </dd>
+              </div>
+            )}
+            {/* Metrics summary */}
+            {Array.isArray(evalData.content?.metrics) && (evalData.content.metrics as unknown[]).length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-3">
+                <dt className="text-gray-500">Metrics</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {(evalData.content.metrics as Array<{name: string}>).map((m, i) => (
+                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      {m.name}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {/* Graders summary */}
+            {Array.isArray(evalData.content?.graders) && (evalData.content.graders as unknown[]).length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-3">
+                <dt className="text-gray-500">Graders</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {(evalData.content.graders as Array<{type: string; name?: string}>).map((g, i) => (
+                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                      {g.name || g.type}
+                    </span>
+                  ))}
                 </dd>
               </div>
             )}
