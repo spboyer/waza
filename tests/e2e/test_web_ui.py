@@ -54,7 +54,11 @@ def browser_context(server):
     browser = playwright.chromium.launch(headless=True)
     context = browser.new_context(viewport={"width": 1280, "height": 800})
     
-    yield context, server
+    # Handle confirm dialogs automatically
+    def handle_dialog(page):
+        page.on("dialog", lambda dialog: dialog.accept())
+    
+    yield context, server, handle_dialog
     
     context.close()
     browser.close()
@@ -66,7 +70,7 @@ class TestDashboard:
     
     def test_dashboard_loads(self, browser_context):
         """Test that dashboard loads without errors."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(base_url)
@@ -82,7 +86,7 @@ class TestDashboard:
     
     def test_dashboard_shows_stats(self, browser_context):
         """Test that dashboard shows stats cards."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(base_url)
@@ -96,7 +100,7 @@ class TestDashboard:
     
     def test_dashboard_recent_runs(self, browser_context):
         """Test that recent runs section displays properly."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(base_url)
@@ -116,7 +120,7 @@ class TestEvalsPage:
     
     def test_evals_page_loads(self, browser_context):
         """Test that evals page loads."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(f"{base_url}/evals")
@@ -130,7 +134,7 @@ class TestEvalsPage:
     
     def test_evals_navigation(self, browser_context):
         """Test navigation from dashboard to evals."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(base_url)
@@ -147,7 +151,7 @@ class TestEvalsPage:
     
     def test_generate_modal_opens(self, browser_context):
         """Test that generate/import modal can be opened."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(f"{base_url}/evals")
@@ -176,7 +180,7 @@ class TestEvalDetail:
     
     def test_eval_detail_loads(self, browser_context):
         """Test that eval detail page loads for existing eval."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         # First get list of evals
@@ -205,7 +209,7 @@ class TestEvalDetail:
     
     def test_task_list_displays(self, browser_context):
         """Test that task list displays on eval detail."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         page.goto(f"{base_url}/evals")
@@ -228,7 +232,7 @@ class TestRunHistory:
     
     def test_run_history_no_invalid_dates(self, browser_context):
         """Test that run history shows valid dates."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         # Check dashboard
@@ -256,7 +260,7 @@ class TestAPIHealth:
     
     def test_health_endpoint(self, browser_context):
         """Test health endpoint returns valid response."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/api/health")
@@ -272,7 +276,7 @@ class TestAPIHealth:
     
     def test_evals_endpoint(self, browser_context):
         """Test evals endpoint returns list."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/api/evals")
@@ -282,7 +286,7 @@ class TestAPIHealth:
     
     def test_runs_endpoint(self, browser_context):
         """Test runs endpoint returns list."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/api/runs")
@@ -296,7 +300,7 @@ class TestSPARouting:
     
     def test_direct_evals_route(self, browser_context):
         """Test direct navigation to /evals works."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/evals")
@@ -310,7 +314,7 @@ class TestSPARouting:
     
     def test_direct_settings_route(self, browser_context):
         """Test direct navigation to /settings works."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/settings")
@@ -320,12 +324,307 @@ class TestSPARouting:
     
     def test_nonexistent_route_fallback(self, browser_context):
         """Test that nonexistent routes still load app."""
-        context, base_url = browser_context
+        context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
         response = page.goto(f"{base_url}/nonexistent-page-xyz")
         # Should still return 200 (SPA handles routing)
         assert response.status == 200
+        
+        page.close()
+
+
+class TestGenerateModal:
+    """Test suite generation functionality."""
+    
+    def test_generate_modal_opens(self, browser_context):
+        """Test that generate modal opens from evals page."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        gen_btn = page.query_selector("button:has-text('Generate')")
+        assert gen_btn, "Generate button not found"
+        gen_btn.click()
+        time.sleep(0.5)
+        
+        # Modal should be visible
+        modal = page.query_selector("[role='dialog']") or page.query_selector(".fixed.inset-0")
+        assert modal, "Modal did not open"
+        
+        page.close()
+    
+    def test_generate_modal_has_url_input(self, browser_context):
+        """Test that generate modal has URL input field."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        gen_btn = page.query_selector("button:has-text('Generate')")
+        gen_btn.click()
+        time.sleep(0.5)
+        
+        # Check for URL input
+        url_input = page.query_selector("input[placeholder*='URL']") or \
+                    page.query_selector("input[type='url']") or \
+                    page.query_selector("input")
+        assert url_input, "URL input field not found"
+        
+        page.close()
+    
+    def test_generate_accepts_url(self, browser_context):
+        """Test that generate modal accepts a SKILL.md URL."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        gen_btn = page.query_selector("button:has-text('Generate')")
+        gen_btn.click()
+        time.sleep(0.5)
+        
+        url_input = page.query_selector("input")
+        if url_input:
+            url_input.fill("https://raw.githubusercontent.com/microsoft/GitHub-Copilot-for-Azure/main/skills/azure-functions/SKILL.md")
+            
+            # Value should be set
+            assert "azure-functions" in url_input.input_value().lower() or \
+                   "skill" in url_input.input_value().lower()
+        
+        page.close()
+
+
+class TestTaskCRUD:
+    """Test task CRUD operations."""
+    
+    def test_tasks_section_exists(self, browser_context):
+        """Test that tasks section exists on eval detail."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            heading = page.query_selector("h2:has-text('Tasks')") or \
+                      page.query_selector("h3:has-text('Tasks')")
+            assert heading, "Tasks section not found"
+        
+        page.close()
+    
+    def test_edit_task_button(self, browser_context):
+        """Test that edit task button exists and opens editor."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit task']")
+            assert edit_btn, "Edit task button not found"
+            
+            edit_btn.click()
+            time.sleep(0.5)
+            
+            editor = page.query_selector(".monaco-editor") or \
+                     page.query_selector("textarea")
+            assert editor, "Editor did not open"
+        
+        page.close()
+    
+    def test_duplicate_task_button(self, browser_context):
+        """Test that duplicate task button exists."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            dup_btn = page.query_selector("button[title='Duplicate task']")
+            assert dup_btn, "Duplicate task button not found"
+        
+        page.close()
+    
+    def test_delete_task_button(self, browser_context):
+        """Test that delete task button exists."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            del_btn = page.query_selector("button[title='Delete task']")
+            assert del_btn, "Delete task button not found"
+        
+        page.close()
+    
+    def test_add_task_button(self, browser_context):
+        """Test that add task button exists."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            add_btn = page.query_selector("button:has-text('Add Task')")
+            assert add_btn, "Add Task button not found"
+        
+        page.close()
+    
+    def test_task_editor_has_yaml(self, browser_context):
+        """Test that task editor shows YAML content."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit task']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(1)
+                
+                content = page.content()
+                has_yaml = "name:" in content or "prompt:" in content
+                assert has_yaml, "Task YAML content not displayed"
+        
+        page.close()
+    
+    def test_task_editor_save_cancel(self, browser_context):
+        """Test that task editor has save/cancel buttons."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit task']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(0.5)
+                
+                save_btn = page.query_selector("button:has-text('Save')")
+                cancel_btn = page.query_selector("button:has-text('Cancel')")
+                assert save_btn or cancel_btn, "Save/Cancel buttons not found"
+        
+        page.close()
+    
+    def test_duplicate_task_works(self, browser_context):
+        """Test that duplicating a task increases task count."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(0.5)
+            
+            tasks_before = len(page.query_selector_all("button[title='Duplicate task']"))
+            
+            dup_btn = page.query_selector("button[title='Duplicate task']")
+            if dup_btn:
+                dup_btn.click()
+                time.sleep(1)
+                page.wait_for_load_state("networkidle")
+                
+                tasks_after = len(page.query_selector_all("button[title='Duplicate task']"))
+                assert tasks_after == tasks_before + 1, \
+                    f"Expected {tasks_before + 1} tasks, got {tasks_after}"
+        
+        page.close()
+    
+    def test_delete_task_works(self, browser_context):
+        """Test that deleting a task decreases task count."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        setup_dialog(page)  # Handle confirm dialog
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(0.5)
+            
+            tasks_before = len(page.query_selector_all("button[title='Delete task']"))
+            
+            if tasks_before > 1:  # Only delete if more than 1 task
+                del_btn = page.query_selector("button[title='Delete task']")
+                if del_btn:
+                    del_btn.click()
+                    time.sleep(1)
+                    page.wait_for_load_state("networkidle")
+                    
+                    tasks_after = len(page.query_selector_all("button[title='Delete task']"))
+                    assert tasks_after == tasks_before - 1, \
+                        f"Expected {tasks_before - 1} tasks, got {tasks_after}"
+        
+        page.close()
+
+
+class TestRunEval:
+    """Test eval run functionality."""
+    
+    def test_run_eval_button(self, browser_context):
+        """Test that Run Eval button exists."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            assert run_btn, "Run Eval button not found"
         
         page.close()
 
