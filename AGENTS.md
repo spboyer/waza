@@ -4,6 +4,136 @@
 
 This repository contains `waza`, a CLI tool for evaluating Agent Skills. When making changes, follow these guidelines to maintain consistency and quality.
 
+## Web UI (`waza serve`)
+
+The `waza serve` command starts a web dashboard for managing evals, tasks, and runs.
+
+### Architecture
+
+```
+waza/api/               # FastAPI backend
+├── main.py             # App entry, SPA routing, static files
+├── auth.py             # Authentication (Azure Easy Auth + gh CLI)
+├── storage.py          # JSON/YAML file storage in ~/.waza/
+└── routes/
+    ├── evals.py        # Eval CRUD + task management
+    ├── runs.py         # Run execution + SSE streaming
+    └── skills.py       # SKILL.md generation endpoints
+
+web/                    # React frontend (Vite + TypeScript + Tailwind)
+├── src/
+│   ├── pages/          # Dashboard, Evals, EvalDetail, RunDetail, Settings
+│   ├── components/     # TaskEditor (Monaco), GenerateModal
+│   ├── api/client.ts   # API client with auth
+│   └── types/          # TypeScript interfaces
+└── dist/               # Built assets (served by FastAPI)
+```
+
+### Key Patterns
+
+#### SPA Routing
+The FastAPI app serves the React SPA. Client-side routes (e.g., `/evals/azure-functions`) are handled by returning `index.html` for all non-API, non-asset paths:
+
+```python
+# Mount assets first, then catch-all for SPA
+app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    return FileResponse(index_path)
+```
+
+#### Authentication
+Supports two auth modes:
+1. **Azure Easy Auth** (deployed): Reads `X-MS-CLIENT-PRINCIPAL` headers
+2. **GitHub CLI** (local): Calls `gh auth token` subprocess, fetches user from GitHub API
+
+```python
+# Auto-detect auth in get_current_user()
+if easy_auth_header:
+    return parse_easy_auth(header)
+else:
+    token = subprocess.run(["gh", "auth", "token"], capture_output=True)
+    return fetch_github_user(token)
+```
+
+#### Task CRUD
+Tasks are stored as individual YAML files in `~/.waza/evals/{eval_id}/tasks/`:
+
+```python
+# Storage methods
+storage.list_tasks(eval_id)      # Returns list of task dicts
+storage.get_task(eval_id, task_id)
+storage.save_task(eval_id, task_id, yaml_content)
+storage.create_task(eval_id, name, yaml_content)
+storage.duplicate_task(eval_id, task_id)
+storage.delete_task(eval_id, task_id)
+```
+
+#### Run Execution
+Runs execute in background tasks with SSE streaming for progress:
+
+```python
+# Start run
+background_tasks.add_task(execute_run, run_id, eval_id, executor, model)
+
+# Stream progress via SSE
+@router.get("/{run_id}/stream")
+async def stream_run(run_id: str):
+    async def event_generator():
+        while run_id in active_runs:
+            yield f"data: {json.dumps(active_runs[run_id])}\n\n"
+            await asyncio.sleep(0.5)
+```
+
+### Frontend Components
+
+#### TaskEditor
+Rich YAML editor using Monaco Editor:
+- Syntax highlighting for YAML
+- Save/Cancel actions
+- Used for edit, create, and duplicate operations
+
+#### GenerateModal
+Import skills from SKILL.md URLs:
+- URL input with preview
+- LLM-assist checkbox (requires auth)
+- Progress indicator during generation
+
+### E2E Testing
+
+Tests use Playwright and cover:
+- Dashboard, Evals, EvalDetail, RunDetail pages
+- Task CRUD operations (edit, duplicate, delete)
+- Generate modal and URL input
+- API endpoints (health, evals, runs, auth)
+- SPA routing for direct navigation
+- Error handling for failed runs
+
+Run E2E tests:
+```bash
+cd tests/e2e && pytest test_web_ui.py -v
+```
+
+### Development Workflow
+
+```bash
+# Start backend + frontend dev server
+cd web && npm run dev    # Frontend on :5173
+waza serve               # Backend on :8000
+
+# Build for production
+cd web && npm run build  # Outputs to web/dist/
+waza serve               # Serves built assets
+```
+
+### Storage Locations
+
+- Evals: `~/.waza/evals/{eval_id}.yaml`
+- Tasks: `~/.waza/evals/{eval_id}/tasks/*.yaml`
+- Runs: `~/.waza/runs/{timestamp}-{eval_id}-{uuid}/`
+- Results: `~/.waza/runs/{run_id}/results.json`
+
 ## Copilot SDK Usage
 
 **IMPORTANT:** The GitHub Copilot SDK package is `copilot`, NOT `copilot_sdk`.

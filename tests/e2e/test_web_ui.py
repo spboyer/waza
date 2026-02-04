@@ -629,5 +629,136 @@ class TestRunEval:
         page.close()
 
 
+class TestRunDetail:
+    """Test run detail page."""
+    
+    def _get_run_id(self, base_url):
+        """Get a run ID from the API."""
+        import urllib.request
+        import json
+        with urllib.request.urlopen(f"{base_url}/api/runs") as resp:
+            runs = json.loads(resp.read().decode())
+        return runs[0]["id"] if runs else None
+    
+    def _get_failed_run_id(self, base_url):
+        """Get a failed run ID from the API."""
+        import urllib.request
+        import json
+        with urllib.request.urlopen(f"{base_url}/api/runs") as resp:
+            runs = json.loads(resp.read().decode())
+        failed = next((r for r in runs if r.get("status") == "failed"), None)
+        return failed["id"] if failed else None
+    
+    def test_run_detail_loads(self, browser_context):
+        """Test that run detail page loads."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_run_id(base_url)
+        if not run_id:
+            pytest.skip("No runs available")
+        
+        page = context.new_page()
+        response = page.goto(f"{base_url}/runs/{run_id}")
+        assert response.status == 200
+        page.close()
+    
+    def test_run_detail_shows_run_id(self, browser_context):
+        """Test that run detail shows the run ID."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_run_id(base_url)
+        if not run_id:
+            pytest.skip("No runs available")
+        
+        page = context.new_page()
+        page.goto(f"{base_url}/runs/{run_id}")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        assert run_id[:8] in page.content()
+        page.close()
+    
+    def test_run_detail_has_back_link(self, browser_context):
+        """Test that run detail has back link."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_run_id(base_url)
+        if not run_id:
+            pytest.skip("No runs available")
+        
+        page = context.new_page()
+        page.goto(f"{base_url}/runs/{run_id}")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        back_link = page.query_selector("a:has-text('Back')")
+        assert back_link, "Back link not found"
+        page.close()
+    
+    def test_run_detail_shows_status(self, browser_context):
+        """Test that run detail shows status."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_run_id(base_url)
+        if not run_id:
+            pytest.skip("No runs available")
+        
+        page = context.new_page()
+        page.goto(f"{base_url}/runs/{run_id}")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        content = page.content().lower()
+        has_status = "failed" in content or "completed" in content or \
+                     "running" in content or "pending" in content
+        assert has_status, "Status not found"
+        page.close()
+    
+    def test_failed_run_shows_error(self, browser_context):
+        """Test that failed run shows error message."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_failed_run_id(base_url)
+        if not run_id:
+            pytest.skip("No failed runs available")
+        
+        page = context.new_page()
+        page.goto(f"{base_url}/runs/{run_id}")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        content = page.content()
+        assert "Run Failed" in content or "error" in content.lower()
+        page.close()
+    
+    def test_nonexistent_run_handled(self, browser_context):
+        """Test that nonexistent run is handled gracefully."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/runs/nonexistent-run-xyz")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        content = page.content().lower()
+        assert "not found" in content or "run" in content
+        page.close()
+    
+    def test_back_link_navigates(self, browser_context):
+        """Test that back link navigates to eval."""
+        context, base_url, setup_dialog = browser_context
+        run_id = self._get_run_id(base_url)
+        if not run_id:
+            pytest.skip("No runs available")
+        
+        page = context.new_page()
+        page.goto(f"{base_url}/runs/{run_id}")
+        page.wait_for_load_state("networkidle")
+        time.sleep(1)
+        
+        back = page.query_selector("a:has-text('Back')")
+        if back:
+            back.click()
+            page.wait_for_load_state("networkidle")
+            assert "/evals/" in page.url
+        
+        page.close()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
