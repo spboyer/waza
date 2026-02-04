@@ -3,6 +3,20 @@ import { Save, RefreshCw } from 'lucide-react'
 import { getConfig, updateConfig } from '../api/client'
 import { useState, useEffect } from 'react'
 
+// Supported models
+const MODELS = [
+  { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (Default)', provider: 'Anthropic' },
+  { value: 'claude-sonnet-4', label: 'Claude Sonnet 4', provider: 'Anthropic' },
+  { value: 'claude-opus-4', label: 'Claude Opus 4', provider: 'Anthropic' },
+  { value: 'claude-haiku-4', label: 'Claude Haiku 4', provider: 'Anthropic' },
+  { value: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', provider: 'OpenAI' },
+  { value: 'o1', label: 'o1', provider: 'OpenAI' },
+  { value: 'o1-mini', label: 'o1 Mini', provider: 'OpenAI' },
+  { value: 'o3-mini', label: 'o3 Mini', provider: 'OpenAI' },
+]
+
 export default function Settings() {
   const queryClient = useQueryClient()
   
@@ -53,13 +67,22 @@ export default function Settings() {
           <label className="block text-sm font-medium text-gray-900 mb-2">
             Default Model
           </label>
-          <input
-            type="text"
+          <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-waza-500 focus:border-waza-500"
-            placeholder="claude-sonnet-4-20250514"
-          />
+          >
+            <optgroup label="Anthropic">
+              {MODELS.filter(m => m.provider === 'Anthropic').map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="OpenAI">
+              {MODELS.filter(m => m.provider === 'OpenAI').map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </optgroup>
+          </select>
           <p className="mt-1.5 text-sm text-gray-500">
             The LLM model to use for eval execution
           </p>
