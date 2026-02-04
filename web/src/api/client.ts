@@ -134,7 +134,7 @@ export async function getRun(id: string): Promise<import('../types').Run> {
   return request(`/runs/${id}`);
 }
 
-export async function startRun(evalId: string, options?: { model?: string; executor?: string }): Promise<import('../types').Run> {
+export async function startRun(evalId: string, options?: { model?: string; executor?: string }): Promise<{ run_id: string; status: string }> {
   return request('/runs', {
     method: 'POST',
     body: JSON.stringify({ eval_id: evalId, ...options }),

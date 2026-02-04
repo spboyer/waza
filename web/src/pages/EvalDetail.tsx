@@ -46,9 +46,9 @@ export default function EvalDetail() {
 
   const runMutation = useMutation({
     mutationFn: () => startRun(id!),
-    onSuccess: (run) => {
+    onSuccess: (data: { run_id: string; status: string }) => {
       queryClient.invalidateQueries({ queryKey: ['runs'] })
-      navigate(`/runs/${run.id}`)
+      navigate(`/runs/${data.run_id}`)
     },
   })
 

@@ -144,9 +144,13 @@ class EvalRunner:
             task_files = glob.glob(str(self.base_path / pattern))
 
             for task_file in task_files:
-                task = Task.from_file(task_file)
-                if task.enabled:
-                    tasks.append(task)
+                try:
+                    task = Task.from_file(task_file)
+                    if task.enabled:
+                        tasks.append(task)
+                except Exception:
+                    # Skip files that don't match Task schema (e.g., trigger-tests.yaml)
+                    continue
 
         return tasks
 

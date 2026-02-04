@@ -1032,16 +1032,23 @@ Return ONLY the JSON array, no explanation."""
         if not tasks or not isinstance(tasks, list):
             return []
 
-        # Validate and clean tasks
+        # Validate and clean tasks, converting to proper Task schema format
         valid_tasks = []
         for i, task in enumerate(tasks[:5]):
             if isinstance(task, dict) and "prompt" in task:
+                task_id = task.get("id", f"{self._safe_name()}-{i+1:03d}")
                 valid_tasks.append({
-                    "id": task.get("id", f"{self._safe_name()}-{i+1:03d}"),
+                    "id": task_id,
                     "name": task.get("name", f"Task {i+1}"),
-                    "prompt": task.get("prompt", ""),
                     "description": task.get("description", ""),
-                    "expected_keywords": task.get("expected_keywords", []),
+                    "inputs": {
+                        "prompt": task.get("prompt", ""),
+                        "context": {},
+                    },
+                    "expected": {
+                        "outcomes": [{"type": "task_completed"}],
+                        "output_contains": task.get("expected_keywords", []),
+                    },
                     "difficulty": task.get("difficulty", "medium"),
                 })
 
