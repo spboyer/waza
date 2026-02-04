@@ -12,10 +12,12 @@ import {
   Edit,
   Copy,
   Trash2,
-  FileText
+  FileText,
+  Settings
 } from 'lucide-react'
 import { getEval, listRuns, startRun, listTasks, duplicateTask, deleteTask, getTask } from '../api/client'
 import TaskEditor from '../components/TaskEditor'
+import EvalEditor from '../components/EvalEditor'
 import type { Task } from '../types'
 
 export default function EvalDetail() {
@@ -23,6 +25,7 @@ export default function EvalDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined) // undefined = closed, null = new, Task = edit
+  const [editingEval, setEditingEval] = useState(false)
 
   const { data: evalData, isLoading: evalLoading } = useQuery({
     queryKey: ['eval', id],
@@ -101,7 +104,16 @@ export default function EvalDetail() {
             <ArrowLeft className="w-4 h-4" />
             Back to evals
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">{evalData.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-gray-900">{evalData.name}</h1>
+            <button
+              onClick={() => setEditingEval(true)}
+              className="p-1.5 text-gray-400 hover:text-waza-600 hover:bg-waza-50 rounded"
+              title="Edit eval configuration"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             {evalData.content?.skill as string || evalData.skill} • {tasks.length} tasks
           </p>
@@ -240,6 +252,14 @@ export default function EvalDetail() {
           evalId={id!}
           task={editingTask}
           onClose={() => setEditingTask(undefined)}
+        />
+      )}
+
+      {/* Eval Editor Modal */}
+      {editingEval && (
+        <EvalEditor
+          evalData={evalData}
+          onClose={() => setEditingEval(false)}
         />
       )}
     </div>

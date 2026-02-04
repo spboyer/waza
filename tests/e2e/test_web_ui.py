@@ -607,6 +607,154 @@ class TestTaskCRUD:
         page.close()
 
 
+class TestEvalEditor:
+    """Test eval.yaml editor functionality."""
+    
+    def test_edit_eval_button_exists(self, browser_context):
+        """Test that edit eval config button exists."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            assert edit_btn, "Edit eval config button not found"
+        
+        page.close()
+    
+    def test_edit_eval_opens_modal(self, browser_context):
+        """Test that clicking edit opens the eval editor modal."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(0.5)
+                
+                modal = page.query_selector(".fixed.inset-0")
+                assert modal, "Eval editor modal did not open"
+        
+        page.close()
+    
+    def test_eval_editor_has_yaml_content(self, browser_context):
+        """Test that eval editor shows YAML content."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(1)  # Wait for Monaco to load
+                
+                content = page.content()
+                # Check for common eval fields
+                has_content = "name:" in content or "skill:" in content
+                assert has_content, "Eval YAML content not displayed"
+        
+        page.close()
+    
+    def test_eval_editor_has_save_cancel(self, browser_context):
+        """Test that eval editor has save/cancel buttons."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(0.5)
+                
+                save_btn = page.query_selector("button:has-text('Save Changes')")
+                cancel_btn = page.query_selector("button:has-text('Cancel')")
+                assert save_btn, "Save Changes button not found"
+                assert cancel_btn, "Cancel button not found"
+        
+        page.close()
+    
+    def test_eval_editor_cancel_closes_modal(self, browser_context):
+        """Test that cancel button closes the modal."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(0.5)
+                
+                cancel_btn = page.query_selector("button:has-text('Cancel')")
+                if cancel_btn:
+                    cancel_btn.click()
+                    time.sleep(0.3)
+                    
+                    modal = page.query_selector(".fixed.inset-0")
+                    assert not modal, "Modal did not close after cancel"
+        
+        page.close()
+    
+    def test_eval_editor_info_message(self, browser_context):
+        """Test that eval editor shows info about editable fields."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            edit_btn = page.query_selector("button[title='Edit eval configuration']")
+            if edit_btn:
+                edit_btn.click()
+                time.sleep(0.5)
+                
+                content = page.content()
+                # Check for info message about editable fields
+                has_info = "name" in content and "skill" in content
+                assert has_info, "Info message about editable fields not found"
+        
+        page.close()
+
+
 class TestRunEval:
     """Test eval run functionality."""
     

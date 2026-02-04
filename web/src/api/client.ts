@@ -47,6 +47,13 @@ export async function createEval(data: { name: string; content: string }): Promi
   });
 }
 
+export async function updateEval(id: string, content: string): Promise<import('../types').Eval> {
+  return request(`/evals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  });
+}
+
 export async function deleteEval(id: string): Promise<void> {
   await request(`/evals/${id}`, { method: 'DELETE' });
 }
