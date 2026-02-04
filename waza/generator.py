@@ -84,6 +84,15 @@ class SkillParser:
 
     def parse_url(self, url: str) -> ParsedSkill:
         """Parse a SKILL.md from a URL (GitHub raw or regular)."""
+        # Convert GitHub tree URL (directory) to raw SKILL.md URL
+        if "github.com" in url and "/tree/" in url:
+            # Convert tree URL to raw URL for SKILL.md
+            url = url.replace("github.com", "raw.githubusercontent.com")
+            url = url.replace("/tree/", "/")
+            # Append SKILL.md if not already present
+            if not url.rstrip("/").upper().endswith("SKILL.MD"):
+                url = url.rstrip("/") + "/SKILL.md"
+
         # Convert GitHub blob URL to raw URL
         if "github.com" in url and "/blob/" in url:
             url = url.replace("github.com", "raw.githubusercontent.com")

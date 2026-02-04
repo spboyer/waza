@@ -404,6 +404,61 @@ class TestGenerateModal:
                    "skill" in url_input.input_value().lower()
         
         page.close()
+    
+    def test_generate_from_tree_url(self, browser_context):
+        """Test that generating an eval from a GitHub tree URL works correctly."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        # Use the API to generate an eval from a tree URL
+        page.goto(f"{base_url}/")  # Load any page first
+        
+        # Make API call to generate eval
+        result = page.evaluate(f"""
+            async () => {{
+                const response = await fetch('{base_url}/api/skills/generate', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        skill_url: 'https://github.com/microsoft/GitHub-Copilot-for-Azure/tree/main/plugin/skills/azure-nodejs-production',
+                        name: 'azure-nodejs-test',
+                        assist: false
+                    }})
+                }});
+                return {{ status: response.status, data: await response.json() }};
+            }}
+        """)
+        
+        # Should succeed
+        assert result["status"] == 200, f"Generate failed: {result['data']}"
+        
+        # Skill name should be extracted correctly
+        data = result["data"]
+        assert data["skill_name"] == "azure-nodejs-production", f"Got skill_name: {data.get('skill_name')}"
+        assert data["eval_id"], "No eval_id returned"
+        
+        # Now verify the eval has correct name
+        eval_result = page.evaluate(f"""
+            async () => {{
+                const response = await fetch('{base_url}/api/evals/{data["eval_id"]}');
+                return await response.json();
+            }}
+        """)
+        
+        # Name should NOT be "-eval"
+        assert eval_result.get("name") != "-eval", f"Name is broken: {eval_result.get('name')}"
+        assert "azure-nodejs" in eval_result.get("name", "").lower() or \
+               "azure-nodejs" in eval_result.get("id", "").lower(), \
+               f"Name doesn't contain expected skill: {eval_result}"
+        
+        # Cleanup - delete the test eval
+        page.evaluate(f"""
+            async () => {{
+                await fetch('{base_url}/api/evals/{data["eval_id"]}', {{ method: 'DELETE' }});
+            }}
+        """)
+        
+        page.close()
 
 
 class TestTaskCRUD:
