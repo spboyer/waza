@@ -240,7 +240,14 @@ class StorageManager:
 
         results_file = run_dir / "results.json"
         if results_file.exists():
-            result["results"] = json.loads(results_file.read_text())
+            results_data = json.loads(results_file.read_text())
+            # Flatten common fields to top level for frontend
+            result["status"] = results_data.get("status", "unknown")
+            result["eval_name"] = results_data.get("eval_name", "")
+            result["timestamp"] = results_data.get("timestamp", "")
+            result["error"] = results_data.get("error")
+            # Keep full results for detailed view
+            result["results"] = results_data
 
         transcript_file = run_dir / "transcript.json"
         if transcript_file.exists():

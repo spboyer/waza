@@ -36,6 +36,7 @@ export interface Run {
   pass_rate?: number;
   score?: number;
   duration_ms?: number;
+  error?: string;
   results?: RunResults;
   progress?: RunProgress;
 }

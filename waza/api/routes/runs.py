@@ -49,7 +49,7 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
         # Import runner and execute
         from waza.runner import EvalRunner
         from waza.schemas.eval_spec import EvalSpec
-        from waza.executors import MockExecutor, CopilotExecutor
+        from waza.executors import MockExecutor, get_copilot_executor
 
         spec = EvalSpec.from_yaml(eval_data["raw"])
 
@@ -57,6 +57,9 @@ async def execute_run(run_id: str, eval_id: str, executor: str, model: str) -> N
         if executor == "mock":
             exec_instance = MockExecutor()
         else:
+            CopilotExecutor = get_copilot_executor()
+            if CopilotExecutor is None:
+                raise ValueError("Copilot SDK not available. Use 'mock' executor or install copilot SDK.")
             exec_instance = CopilotExecutor(model=model)
 
         runner = EvalRunner(

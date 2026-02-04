@@ -95,6 +95,18 @@ export default function RunDetail() {
         </p>
       </div>
       
+      {/* Error display */}
+      {run.status === 'failed' && run.error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-red-800 mb-2">
+            ❌ Run Failed
+          </h3>
+          <pre className="whitespace-pre-wrap text-red-900 bg-red-100 p-4 rounded text-sm overflow-x-auto">
+            {run.error}
+          </pre>
+        </div>
+      )}
+      
       {/* Progress bar for running */}
       {run.status === 'running' && progress && (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -114,7 +126,7 @@ export default function RunDetail() {
       )}
       
       {/* Results */}
-      {run.results && (
+      {run.results && run.results.tasks && (
         <>
           {/* Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
