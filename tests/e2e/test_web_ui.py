@@ -1,0 +1,334 @@
+"""End-to-end tests for waza Web UI using Playwright."""
+
+import pytest
+import time
+import subprocess
+import signal
+import os
+from pathlib import Path
+
+
+@pytest.fixture(scope="module")
+def server():
+    """Start waza server for testing."""
+    # Find an available port
+    port = 8765
+    
+    # Start the server
+    env = os.environ.copy()
+    proc = subprocess.Popen(
+        ["waza", "serve", "--port", str(port)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    
+    # Wait for server to be ready
+    import urllib.request
+    for _ in range(30):
+        try:
+            urllib.request.urlopen(f"http://localhost:{port}/api/health", timeout=1)
+            break
+        except Exception:
+            time.sleep(0.5)
+    else:
+        proc.terminate()
+        raise RuntimeError("Server failed to start")
+    
+    yield f"http://localhost:{port}"
+    
+    # Cleanup
+    proc.terminate()
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+
+
+@pytest.fixture(scope="module")
+def browser_context(server):
+    """Create browser context for tests."""
+    from playwright.sync_api import sync_playwright
+    
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=True)
+    context = browser.new_context(viewport={"width": 1280, "height": 800})
+    
+    yield context, server
+    
+    context.close()
+    browser.close()
+    playwright.stop()
+
+
+class TestDashboard:
+    """Test dashboard functionality."""
+    
+    def test_dashboard_loads(self, browser_context):
+        """Test that dashboard loads without errors."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(base_url)
+        page.wait_for_load_state("networkidle")
+        
+        # Check page title or header
+        assert page.query_selector("text=waza") or page.query_selector("h1")
+        
+        # Should not have "Invalid Date"
+        assert "Invalid Date" not in page.content()
+        
+        page.close()
+    
+    def test_dashboard_shows_stats(self, browser_context):
+        """Test that dashboard shows stats cards."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(base_url)
+        page.wait_for_load_state("networkidle")
+        
+        # Check for stat cards
+        content = page.content()
+        assert "Evals" in content or "Running" in content
+        
+        page.close()
+    
+    def test_dashboard_recent_runs(self, browser_context):
+        """Test that recent runs section displays properly."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(base_url)
+        page.wait_for_load_state("networkidle")
+        
+        # Should have Recent Runs section
+        assert page.query_selector("text=Recent Runs") or page.query_selector("text=No runs")
+        
+        # No Invalid Date errors
+        assert "Invalid Date" not in page.content()
+        
+        page.close()
+
+
+class TestEvalsPage:
+    """Test evals list page."""
+    
+    def test_evals_page_loads(self, browser_context):
+        """Test that evals page loads."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        # Should have evals heading or list
+        content = page.content()
+        assert "Evals" in content or "Evaluation" in content or "No evals" in content
+        
+        page.close()
+    
+    def test_evals_navigation(self, browser_context):
+        """Test navigation from dashboard to evals."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(base_url)
+        page.wait_for_load_state("networkidle")
+        
+        # Click on Evals link
+        evals_link = page.query_selector("a[href='/evals']")
+        if evals_link:
+            evals_link.click()
+            page.wait_for_load_state("networkidle")
+            assert "/evals" in page.url
+        
+        page.close()
+    
+    def test_generate_modal_opens(self, browser_context):
+        """Test that generate/import modal can be opened."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        # Look for generate/import button
+        generate_btn = page.query_selector("button:has-text('Generate')") or \
+                       page.query_selector("button:has-text('Import')") or \
+                       page.query_selector("button:has-text('New')")
+        
+        if generate_btn:
+            generate_btn.click()
+            time.sleep(0.5)
+            
+            # Modal should appear
+            modal = page.query_selector("[role='dialog']") or \
+                    page.query_selector(".modal") or \
+                    page.query_selector("text=SKILL.md")
+            assert modal is not None
+        
+        page.close()
+
+
+class TestEvalDetail:
+    """Test eval detail page."""
+    
+    def test_eval_detail_loads(self, browser_context):
+        """Test that eval detail page loads for existing eval."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        # First get list of evals
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        # Click first eval if exists
+        eval_link = page.query_selector("a[href*='/evals/'][href$='architecture']") or \
+                    page.query_selector("a[href*='/evals/']")
+        
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            # Should be on detail page
+            assert "/evals/" in page.url
+            
+            # Should show tasks section
+            content = page.content()
+            assert "Tasks" in content or "No tasks" in content
+            
+            # No Invalid Date
+            assert "Invalid Date" not in content
+        
+        page.close()
+    
+    def test_task_list_displays(self, browser_context):
+        """Test that task list displays on eval detail."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            
+            # Look for tasks section
+            tasks_section = page.query_selector("text=Tasks")
+            assert tasks_section is not None
+        
+        page.close()
+
+
+class TestRunHistory:
+    """Test run history display."""
+    
+    def test_run_history_no_invalid_dates(self, browser_context):
+        """Test that run history shows valid dates."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        # Check dashboard
+        page.goto(base_url)
+        page.wait_for_load_state("networkidle")
+        assert "Invalid Date" not in page.content()
+        
+        # Check evals page
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        assert "Invalid Date" not in page.content()
+        
+        # Check eval detail if available
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            assert "Invalid Date" not in page.content()
+        
+        page.close()
+
+
+class TestAPIHealth:
+    """Test API endpoints are accessible."""
+    
+    def test_health_endpoint(self, browser_context):
+        """Test health endpoint returns valid response."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/api/health")
+        assert response.status == 200
+        
+        # Parse JSON
+        import json
+        data = json.loads(page.content().split(">")[1].split("<")[0])
+        assert "status" in data
+        assert data["status"] == "ok"
+        
+        page.close()
+    
+    def test_evals_endpoint(self, browser_context):
+        """Test evals endpoint returns list."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/api/evals")
+        assert response.status == 200
+        
+        page.close()
+    
+    def test_runs_endpoint(self, browser_context):
+        """Test runs endpoint returns list."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/api/runs")
+        assert response.status == 200
+        
+        page.close()
+
+
+class TestSPARouting:
+    """Test SPA routing works correctly."""
+    
+    def test_direct_evals_route(self, browser_context):
+        """Test direct navigation to /evals works."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/evals")
+        assert response.status == 200
+        
+        # Should load React app, not 404
+        assert "<!DOCTYPE html>" in page.content() or "evals" in page.content().lower()
+        assert "404" not in page.query_selector("h1").text_content() if page.query_selector("h1") else True
+        
+        page.close()
+    
+    def test_direct_settings_route(self, browser_context):
+        """Test direct navigation to /settings works."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/settings")
+        assert response.status == 200
+        
+        page.close()
+    
+    def test_nonexistent_route_fallback(self, browser_context):
+        """Test that nonexistent routes still load app."""
+        context, base_url = browser_context
+        page = context.new_page()
+        
+        response = page.goto(f"{base_url}/nonexistent-page-xyz")
+        # Should still return 200 (SPA handles routing)
+        assert response.status == 200
+        
+        page.close()
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
