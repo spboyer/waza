@@ -12,14 +12,31 @@ Waza uses a **subprocess-based integration model** rather than a traditional dae
 
 ### Message Format
 
-Waza emits **line-delimited JSON** on stdout when run with `-v` flag:
+Waza emits **line-delimited JSON** on stdout when run with `--stream-json` flag:
 
 ```
-{"type":"eval_start","eval":"my-eval","tasks":5}\n
-{"type":"task_start","idx":0,"name":"test-auth"}\n
-{"type":"task_complete","idx":0,"result":"pass","took_ms":1234}\n
-{"type":"eval_complete","passed":4,"failed":1}\n
+{"type":"eval_start","eval":"my-eval","tasks":5,"timestamp":1234567890}\n
+{"type":"task_start","idx":0,"task":"test-auth","total":5,"timestamp":1234567890}\n
+{"type":"task_complete","idx":0,"task":"test-auth","status":"passed","took_ms":1234,"score":1.0,"timestamp":1234567891}\n
+{"type":"eval_complete","passed":4,"failed":1,"total":5,"rate":0.8,"timestamp":1234567900}\n
 ```
+
+### CLI Usage
+
+```bash
+# Run with JSON streaming for IDE integration
+waza run eval.yaml --stream-json --executor mock
+
+# Optional: Specify model
+waza run eval.yaml --stream-json --executor copilot-sdk --model claude-sonnet-4
+
+# Save results to file as well
+waza run eval.yaml --stream-json --output results.json
+```
+
+**Note:** `--stream-json` automatically disables:
+- Rich console output (for clean JSON)
+- Interactive prompts (like GitHub issue creation)
 
 ### Event Types
 
@@ -63,12 +80,18 @@ Emitted when a task finishes.
 {
   "type": "task_complete",
   "idx": 0,
-  "name": "test-http-trigger",
-  "result": "pass",
+  "task": "test-http-trigger",
+  "status": "passed",
   "score": 1.0,
-  "took_ms": 2345
+  "took_ms": 2345,
+  "timestamp": 1234567891
 }
 ```
+
+**Fields:**
+- `status`: "passed" or "failed"
+- `score`: 0.0 to 1.0
+- `took_ms`: Duration in milliseconds
 
 #### `eval_complete`
 Final event with summary.

@@ -77,6 +77,7 @@ def run(
         # Disable rich console output for clean JSON streaming
         import io
         console._file = io.StringIO()  # Suppress rich output
+        no_issues = True  # Auto-disable interactive prompts in stream mode
     else:
         console.print(f"[bold blue]waza[/bold blue] v{__version__}")
         console.print()
@@ -376,8 +377,8 @@ def run(
     if stream_json:
         json_event = {
             "type": "eval_complete",
-            "passed": result.summary.passed_tasks,
-            "failed": result.summary.failed_tasks,
+            "passed": result.summary.passed,
+            "failed": result.summary.failed,
             "total": result.summary.total_tasks,
             "rate": result.summary.pass_rate,
             "timestamp": int(datetime.now().timestamp()),
