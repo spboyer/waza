@@ -25,15 +25,15 @@ type SpecIdentity struct {
 
 // RuntimeOptions controls execution behavior
 type RuntimeOptions struct {
-	RunsPerTest     int               `yaml:"trials_per_task" json:"runs_per_test"`
-	TimeoutSec      int               `yaml:"timeout_seconds" json:"timeout_sec"`
-	Concurrent      bool              `yaml:"parallel" json:"concurrent"`
-	Workers         int               `yaml:"max_workers,omitempty" json:"workers,omitempty"`
-	StopOnError     bool              `yaml:"fail_fast,omitempty" json:"stop_on_error,omitempty"`
-	EngineType      string            `yaml:"executor" json:"engine_type"`
-	ModelID         string            `yaml:"model" json:"model_id"`
-	SkillPaths      []string          `yaml:"skill_directories,omitempty" json:"skill_paths,omitempty"`
-	ServerConfigs   map[string]any    `yaml:"mcp_servers,omitempty" json:"server_configs,omitempty"`
+	RunsPerTest   int            `yaml:"trials_per_task" json:"runs_per_test"`
+	TimeoutSec    int            `yaml:"timeout_seconds" json:"timeout_sec"`
+	Concurrent    bool           `yaml:"parallel" json:"concurrent"`
+	Workers       int            `yaml:"max_workers,omitempty" json:"workers,omitempty"`
+	StopOnError   bool           `yaml:"fail_fast,omitempty" json:"stop_on_error,omitempty"`
+	EngineType    string         `yaml:"executor" json:"engine_type"`
+	ModelID       string         `yaml:"model" json:"model_id"`
+	SkillPaths    []string       `yaml:"skill_directories,omitempty" json:"skill_paths,omitempty"`
+	ServerConfigs map[string]any `yaml:"mcp_servers,omitempty" json:"server_configs,omitempty"`
 }
 
 // ValidatorConfig defines a validator/grader

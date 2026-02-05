@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	
+
 	"github.com/spboyer/waza/waza-go/internal/models"
 )
 
@@ -28,7 +28,7 @@ func NewCodeValidator(identifier string, params map[string]any) Validator {
 			}
 		}
 	}
-	
+
 	return &CodeValidator{
 		identifier: identifier,
 		assertions: assertions,
@@ -49,10 +49,10 @@ func (v *CodeValidator) Validate(ctx *ValidationContext) *models.ValidationOut {
 				Feedback:   "No assertions configured",
 			}
 		}
-		
+
 		passed := 0
 		var failures []string
-		
+
 		// Simple assertion evaluation
 		for _, assertion := range v.assertions {
 			if evaluateAssertion(assertion, ctx) {
@@ -61,15 +61,15 @@ func (v *CodeValidator) Validate(ctx *ValidationContext) *models.ValidationOut {
 				failures = append(failures, fmt.Sprintf("Failed: %s", assertion))
 			}
 		}
-		
+
 		score := float64(passed) / float64(len(v.assertions))
 		allPassed := len(failures) == 0
-		
+
 		feedback := "All assertions passed"
 		if !allPassed {
 			feedback = strings.Join(failures, "; ")
 		}
-		
+
 		return &models.ValidationOut{
 			Identifier: v.identifier,
 			Kind:       "code",
@@ -89,41 +89,41 @@ func (v *CodeValidator) Validate(ctx *ValidationContext) *models.ValidationOut {
 func evaluateAssertion(assertion string, ctx *ValidationContext) bool {
 	// Simple pattern matching for common assertions
 	// In a real implementation, you'd use a proper expression evaluator
-	
+
 	// len(output) > N
 	if matches := regexp.MustCompile(`len\(output\)\s*>\s*(\d+)`).FindStringSubmatch(assertion); len(matches) > 1 {
 		threshold := 0
 		fmt.Sscanf(matches[1], "%d", &threshold)
 		return len(ctx.Output) > threshold
 	}
-	
+
 	// "text" in output.lower()
 	if matches := regexp.MustCompile(`['"](.+?)['"]\s+in\s+output\.lower\(\)`).FindStringSubmatch(assertion); len(matches) > 1 {
 		text := matches[1]
 		return strings.Contains(strings.ToLower(ctx.Output), strings.ToLower(text))
 	}
-	
+
 	// 'text' in output
 	if matches := regexp.MustCompile(`['"](.+?)['"]\s+in\s+output`).FindStringSubmatch(assertion); len(matches) > 1 {
 		text := matches[1]
 		return strings.Contains(ctx.Output, text)
 	}
-	
+
 	// Default: treat as true for unknown patterns
 	return true
 }
 
 // RegexValidator validates using regex patterns
 type RegexValidator struct {
-	identifier    string
-	mustMatch     []string
-	mustNotMatch  []string
+	identifier   string
+	mustMatch    []string
+	mustNotMatch []string
 }
 
 func NewRegexValidator(identifier string, params map[string]any) Validator {
 	mustMatch := extractStringSlice(params, "must_match")
 	mustNotMatch := extractStringSlice(params, "must_not_match")
-	
+
 	return &RegexValidator{
 		identifier:   identifier,
 		mustMatch:    mustMatch,
@@ -137,34 +137,34 @@ func (v *RegexValidator) Category() string   { return "regex" }
 func (v *RegexValidator) Validate(ctx *ValidationContext) *models.ValidationOut {
 	return measureTime(func() *models.ValidationOut {
 		var failures []string
-		
+
 		for _, pattern := range v.mustMatch {
 			matched, _ := regexp.MatchString(pattern, ctx.Output)
 			if !matched {
 				failures = append(failures, fmt.Sprintf("Missing expected pattern: %s", pattern))
 			}
 		}
-		
+
 		for _, pattern := range v.mustNotMatch {
 			matched, _ := regexp.MatchString(pattern, ctx.Output)
 			if matched {
 				failures = append(failures, fmt.Sprintf("Found forbidden pattern: %s", pattern))
 			}
 		}
-		
+
 		totalChecks := len(v.mustMatch) + len(v.mustNotMatch)
 		passedChecks := totalChecks - len(failures)
-		
+
 		score := 1.0
 		if totalChecks > 0 {
 			score = float64(passedChecks) / float64(totalChecks)
 		}
-		
+
 		feedback := "All patterns matched"
 		if len(failures) > 0 {
 			feedback = strings.Join(failures, "; ")
 		}
-		
+
 		return &models.ValidationOut{
 			Identifier: v.identifier,
 			Kind:       "regex",

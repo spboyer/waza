@@ -2,7 +2,7 @@ package scoring
 
 import (
 	"time"
-	
+
 	"github.com/spboyer/waza/waza-go/internal/models"
 )
 
@@ -10,22 +10,22 @@ import (
 type Validator interface {
 	// Identifier returns the validator name
 	Identifier() string
-	
+
 	// Category returns the validator type
 	Category() string
-	
+
 	// Validate performs validation and returns a result
 	Validate(ctx *ValidationContext) *models.ValidationOut
 }
 
 // ValidationContext provides context for validation
 type ValidationContext struct {
-	TestCase      *models.TestCase
-	Transcript    []models.TranscriptEntry
-	Output        string
-	Outcome       map[string]any
-	DurationMs    int64
-	Metadata      map[string]any
+	TestCase   *models.TestCase
+	Transcript []models.TranscriptEntry
+	Output     string
+	Outcome    map[string]any
+	DurationMs int64
+	Metadata   map[string]any
 }
 
 // ValidatorRegistry manages validator implementations

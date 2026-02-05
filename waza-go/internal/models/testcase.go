@@ -8,16 +8,16 @@ import (
 
 // TestCase represents a single evaluation test
 type TestCase struct {
-	TestID      string             `yaml:"id" json:"test_id"`
-	DisplayName string             `yaml:"name" json:"display_name"`
-	Summary     string             `yaml:"description,omitempty" json:"summary,omitempty"`
-	Stimulus    TestStimulus       `yaml:"inputs" json:"stimulus"`
-	Expectation TestExpectation    `yaml:"expected,omitempty" json:"expectation,omitempty"`
-	Validators  []ValidatorInline  `yaml:"graders,omitempty" json:"validators,omitempty"`
-	Labels      []string           `yaml:"tags,omitempty" json:"labels,omitempty"`
-	Active      bool               `yaml:"enabled,omitempty" json:"active,omitempty"`
-	TimeoutSec  *int               `yaml:"timeout_seconds,omitempty" json:"timeout_sec,omitempty"`
-	ContextRoot string             `yaml:"context_dir,omitempty" json:"context_root,omitempty"`
+	TestID      string            `yaml:"id" json:"test_id"`
+	DisplayName string            `yaml:"name" json:"display_name"`
+	Summary     string            `yaml:"description,omitempty" json:"summary,omitempty"`
+	Stimulus    TestStimulus      `yaml:"inputs" json:"stimulus"`
+	Expectation TestExpectation   `yaml:"expected,omitempty" json:"expectation,omitempty"`
+	Validators  []ValidatorInline `yaml:"graders,omitempty" json:"validators,omitempty"`
+	Labels      []string          `yaml:"tags,omitempty" json:"labels,omitempty"`
+	Active      bool              `yaml:"enabled,omitempty" json:"active,omitempty"`
+	TimeoutSec  *int              `yaml:"timeout_seconds,omitempty" json:"timeout_sec,omitempty"`
+	ContextRoot string            `yaml:"context_dir,omitempty" json:"context_root,omitempty"`
 }
 
 // TestStimulus defines the input for a test
@@ -36,11 +36,11 @@ type ResourceRef struct {
 
 // TestExpectation defines expected outcomes
 type TestExpectation struct {
-	OutcomeSpecs    []OutcomeSpec     `yaml:"outcomes,omitempty" json:"outcome_specs,omitempty"`
-	ToolPatterns    map[string]any    `yaml:"tool_calls,omitempty" json:"tool_patterns,omitempty"`
-	BehaviorRules   BehaviorRules     `yaml:"behavior,omitempty" json:"behavior_rules,omitempty"`
-	MustInclude     []string          `yaml:"output_contains,omitempty" json:"must_include,omitempty"`
-	MustExclude     []string          `yaml:"output_not_contains,omitempty" json:"must_exclude,omitempty"`
+	OutcomeSpecs  []OutcomeSpec  `yaml:"outcomes,omitempty" json:"outcome_specs,omitempty"`
+	ToolPatterns  map[string]any `yaml:"tool_calls,omitempty" json:"tool_patterns,omitempty"`
+	BehaviorRules BehaviorRules  `yaml:"behavior,omitempty" json:"behavior_rules,omitempty"`
+	MustInclude   []string       `yaml:"output_contains,omitempty" json:"must_include,omitempty"`
+	MustExclude   []string       `yaml:"output_not_contains,omitempty" json:"must_exclude,omitempty"`
 }
 
 type OutcomeSpec struct {

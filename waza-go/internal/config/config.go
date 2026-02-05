@@ -6,12 +6,12 @@ import (
 
 // BenchmarkConfig is the main configuration with functional options
 type BenchmarkConfig struct {
-	spec         *models.BenchmarkSpec
-	specDir      string // Directory containing the spec file (for resolving test patterns)
-	fixtureDir   string // Directory containing fixtures/context files
-	verbose      bool
-	outputPath   string
-	logPath      string
+	spec       *models.BenchmarkSpec
+	specDir    string // Directory containing the spec file (for resolving test patterns)
+	fixtureDir string // Directory containing fixtures/context files
+	verbose    bool
+	outputPath string
+	logPath    string
 }
 
 // Option is a functional option for BenchmarkConfig
@@ -72,10 +72,10 @@ func WithLogPath(path string) Option {
 }
 
 // Getters
-func (c *BenchmarkConfig) Spec() *models.BenchmarkSpec     { return c.spec }
-func (c *BenchmarkConfig) SpecDir() string                  { return c.specDir }
-func (c *BenchmarkConfig) FixtureDir() string               { return c.fixtureDir }
-func (c *BenchmarkConfig) ContextRoot() string              { return c.fixtureDir } // Alias for compatibility
-func (c *BenchmarkConfig) Verbose() bool                    { return c.verbose }
-func (c *BenchmarkConfig) OutputPath() string               { return c.outputPath }
-func (c *BenchmarkConfig) LogPath() string                  { return c.logPath }
+func (c *BenchmarkConfig) Spec() *models.BenchmarkSpec { return c.spec }
+func (c *BenchmarkConfig) SpecDir() string             { return c.specDir }
+func (c *BenchmarkConfig) FixtureDir() string          { return c.fixtureDir }
+func (c *BenchmarkConfig) ContextRoot() string         { return c.fixtureDir } // Alias for compatibility
+func (c *BenchmarkConfig) Verbose() bool               { return c.verbose }
+func (c *BenchmarkConfig) OutputPath() string          { return c.outputPath }
+func (c *BenchmarkConfig) LogPath() string             { return c.logPath }

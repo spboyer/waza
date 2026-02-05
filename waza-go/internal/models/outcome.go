@@ -23,14 +23,14 @@ type OutcomeSetup struct {
 }
 
 type OutcomeDigest struct {
-	TotalTests      int     `json:"total_tests"`
-	Succeeded       int     `json:"succeeded"`
-	Failed          int     `json:"failed"`
-	Errors          int     `json:"errors"`
-	Skipped         int     `json:"skipped"`
-	SuccessRate     float64 `json:"success_rate"`
-	AggregateScore  float64 `json:"aggregate_score"`
-	DurationMs      int64   `json:"duration_ms"`
+	TotalTests     int     `json:"total_tests"`
+	Succeeded      int     `json:"succeeded"`
+	Failed         int     `json:"failed"`
+	Errors         int     `json:"errors"`
+	Skipped        int     `json:"skipped"`
+	SuccessRate    float64 `json:"success_rate"`
+	AggregateScore float64 `json:"aggregate_score"`
+	DurationMs     int64   `json:"duration_ms"`
 }
 
 type MeasureResult struct {
@@ -44,23 +44,23 @@ type MeasureResult struct {
 
 // TestOutcome represents the result of one test case
 type TestOutcome struct {
-	TestID      string            `json:"test_id"`
-	DisplayName string            `json:"display_name"`
-	Status      string            `json:"status"`
-	Runs        []RunResult       `json:"runs"`
-	Stats       *TestStats        `json:"stats,omitempty"`
+	TestID      string      `json:"test_id"`
+	DisplayName string      `json:"display_name"`
+	Status      string      `json:"status"`
+	Runs        []RunResult `json:"runs"`
+	Stats       *TestStats  `json:"stats,omitempty"`
 }
 
 // RunResult is the result of a single run/trial
 type RunResult struct {
-	RunNumber      int                      `json:"run_number"`
-	Status         string                   `json:"status"`
-	DurationMs     int64                    `json:"duration_ms"`
-	Validations    map[string]ValidationOut `json:"validations"`
-	SessionDigest  SessionDigest            `json:"session_digest"`
-	Transcript     []TranscriptEntry        `json:"transcript,omitempty"`
-	FinalOutput    string                   `json:"final_output"`
-	ErrorMsg       string                   `json:"error_msg,omitempty"`
+	RunNumber     int                      `json:"run_number"`
+	Status        string                   `json:"status"`
+	DurationMs    int64                    `json:"duration_ms"`
+	Validations   map[string]ValidationOut `json:"validations"`
+	SessionDigest SessionDigest            `json:"session_digest"`
+	Transcript    []TranscriptEntry        `json:"transcript,omitempty"`
+	FinalOutput   string                   `json:"final_output"`
+	ErrorMsg      string                   `json:"error_msg,omitempty"`
 }
 
 type ValidationOut struct {

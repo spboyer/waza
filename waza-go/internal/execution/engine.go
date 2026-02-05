@@ -10,22 +10,22 @@ import (
 type AgentEngine interface {
 	// Initialize sets up the engine
 	Initialize(ctx context.Context) error
-	
+
 	// Execute runs a test with the given stimulus
 	Execute(ctx context.Context, req *ExecutionRequest) (*ExecutionResponse, error)
-	
+
 	// Shutdown cleans up resources
 	Shutdown(ctx context.Context) error
 }
 
 // ExecutionRequest represents a test execution request
 type ExecutionRequest struct {
-	TestID      string
-	Message     string
-	Context     map[string]any
-	Resources   []ResourceFile
-	SkillName   string
-	TimeoutSec  int
+	TestID     string
+	Message    string
+	Context    map[string]any
+	Resources  []ResourceFile
+	SkillName  string
+	TimeoutSec int
 }
 
 // ResourceFile represents a file resource
@@ -36,14 +36,14 @@ type ResourceFile struct {
 
 // ExecutionResponse represents the result of an execution
 type ExecutionResponse struct {
-	FinalOutput   string
-	Events        []SessionEvent
-	ModelID       string
-	SkillInvoked  string
-	DurationMs    int64
-	ToolCalls     []ToolCall
-	ErrorMsg      string
-	Success       bool
+	FinalOutput  string
+	Events       []SessionEvent
+	ModelID      string
+	SkillInvoked string
+	DurationMs   int64
+	ToolCalls    []ToolCall
+	ErrorMsg     string
+	Success      bool
 }
 
 // SessionEvent represents an event during execution

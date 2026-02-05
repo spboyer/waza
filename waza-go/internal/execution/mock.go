@@ -24,15 +24,15 @@ func (m *MockEngine) Initialize(ctx context.Context) error {
 
 func (m *MockEngine) Execute(ctx context.Context, req *ExecutionRequest) (*ExecutionResponse, error) {
 	start := time.Now()
-	
+
 	// Simple mock response
 	output := fmt.Sprintf("Mock response for: %s", req.Message)
-	
+
 	// Add some context if files are present
 	if len(req.Resources) > 0 {
 		output += fmt.Sprintf("\nAnalyzed %d file(s)", len(req.Resources))
 	}
-	
+
 	resp := &ExecutionResponse{
 		FinalOutput:  output,
 		Events:       []SessionEvent{},
@@ -42,7 +42,7 @@ func (m *MockEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Execu
 		ToolCalls:    []ToolCall{},
 		Success:      true,
 	}
-	
+
 	return resp, nil
 }
 

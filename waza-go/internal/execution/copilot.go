@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	
+
 	copilot "github.com/github/copilot-sdk/go"
 )
 
@@ -17,7 +17,7 @@ type CopilotEngine struct {
 	serverConfigs map[string]any
 	timeoutSec    int
 	streaming     bool
-	
+
 	client    *copilot.Client
 	workspace string
 }
@@ -70,17 +70,17 @@ func (e *CopilotEngine) Initialize(ctx context.Context) error {
 		return fmt.Errorf("failed to create temp workspace: %w", err)
 	}
 	e.workspace = tmpDir
-	
+
 	// Initialize Copilot client with new API
 	client := copilot.NewClient(&copilot.ClientOptions{
 		Cwd:      e.workspace,
 		LogLevel: "error",
 	})
-	
+
 	if err := client.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start copilot client: %w", err)
 	}
-	
+
 	e.client = client
 	return nil
 }
@@ -88,38 +88,38 @@ func (e *CopilotEngine) Initialize(ctx context.Context) error {
 // Execute runs a test with Copilot SDK
 func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*ExecutionResponse, error) {
 	start := time.Now()
-	
+
 	// Clean up any previous workspace and create fresh one
 	if e.workspace != "" {
 		os.RemoveAll(e.workspace)
 	}
-	
+
 	tmpDir, err := os.MkdirTemp("", "waza-go-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp workspace: %w", err)
 	}
 	e.workspace = tmpDir
-	
+
 	// Write resource files to workspace
 	if err := e.setupResources(req.Resources); err != nil {
 		return nil, fmt.Errorf("failed to setup resources: %w", err)
 	}
-	
+
 	// Reinitialize client with new workspace
 	if e.client != nil {
 		e.client.Stop()
 	}
-	
+
 	client := copilot.NewClient(&copilot.ClientOptions{
 		Cwd:      e.workspace,
 		LogLevel: "error",
 	})
-	
+
 	if err := client.Start(ctx); err != nil {
 		return nil, fmt.Errorf("failed to start copilot client: %w", err)
 	}
 	e.client = client
-	
+
 	// Create session with updated API
 	session, err := e.client.CreateSession(ctx, &copilot.SessionConfig{
 		Model: e.modelID,
@@ -128,13 +128,13 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 	defer session.Destroy()
-	
+
 	// Collect events
 	var events []SessionEvent
 	var outputParts []string
 	var errorMsg string
 	done := make(chan struct{})
-	
+
 	// Event handler with updated API
 	unsubscribe := session.On(func(evt copilot.SessionEvent) {
 		// Convert to our event format
@@ -143,7 +143,7 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 			Timestamp: evt.Timestamp,
 			Payload:   make(map[string]any),
 		}
-		
+
 		// Extract message content from Data based on event type
 		if evt.Type == "assistant.message" || evt.Type == "assistant.message_delta" {
 			if evt.Data.Message != nil {
@@ -151,7 +151,7 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 				outputParts = append(outputParts, *evt.Data.Message)
 			}
 		}
-		
+
 		// Check for completion
 		if evt.Type == "session.idle" {
 			select {
@@ -169,11 +169,11 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 				close(done)
 			}
 		}
-		
+
 		events = append(events, event)
 	})
 	defer unsubscribe()
-	
+
 	// Send prompt with updated API
 	_, err = session.Send(ctx, copilot.MessageOptions{
 		Prompt: req.Message,
@@ -181,20 +181,20 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 	if err != nil {
 		return nil, fmt.Errorf("failed to send prompt: %w", err)
 	}
-	
+
 	// Wait for completion with timeout
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSec)*time.Second)
 	defer cancel()
-	
+
 	select {
 	case <-done:
 		// Completed normally
 	case <-timeoutCtx.Done():
 		errorMsg = fmt.Sprintf("execution timed out after %ds", req.TimeoutSec)
 	}
-	
+
 	duration := time.Since(start)
-	
+
 	// Build response
 	resp := &ExecutionResponse{
 		FinalOutput:  joinStrings(outputParts),
@@ -206,7 +206,7 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 		ErrorMsg:     errorMsg,
 		Success:      errorMsg == "",
 	}
-	
+
 	return resp, nil
 }
 
@@ -216,12 +216,12 @@ func (e *CopilotEngine) Shutdown(ctx context.Context) error {
 		e.client.Stop()
 		e.client = nil
 	}
-	
+
 	if e.workspace != "" {
 		os.RemoveAll(e.workspace)
 		e.workspace = ""
 	}
-	
+
 	return nil
 }
 
@@ -231,19 +231,19 @@ func (e *CopilotEngine) setupResources(resources []ResourceFile) error {
 		if res.Path == "" {
 			continue
 		}
-		
+
 		fullPath := filepath.Join(e.workspace, res.Path)
 		dir := filepath.Dir(fullPath)
-		
+
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
-		
+
 		if err := os.WriteFile(fullPath, []byte(res.Content), 0644); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
