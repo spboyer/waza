@@ -19,6 +19,7 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 - 📊 **Model Comparison** - Compare results across different models
 - 🔎 **Skill Discovery** - Scan GitHub repos or local directories for skills
 - 📝 **GitHub Issue Creation** - Create issues with eval results automatically
+- 🔌 **JSON-RPC Server** - IDE integration via Language Server Protocol-style API
 
 ---
 
@@ -193,6 +194,7 @@ waza run my-skill/eval.yaml -o results.json
 | `waza analyze <telemetry>` | Analyze runtime telemetry |
 | `waza report <results.json>` | Generate reports from results |
 | `waza list-graders` | List available grader types |
+| `waza jsonrpc` | Start JSON-RPC server for IDE integration |
 
 ### Common Options
 
@@ -232,7 +234,40 @@ waza generate --repo org/repo --all --output ./evals                       # Gen
 #   claude-opus-4.5
 #   gpt-4o
 #   gpt-5
+
+# JSON-RPC server options (for IDE integration)
+waza jsonrpc                            # Start stdio server (for IDE extensions)
+waza jsonrpc --tcp localhost:9000       # Start TCP server (for debugging/remote access)
+waza jsonrpc --log-level debug          # Enable debug logging
 ```
+
+### JSON-RPC Server for IDE Integration
+
+The JSON-RPC server enables programmatic access to waza for IDE extensions (VS Code, JetBrains, etc.):
+
+```bash
+# Start server (stdio transport)
+waza jsonrpc
+
+# Start TCP server for remote/debugging
+waza jsonrpc --tcp localhost:9000
+```
+
+**Supported Methods:**
+- `eval.run` - Start eval execution, returns run ID
+- `eval.list` - List available evals in directory
+- `eval.get` - Get eval details
+- `eval.validate` - Validate eval spec
+- `task.list` - List tasks for an eval
+- `task.get` - Get task details
+- `run.status` - Get run status
+- `run.cancel` - Cancel running eval
+
+**Real-time Notifications:**
+- `eval.progress` - Task/trial progress updates
+- `eval.complete` - Run finished with results
+
+See [docs/JSONRPC.md](docs/JSONRPC.md) for complete protocol specification and client examples.
 
 ---
 
