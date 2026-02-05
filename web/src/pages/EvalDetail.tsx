@@ -17,6 +17,7 @@ import {
 import { getEval, listRuns, startRun, listTasks, duplicateTask, deleteTask, getTask } from '../api/client'
 import TaskEditor from '../components/TaskEditor'
 import EvalEditor from '../components/EvalEditor'
+import RunConfigModal from '../components/RunConfigModal'
 import type { Task } from '../types'
 
 export default function EvalDetail() {
@@ -25,6 +26,7 @@ export default function EvalDetail() {
   const queryClient = useQueryClient()
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined) // undefined = closed, null = new, Task = edit
   const [editingEval, setEditingEval] = useState(false)
+  const [showRunConfig, setShowRunConfig] = useState(false)
 
   const { data: evalData, isLoading: evalLoading } = useQuery({
     queryKey: ['eval', id],
@@ -45,9 +47,10 @@ export default function EvalDetail() {
   })
 
   const runMutation = useMutation({
-    mutationFn: () => startRun(id!),
+    mutationFn: (config: { executor: string; model: string }) => startRun(id!, config),
     onSuccess: (data: { run_id: string; status: string }) => {
       queryClient.invalidateQueries({ queryKey: ['runs'] })
+      setShowRunConfig(false)
       navigate(`/runs/${data.run_id}`)
     },
   })
@@ -109,14 +112,24 @@ export default function EvalDetail() {
           </p>
         </div>
         <button
-          onClick={() => runMutation.mutate()}
+          onClick={() => setShowRunConfig(true)}
           disabled={runMutation.isPending}
           className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
         >
           <Play className="w-4 h-4" />
-          {runMutation.isPending ? 'Starting...' : 'Run Eval'}
+          Run Eval
         </button>
       </div>
+
+      {/* Run Config Modal */}
+      {showRunConfig && (
+        <RunConfigModal
+          evalName={evalData.name}
+          onClose={() => setShowRunConfig(false)}
+          onRun={(config) => runMutation.mutate(config)}
+          isRunning={runMutation.isPending}
+        />
+      )}
 
       {/* Configuration */}
       <div className="bg-white rounded-lg border border-gray-200">

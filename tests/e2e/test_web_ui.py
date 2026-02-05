@@ -898,8 +898,8 @@ class TestRunEval:
         
         page.close()
     
-    def test_run_eval_navigates_to_run_detail(self, browser_context):
-        """Test that clicking Run Eval creates a run and navigates to run detail."""
+    def test_run_eval_opens_config_modal(self, browser_context):
+        """Test that clicking Run Eval opens the configuration modal."""
         context, base_url, setup_dialog = browser_context
         page = context.new_page()
         
@@ -915,13 +915,119 @@ class TestRunEval:
             run_btn = page.query_selector("button:has-text('Run Eval')")
             if run_btn:
                 run_btn.click()
-                # Wait for navigation to complete
+                time.sleep(0.5)
+                
+                # Modal should be open with executor options
+                modal = page.query_selector("text='Run Eval'")
+                mock_option = page.query_selector("text='Mock'")
+                copilot_option = page.query_selector("text='Copilot SDK'")
+                
+                assert modal, "Run config modal not found"
+                assert mock_option, "Mock executor option not found"
+                assert copilot_option, "Copilot SDK executor option not found"
+        
+        page.close()
+    
+    def test_run_config_modal_shows_model_dropdown(self, browser_context):
+        """Test that selecting Copilot SDK shows model dropdown."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                time.sleep(0.5)
+                
+                # Click Copilot SDK option
+                copilot_btn = page.query_selector("button:has-text('Copilot SDK')")
+                if copilot_btn:
+                    copilot_btn.click()
+                    time.sleep(0.3)
+                    
+                    # Model dropdown should appear
+                    model_select = page.query_selector("select")
+                    assert model_select, "Model dropdown not found after selecting Copilot SDK"
+                    
+                    # Check for model options
+                    model_html = model_select.inner_html()
+                    assert "claude" in model_html.lower() or "gpt" in model_html.lower(), \
+                        "Model options not found in dropdown"
+        
+        page.close()
+    
+    def test_run_config_modal_start_run(self, browser_context):
+        """Test that Start Run button in modal works."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                time.sleep(0.5)
+                
+                # Click Start Run in modal
+                start_btn = page.query_selector("button:has-text('Start Run')")
+                if start_btn:
+                    start_btn.click()
+                    try:
+                        page.wait_for_url("**/runs/**", timeout=10000)
+                    except:
+                        time.sleep(5)
+                    
+                    assert "/runs/" in page.url, f"Expected to navigate to run detail, got {page.url}"
+        
+        page.close()
+    
+    def _click_run_eval_and_start(self, page):
+        """Helper to click Run Eval button and Start Run in modal."""
+        run_btn = page.query_selector("button:has-text('Run Eval')")
+        if run_btn:
+            run_btn.click()
+            time.sleep(0.5)
+            start_btn = page.query_selector("button:has-text('Start Run')")
+            if start_btn:
+                start_btn.click()
+                return True
+        return False
+    
+    def test_run_eval_navigates_to_run_detail(self, browser_context):
+        """Test that clicking Run Eval creates a run and navigates to run detail."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            if self._click_run_eval_and_start(page):
                 try:
                     page.wait_for_url("**/runs/**", timeout=10000)
                 except:
-                    time.sleep(5)  # Fallback wait
+                    time.sleep(5)
                 
-                # Should navigate to run detail page
                 assert "/runs/" in page.url, f"Expected to navigate to run detail, got {page.url}"
         
         page.close()
@@ -940,9 +1046,7 @@ class TestRunEval:
             page.wait_for_load_state("networkidle")
             time.sleep(1)
             
-            run_btn = page.query_selector("button:has-text('Run Eval')")
-            if run_btn:
-                run_btn.click()
+            if self._click_run_eval_and_start(page):
                 time.sleep(5)
                 page.wait_for_load_state("networkidle")
                 time.sleep(2)
@@ -974,9 +1078,7 @@ class TestRunEval:
             page.wait_for_load_state("networkidle")
             time.sleep(1)
             
-            run_btn = page.query_selector("button:has-text('Run Eval')")
-            if run_btn:
-                run_btn.click()
+            if self._click_run_eval_and_start(page):
                 time.sleep(5)
                 page.wait_for_load_state("networkidle")
                 time.sleep(2)
@@ -1010,9 +1112,7 @@ class TestRunEval:
             page.wait_for_load_state("networkidle")
             time.sleep(1)
             
-            run_btn = page.query_selector("button:has-text('Run Eval')")
-            if run_btn:
-                run_btn.click()
+            if self._click_run_eval_and_start(page):
                 time.sleep(5)
                 page.wait_for_load_state("networkidle")
                 time.sleep(2)
