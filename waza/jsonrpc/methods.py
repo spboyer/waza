@@ -297,7 +297,7 @@ class MethodHandler:
             "skill": spec.skill,
             "version": spec.version,
             "config": spec.config.model_dump(),
-            "metrics": spec.metrics.model_dump() if spec.metrics else None,
+            "metrics": [m.model_dump() for m in spec.metrics] if spec.metrics else [],
         }
 
     async def handle_eval_validate(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -363,19 +363,23 @@ class MethodHandler:
         # Get tasks
         base_path = Path(eval_path).parent
         tasks = []
-        for task_spec in spec.tasks:
-            task_path = base_path / task_spec.file
-            try:
-                from waza.schemas.task import Task
-                task = Task.from_file(str(task_path))
-                tasks.append({
-                    "id": task.id,
-                    "name": task.name,
-                    "description": task.description,
-                    "file": task_spec.file,
-                })
-            except Exception as e:
-                logger.warning(f"Failed to load task {task_path}: {e}")
+        
+        # Resolve task file patterns
+        import glob as glob_module
+        for pattern in spec.tasks:
+            task_files = glob_module.glob(str(base_path / pattern))
+            for task_file in task_files:
+                try:
+                    from waza.schemas.task import Task
+                    task = Task.from_file(task_file)
+                    tasks.append({
+                        "id": task.id,
+                        "name": task.name,
+                        "description": task.description,
+                        "file": str(Path(task_file).relative_to(base_path)),
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to load task {task_file}: {e}")
         
         return {"tasks": tasks}
 
@@ -409,21 +413,23 @@ class MethodHandler:
         
         # Find task
         base_path = Path(eval_path).parent
-        for task_spec in spec.tasks:
-            task_path = base_path / task_spec.file
-            try:
-                from waza.schemas.task import Task
-                task = Task.from_file(str(task_path))
-                if task.id == task_id:
-                    return {
-                        "id": task.id,
-                        "name": task.name,
-                        "description": task.description,
-                        "prompt": task.prompt,
-                        "graders": [g.model_dump() for g in task.graders] if task.graders else [],
-                    }
-            except Exception as e:
-                logger.warning(f"Failed to load task {task_path}: {e}")
+        import glob as glob_module
+        for pattern in spec.tasks:
+            task_files = glob_module.glob(str(base_path / pattern))
+            for task_file in task_files:
+                try:
+                    from waza.schemas.task import Task
+                    task = Task.from_file(task_file)
+                    if task.id == task_id:
+                        return {
+                            "id": task.id,
+                            "name": task.name,
+                            "description": task.description,
+                            "prompt": task.inputs.prompt if task.inputs else None,
+                            "graders": [g.model_dump() for g in task.graders] if task.graders else [],
+                        }
+                except Exception as e:
+                    logger.warning(f"Failed to load task {task_file}: {e}")
         
         raise JSONRPCException(JSONRPCError.invalid_params(f"task '{task_id}' not found"))
 
