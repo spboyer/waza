@@ -42,20 +42,37 @@ export interface Run {
 }
 
 export interface RunResults {
-  total_tasks: number;
-  passed: number;
-  failed: number;
-  pass_rate: number;
-  tasks: TaskResult[];
+  total_tasks?: number;
+  passed?: number;
+  failed?: number;
+  pass_rate?: number;
+  tasks?: TaskResult[];
   suggestions?: string;
+  summary?: {
+    total_tasks: number;
+    passed: number;
+    failed: number;
+    errors: number;
+    skipped: number;
+    pass_rate: number;
+    composite_score: number;
+    duration_ms: number;
+  };
 }
 
 export interface TaskResult {
   id: string;
   name: string;
   status: 'passed' | 'failed' | 'error';
-  score: number;
+  score?: number;
   trials: Trial[];
+  aggregate?: {
+    pass_rate: number;
+    mean_score: number;
+    min_score: number;
+    max_score: number;
+    mean_duration_ms: number;
+  };
 }
 
 export interface Trial {

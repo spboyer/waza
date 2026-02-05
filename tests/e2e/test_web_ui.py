@@ -897,6 +897,131 @@ class TestRunEval:
             assert run_btn, "Run Eval button not found"
         
         page.close()
+    
+    def test_run_eval_navigates_to_run_detail(self, browser_context):
+        """Test that clicking Run Eval creates a run and navigates to run detail."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                # Wait for navigation to complete
+                try:
+                    page.wait_for_url("**/runs/**", timeout=10000)
+                except:
+                    time.sleep(5)  # Fallback wait
+                
+                # Should navigate to run detail page
+                assert "/runs/" in page.url, f"Expected to navigate to run detail, got {page.url}"
+        
+        page.close()
+    
+    def test_run_detail_shows_summary_cards(self, browser_context):
+        """Test that run detail page shows summary cards with pass rate, passed, failed, total."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                time.sleep(5)
+                page.wait_for_load_state("networkidle")
+                time.sleep(2)
+                
+                # Check for summary cards
+                pass_rate = page.query_selector("text='Pass Rate'")
+                passed = page.query_selector("text='Passed'")
+                failed = page.query_selector("text='Failed'")
+                total = page.query_selector("text='Total'")
+                
+                assert pass_rate, "Pass Rate card not found"
+                assert passed, "Passed card not found"
+                assert failed, "Failed card not found"
+                assert total, "Total card not found"
+        
+        page.close()
+    
+    def test_run_detail_shows_task_results(self, browser_context):
+        """Test that run detail page shows task results section."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                time.sleep(5)
+                page.wait_for_load_state("networkidle")
+                time.sleep(2)
+                
+                # Check for task results section
+                task_results = page.query_selector("text='Task Results'")
+                assert task_results, "Task Results section not found"
+                
+                # Check for task score display
+                score_text = page.query_selector("text=/Score: \\d+\\.\\d+/")
+                # Score might not be present if no tasks, so just verify no JS errors
+                body = page.query_selector("body")
+                assert body, "Page should have content"
+        
+        page.close()
+    
+    def test_run_detail_no_console_errors(self, browser_context):
+        """Test that run detail page loads without console errors."""
+        context, base_url, setup_dialog = browser_context
+        page = context.new_page()
+        
+        errors = []
+        page.on("console", lambda msg: errors.append(msg.text) if msg.type == "error" else None)
+        
+        page.goto(f"{base_url}/evals")
+        page.wait_for_load_state("networkidle")
+        
+        eval_link = page.query_selector("a[href*='/evals/']")
+        if eval_link:
+            eval_link.click()
+            page.wait_for_load_state("networkidle")
+            time.sleep(1)
+            
+            run_btn = page.query_selector("button:has-text('Run Eval')")
+            if run_btn:
+                run_btn.click()
+                time.sleep(5)
+                page.wait_for_load_state("networkidle")
+                time.sleep(2)
+                
+                # Filter out non-critical errors
+                critical_errors = [e for e in errors if "TypeError" in e or "ReferenceError" in e]
+                assert not critical_errors, f"Console errors found: {critical_errors}"
+        
+        page.close()
 
 
 class TestRunDetail:

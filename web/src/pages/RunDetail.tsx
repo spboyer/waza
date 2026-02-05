@@ -126,36 +126,46 @@ export default function RunDetail() {
       )}
       
       {/* Results */}
-      {run.results && run.results.tasks && (
+      {run.results && (run.results.tasks || run.results.summary) && (
         <>
           {/* Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <SummaryCard 
-              label="Pass Rate" 
-              value={`${(run.results.pass_rate * 100).toFixed(0)}%`}
-              color={run.results.pass_rate === 1 ? 'green' : run.results.pass_rate >= 0.5 ? 'yellow' : 'red'}
-            />
-            <SummaryCard label="Passed" value={run.results.passed} color="green" />
-            <SummaryCard label="Failed" value={run.results.failed} color="red" />
-            <SummaryCard label="Total" value={run.results.total_tasks} color="gray" />
+            {(() => {
+              const summary = run.results.summary || run.results;
+              const passRate = summary.pass_rate ?? 0;
+              return (
+                <>
+                  <SummaryCard 
+                    label="Pass Rate" 
+                    value={`${(passRate * 100).toFixed(0)}%`}
+                    color={passRate === 1 ? 'green' : passRate >= 0.5 ? 'yellow' : 'red'}
+                  />
+                  <SummaryCard label="Passed" value={summary.passed ?? 0} color="green" />
+                  <SummaryCard label="Failed" value={summary.failed ?? 0} color="red" />
+                  <SummaryCard label="Total" value={summary.total_tasks ?? 0} color="gray" />
+                </>
+              );
+            })()}
           </div>
           
           {/* Task results */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Task Results</h2>
+          {run.results.tasks && run.results.tasks.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900">Task Results</h2>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {run.results.tasks.map(task => (
+                  <TaskResultRow 
+                    key={task.id}
+                    task={task}
+                    expanded={expandedTasks.has(task.id)}
+                    onToggle={() => toggleTask(task.id)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="divide-y divide-gray-100">
-              {run.results.tasks.map(task => (
-                <TaskResultRow 
-                  key={task.id}
-                  task={task}
-                  expanded={expandedTasks.has(task.id)}
-                  onToggle={() => toggleTask(task.id)}
-                />
-              ))}
-            </div>
-          </div>
+          )}
           
           {/* Suggestions */}
           {run.results.suggestions && (
@@ -247,7 +257,7 @@ function TaskResultRow({
         <div className="flex-1 min-w-0">
           <div className="font-medium text-gray-900 truncate">{task.name}</div>
           <div className="text-sm text-gray-500">
-            {task.trials.length} trial(s) • Score: {task.score.toFixed(2)}
+            {task.trials?.length || 0} trial(s) • Score: {(task.score ?? task.aggregate?.mean_score ?? 0).toFixed(2)}
           </div>
         </div>
       </button>

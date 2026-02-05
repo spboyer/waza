@@ -102,13 +102,33 @@ Import skills from SKILL.md URLs:
 
 ### E2E Testing
 
+**IMPORTANT: When adding or modifying any Web UI feature, you MUST:**
+1. Add or update Playwright tests in `tests/e2e/test_web_ui.py`
+2. Run the tests until they pass: `pytest tests/e2e/test_web_ui.py -v`
+3. Fix any failures before committing
+
 Tests use Playwright and cover:
 - Dashboard, Evals, EvalDetail, RunDetail pages
 - Task CRUD operations (edit, duplicate, delete)
 - Generate modal and URL input
+- Run eval flow (button click, navigation, results display)
 - API endpoints (health, evals, runs, auth)
 - SPA routing for direct navigation
 - Error handling for failed runs
+- Console error detection (no TypeError, ReferenceError)
+
+Test classes:
+- `TestDashboard` - Dashboard page tests
+- `TestEvalsPage` - Evals list page tests
+- `TestEvalDetail` - Eval detail page tests
+- `TestRunHistory` - Run history display tests
+- `TestAPIHealth` - API endpoint tests
+- `TestSPARouting` - Client-side routing tests
+- `TestGenerateModal` - Generate eval from SKILL.md tests
+- `TestTaskCRUD` - Task create/read/update/delete tests
+- `TestEvalEditor` - Eval configuration editor tests
+- `TestRunEval` - Run eval button and flow tests
+- `TestRunDetail` - Run detail page tests
 
 Run E2E tests:
 ```bash
