@@ -36,6 +36,7 @@ def main():
 @click.option("--trials", type=int, help="Override trials per task")
 @click.option("--parallel/--no-parallel", default=None, help="Run tasks in parallel")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output with conversation details")
+@click.option("--stream-json", is_flag=True, help="Output line-delimited JSON events for IDE integration")
 @click.option("--fail-threshold", type=float, default=0.0, help="Fail if pass rate below threshold")
 @click.option("--model", "-m", type=str, help="Model to use for execution (e.g., claude-sonnet-4-20250514, gpt-4)")
 @click.option("--executor", "-e", type=click.Choice(["mock", "copilot-sdk"]), help="Executor type")
@@ -52,6 +53,7 @@ def run(
     trials: int | None,
     parallel: bool | None,
     verbose: bool,
+    stream_json: bool,
     fail_threshold: float,
     model: str | None,
     executor: str | None,
@@ -69,8 +71,15 @@ def run(
     if suggestions_file:
         suggestions = True
 
-    console.print(f"[bold blue]waza[/bold blue] v{__version__}")
-    console.print()
+    # stream_json mode: emit line-delimited JSON for IDE integration
+    import json as json_lib
+    if stream_json:
+        # Disable rich console output for clean JSON streaming
+        import io
+        console._file = io.StringIO()  # Suppress rich output
+    else:
+        console.print(f"[bold blue]waza[/bold blue] v{__version__}")
+        console.print()
 
     # Load spec
     try:
@@ -247,6 +256,28 @@ def run(
         details: dict | None = None,
     ):
         """Handle progress updates from the runner."""
+        # Emit line-delimited JSON for IDE integration
+        if stream_json:
+            json_event = {
+                "type": event,
+                "timestamp": int(datetime.now().timestamp()),
+            }
+            if task_name:
+                json_event["task"] = task_name
+            if task_num is not None:
+                json_event["idx"] = task_num
+            if total_tasks:
+                json_event["total"] = total_tasks
+            if status:
+                json_event["status"] = status
+            if duration_ms is not None:
+                json_event["took_ms"] = duration_ms
+            if details and "score" in details:
+                json_event["score"] = details["score"]
+            
+            print(json_lib.dumps(json_event), flush=True)
+        
+        # Update progress state for rich display
         if event == "task_start":
             progress_state["current_task"] = task_name or ""
             progress_state["current_task_num"] = task_num or 0
@@ -293,8 +324,26 @@ def run(
         context_dir=context_dir,
     )
 
+    # Emit eval_start event for JSON streaming
+    if stream_json:
+        json_event = {
+            "type": "eval_start",
+            "eval": spec.name,
+            "skill": spec.skill,
+            "tasks": len(tasks),
+            "timestamp": int(datetime.now().timestamp()),
+        }
+        print(json_lib.dumps(json_event), flush=True)
+
     # Run with live progress display
-    with Live(make_progress_table(), console=console, refresh_per_second=4) as live:
+    if not stream_json:
+        live_context = Live(make_progress_table(), console=console, refresh_per_second=4)
+    else:
+        # Dummy context manager for stream_json mode
+        from contextlib import nullcontext
+        live_context = nullcontext()
+    
+    with live_context as live:
         import asyncio
 
         async def run_with_progress():
@@ -308,21 +357,36 @@ def run(
         async def main_loop():
             eval_task = asyncio.create_task(run_eval())
 
-            # Update display while eval runs
+            # Update display while eval runs (only in rich mode)
             while not eval_task.done():
-                live.update(make_progress_table())
+                if not stream_json:
+                    live.update(make_progress_table())
                 await asyncio.sleep(0.1)
 
             # Final update to show 100% completion
             progress_state["current_task"] = ""
-            live.update(make_progress_table())
+            if not stream_json:
+                live.update(make_progress_table())
 
             return await eval_task
 
         result = asyncio.run(main_loop())
 
+    # Emit eval_complete event for JSON streaming
+    if stream_json:
+        json_event = {
+            "type": "eval_complete",
+            "passed": result.summary.passed_tasks,
+            "failed": result.summary.failed_tasks,
+            "total": result.summary.total_tasks,
+            "rate": result.summary.pass_rate,
+            "timestamp": int(datetime.now().timestamp()),
+        }
+        print(json_lib.dumps(json_event), flush=True)
+
     # Display results
-    _display_results(result, verbose)
+    if not stream_json:
+        _display_results(result, verbose)
 
     # Save transcript log if --log specified
     if log:
