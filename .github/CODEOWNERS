@@ -1,0 +1,8 @@
+# CODEOWNERS file for automatic PR review assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Go implementation - richardpark-msft is the primary reviewer
+/waza-go/ @richardpark-msft
+*.go @richardpark-msft
+go.mod @richardpark-msft
+go.sum @richardpark-msft
