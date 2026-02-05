@@ -154,6 +154,7 @@ class CopilotExecutor(BaseExecutor):
             # Create session with model config
             session = await self._client.create_session({
                 "model": self.model,
+                "skill_directories": self.skill_directories,
                 "streaming": self.streaming,
             })
 
