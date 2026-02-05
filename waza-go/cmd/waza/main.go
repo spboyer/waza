@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spboyer/waza/waza-go/internal/config"
@@ -195,9 +196,9 @@ func simpleProgressListener(event orchestration.ProgressEvent) {
 }
 
 func printSummary(outcome *models.EvaluationOutcome) {
-	fmt.Println("=" + repeat("=", 50))
+	fmt.Println("=" + strings.Repeat("=", 50))
 	fmt.Println(" BENCHMARK RESULTS")
-	fmt.Println("=" + repeat("=", 50))
+	fmt.Println("=" + strings.Repeat("=", 50))
 	fmt.Println()
 
 	digest := outcome.Digest
@@ -243,12 +244,4 @@ func saveOutcome(outcome *models.EvaluationOutcome, path string) error {
 	}
 
 	return os.WriteFile(path, data, 0644)
-}
-
-func repeat(s string, count int) string {
-	result := ""
-	for i := 0; i < count; i++ {
-		result += s
-	}
-	return result
 }

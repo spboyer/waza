@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	copilot "github.com/github/copilot-sdk/go"
@@ -221,7 +222,9 @@ func (e *CopilotEngine) Shutdown(ctx context.Context) error {
 	}
 
 	if e.workspace != "" {
-		os.RemoveAll(e.workspace)
+		if err := os.RemoveAll(e.workspace); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to remove workspace %s during shutdown: %v\n", e.workspace, err)
+		}
 		e.workspace = ""
 	}
 
@@ -251,11 +254,11 @@ func (e *CopilotEngine) setupResources(resources []ResourceFile) error {
 }
 
 func joinStrings(parts []string) string {
-	result := ""
+	var builder strings.Builder
 	for _, p := range parts {
-		result += p
+		builder.WriteString(p)
 	}
-	return result
+	return builder.String()
 }
 
 func extractToolCalls(events []SessionEvent) []ToolCall {
