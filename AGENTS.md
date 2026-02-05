@@ -219,6 +219,24 @@ The `AssistedGenerator` class in `generator.py` uses Copilot SDK to generate bet
 
 Falls back to pattern-based `EvalGenerator` if LLM fails.
 
+## Code Ownership and Review
+
+### CODEOWNERS File
+
+The `.github/CODEOWNERS` file automatically assigns reviewers to PRs based on changed files:
+
+- **Go implementation** (`waza-go/`, `*.go`, `go.mod`, `go.sum`) → @richardpark-msft
+
+When you create a PR that modifies files matching these patterns, GitHub automatically:
+1. Requests review from the specified code owner
+2. Requires their approval if branch protection is enabled
+3. Notifies them of the PR
+
+To add new code owners:
+1. Edit `.github/CODEOWNERS`
+2. Use GitHub username format (`@username`) or team format (`@org/team-name`)
+3. Test with a draft PR to verify the pattern matches correctly
+
 ## Testing
 
 ```bash
