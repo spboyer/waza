@@ -19,6 +19,7 @@ A framework for evaluating [Agent Skills](https://agentskills.io/specification) 
 - 📊 **Model Comparison** - Compare results across different models
 - 🔎 **Skill Discovery** - Scan GitHub repos or local directories for skills
 - 📝 **GitHub Issue Creation** - Create issues with eval results automatically
+- 🔌 **IDE Integration** - JSON streaming protocol for VS Code, JetBrains, and more
 
 ---
 
@@ -232,7 +233,52 @@ waza generate --repo org/repo --all --output ./evals                       # Gen
 #   claude-opus-4.5
 #   gpt-4o
 #   gpt-5
+
+# IDE integration (JSON streaming)
+waza run eval.yaml --stream-json --executor mock  # Emit line-delimited JSON for IDE plugins
 ```
+
+### IDE Integration
+
+Waza supports IDE integration through JSON streaming:
+
+```bash
+# Run with JSON streaming for IDE integration
+waza run eval.yaml --stream-json --executor mock
+```
+
+**Output format (line-delimited JSON):**
+```json
+{"type":"eval_start","eval":"my-eval","tasks":5,"timestamp":1234567890}
+{"type":"task_start","idx":0,"task":"test-auth","total":5}
+{"type":"task_complete","idx":0,"status":"passed","took_ms":1234,"score":1.0}
+{"type":"eval_complete","passed":4,"failed":1,"total":5,"rate":0.8}
+```
+
+**Example integration (Python):**
+```python
+import subprocess, json
+
+proc = subprocess.Popen(
+    ["waza", "run", "eval.yaml", "--stream-json"],
+    stdout=subprocess.PIPE, text=True
+)
+
+for line in proc.stdout:
+    event = json.loads(line)
+    print(f"{event['type']}: {event}")
+```
+
+**See also:**
+- [IDE Integration Guide](docs/IDE-INTEGRATION.md) - Architecture overview
+- [RPC Protocol](docs/RPC-PROTOCOL.md) - Complete event reference
+- [Example Integration](examples/IDE-INTEGRATION-EXAMPLE.md) - Working Python example
+
+**Community extensions welcome:**
+- VS Code extension
+- JetBrains plugin  
+- Emacs mode
+- Vim plugin
 
 ---
 
