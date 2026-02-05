@@ -54,7 +54,7 @@ class JSONRPCError(BaseModel):
     data: Any | None = None
 
     @classmethod
-    def parse_error(cls, data: Any | None = None) -> JSONRPCError:
+    def parse_error(cls, data: Any | None = None) -> "JSONRPCError":
         """Create a parse error."""
         return cls(
             code=ErrorCode.PARSE_ERROR,
@@ -63,7 +63,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def invalid_request(cls, data: Any | None = None) -> JSONRPCError:
+    def invalid_request(cls, data: Any | None = None) -> "JSONRPCError":
         """Create an invalid request error."""
         return cls(
             code=ErrorCode.INVALID_REQUEST,
@@ -72,7 +72,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def method_not_found(cls, method: str) -> JSONRPCError:
+    def method_not_found(cls, method: str) -> "JSONRPCError":
         """Create a method not found error."""
         return cls(
             code=ErrorCode.METHOD_NOT_FOUND,
@@ -81,7 +81,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def invalid_params(cls, message: str) -> JSONRPCError:
+    def invalid_params(cls, message: str) -> "JSONRPCError":
         """Create an invalid params error."""
         return cls(
             code=ErrorCode.INVALID_PARAMS,
@@ -89,7 +89,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def internal_error(cls, message: str) -> JSONRPCError:
+    def internal_error(cls, message: str) -> "JSONRPCError":
         """Create an internal error."""
         return cls(
             code=ErrorCode.INTERNAL_ERROR,
@@ -97,7 +97,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def eval_not_found(cls, path: str) -> JSONRPCError:
+    def eval_not_found(cls, path: str) -> "JSONRPCError":
         """Create an eval not found error."""
         return cls(
             code=ErrorCode.EVAL_NOT_FOUND,
@@ -106,7 +106,7 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def validation_failed(cls, errors: list[str]) -> JSONRPCError:
+    def validation_failed(cls, errors: list[str]) -> "JSONRPCError":
         """Create a validation failed error."""
         return cls(
             code=ErrorCode.VALIDATION_FAILED,
@@ -115,12 +115,25 @@ class JSONRPCError(BaseModel):
         )
 
     @classmethod
-    def run_failed(cls, message: str) -> JSONRPCError:
+    def run_failed(cls, message: str) -> "JSONRPCError":
         """Create a run failed error."""
         return cls(
             code=ErrorCode.RUN_FAILED,
             message=f"Run failed: {message}",
         )
+
+
+class JSONRPCException(Exception):
+    """Exception that wraps a JSON-RPC error for raising in handlers."""
+
+    def __init__(self, error: JSONRPCError):
+        """Initialize exception with error object.
+        
+        Args:
+            error: The JSON-RPC error object.
+        """
+        self.error = error
+        super().__init__(error.message)
 
 
 class JSONRPCResponse(BaseModel):

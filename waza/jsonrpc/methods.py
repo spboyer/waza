@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from waza.jsonrpc.protocol import JSONRPCError
+from waza.jsonrpc.protocol import JSONRPCError, JSONRPCException
 from waza.runner import EvalRunner
 from waza.schemas.eval_spec import EvalSpec
 
@@ -138,19 +138,23 @@ class MethodHandler:
         """
         # Validate parameters
         if "path" not in params:
-            raise JSONRPCError.invalid_params("missing 'path' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'path' parameter")
+)
         
         eval_path = params["path"]
         
         # Check if eval file exists
         if not Path(eval_path).exists():
-            raise JSONRPCError.eval_not_found(eval_path)
+            raise JSONRPCException(JSONRPCError.eval_not_found(eval_path)
+)
         
         # Load eval spec
         try:
             spec = EvalSpec.from_file(eval_path)
         except Exception as e:
-            raise JSONRPCError.validation_failed([str(e)])
+            errors = [str(e)]
+            raise JSONRPCException(JSONRPCError.validation_failed(errors)
+)
         
         # Apply parameter overrides
         if "executor" in params:
@@ -240,11 +244,11 @@ class MethodHandler:
         """
         # Validate parameters
         if "directory" not in params:
-            raise JSONRPCError.invalid_params("missing 'directory' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'directory' parameter"))
         
         directory = Path(params["directory"])
         if not directory.exists():
-            raise JSONRPCError.eval_not_found(str(directory))
+            raise JSONRPCException(JSONRPCError.eval_not_found(str(directory)))
         
         # Find eval.yaml files
         evals = []
@@ -273,13 +277,13 @@ class MethodHandler:
         """
         # Validate parameters
         if "path" not in params:
-            raise JSONRPCError.invalid_params("missing 'path' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'path' parameter"))
         
         eval_path = params["path"]
         
         # Check if eval file exists
         if not Path(eval_path).exists():
-            raise JSONRPCError.eval_not_found(eval_path)
+            raise JSONRPCException(JSONRPCError.eval_not_found(eval_path))
         
         # Load eval spec
         try:
@@ -307,13 +311,13 @@ class MethodHandler:
         """
         # Validate parameters
         if "path" not in params:
-            raise JSONRPCError.invalid_params("missing 'path' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'path' parameter"))
         
         eval_path = params["path"]
         
         # Check if eval file exists
         if not Path(eval_path).exists():
-            raise JSONRPCError.eval_not_found(eval_path)
+            raise JSONRPCException(JSONRPCError.eval_not_found(eval_path))
         
         # Try to load eval spec
         errors = []
@@ -342,13 +346,13 @@ class MethodHandler:
         """
         # Validate parameters
         if "path" not in params:
-            raise JSONRPCError.invalid_params("missing 'path' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'path' parameter"))
         
         eval_path = params["path"]
         
         # Check if eval file exists
         if not Path(eval_path).exists():
-            raise JSONRPCError.eval_not_found(eval_path)
+            raise JSONRPCException(JSONRPCError.eval_not_found(eval_path))
         
         # Load eval spec
         try:
@@ -386,16 +390,16 @@ class MethodHandler:
         """
         # Validate parameters
         if "path" not in params:
-            raise JSONRPCError.invalid_params("missing 'path' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'path' parameter"))
         if "taskId" not in params:
-            raise JSONRPCError.invalid_params("missing 'taskId' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'taskId' parameter"))
         
         eval_path = params["path"]
         task_id = params["taskId"]
         
         # Check if eval file exists
         if not Path(eval_path).exists():
-            raise JSONRPCError.eval_not_found(eval_path)
+            raise JSONRPCException(JSONRPCError.eval_not_found(eval_path))
         
         # Load eval spec
         try:
@@ -421,7 +425,7 @@ class MethodHandler:
             except Exception as e:
                 logger.warning(f"Failed to load task {task_path}: {e}")
         
-        raise JSONRPCError.invalid_params(f"task '{task_id}' not found")
+        raise JSONRPCException(JSONRPCError.invalid_params(f"task '{task_id}' not found"))
 
     async def handle_run_status(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle run.status method.
@@ -434,14 +438,14 @@ class MethodHandler:
         """
         # Validate parameters
         if "runId" not in params:
-            raise JSONRPCError.invalid_params("missing 'runId' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'runId' parameter"))
         
         run_id = params["runId"]
         
         # Get run
         run = self._run_manager.get_run(run_id)
         if not run:
-            raise JSONRPCError.invalid_params(f"run '{run_id}' not found")
+            raise JSONRPCException(JSONRPCError.invalid_params(f"run '{run_id}' not found"))
         
         return {
             "runId": run_id,
@@ -461,7 +465,7 @@ class MethodHandler:
         """
         # Validate parameters
         if "runId" not in params:
-            raise JSONRPCError.invalid_params("missing 'runId' parameter")
+            raise JSONRPCException(JSONRPCError.invalid_params("missing 'runId' parameter"))
         
         run_id = params["runId"]
         
@@ -469,7 +473,7 @@ class MethodHandler:
         cancelled = self._run_manager.cancel_run(run_id)
         
         if not cancelled:
-            raise JSONRPCError.invalid_params(f"run '{run_id}' not found or not running")
+            raise JSONRPCException(JSONRPCError.invalid_params(f"run '{run_id}' not found or not running"))
         
         return {
             "runId": run_id,

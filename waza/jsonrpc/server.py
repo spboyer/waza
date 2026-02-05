@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from waza.jsonrpc.methods import MethodHandler
 from waza.jsonrpc.protocol import (
     JSONRPCError,
+    JSONRPCException,
     JSONRPCNotification,
     JSONRPCRequest,
     JSONRPCResponse,
@@ -76,8 +77,8 @@ class JSONRPCServer:
         try:
             result = await self._dispatch_method(request.method, request.params or {})
             return JSONRPCResponse.success(request.id, result)
-        except JSONRPCError as e:
-            return JSONRPCResponse.error_response(request.id, e)
+        except JSONRPCException as e:
+            return JSONRPCResponse.error_response(request.id, e.error)
         except Exception as e:
             logger.exception(f"Internal error handling {request.method}: {e}")
             return JSONRPCResponse.error_response(
@@ -109,7 +110,7 @@ class JSONRPCServer:
 
         handler = handlers.get(method)
         if not handler:
-            raise JSONRPCError.method_not_found(method)
+            raise JSONRPCException(JSONRPCError.method_not_found(method))
 
         return await handler(params)
 

@@ -5,6 +5,7 @@ from waza.jsonrpc.protocol import (
     JSONRPCRequest,
     JSONRPCResponse,
     JSONRPCError,
+    JSONRPCException,
     JSONRPCNotification,
     ErrorCode,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "JSONRPCRequest",
     "JSONRPCResponse",
     "JSONRPCError",
+    "JSONRPCException",
     "JSONRPCNotification",
     "ErrorCode",
 ]
