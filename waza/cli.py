@@ -1597,5 +1597,80 @@ Duration: {result.summary.duration_ms}ms
                 console.print()
 
 
+@main.command()
+@click.option("--tcp", type=str, help="Start TCP server on host:port (e.g., localhost:9000)")
+@click.option("--log-level", type=click.Choice(["debug", "info", "warning", "error"]), default="info", help="Logging level")
+def jsonrpc(tcp: str | None, log_level: str):
+    """Start JSON-RPC server for IDE integration.
+    
+    By default, uses stdio transport (reads from stdin, writes to stdout).
+    Use --tcp to start a TCP server for remote/debugging access.
+    
+    Examples:
+    
+      # Start stdio server (for IDE extensions)
+      waza jsonrpc
+      
+      # Start TCP server for debugging
+      waza jsonrpc --tcp localhost:9000
+    """
+    import asyncio
+    import logging
+    
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    
+    from waza.jsonrpc import JSONRPCServer
+    from waza.jsonrpc.transports import StdioTransport, TCPTransport
+    
+    async def serve_stdio():
+        """Serve on stdio."""
+        transport = StdioTransport()
+        server = JSONRPCServer(transport)
+        await server.serve()
+    
+    async def serve_tcp(host: str, port: int):
+        """Serve on TCP."""
+        async def handle_client(reader, writer):
+            transport = TCPTransport(reader, writer)
+            server = JSONRPCServer(transport)
+            await server.serve()
+        
+        server = await asyncio.start_server(handle_client, host, port)
+        addr = server.sockets[0].getsockname() if server.sockets else (host, port)
+        console.print(f"[green]JSON-RPC server listening on {addr[0]}:{addr[1]}[/green]")
+        
+        async with server:
+            await server.serve_forever()
+    
+    try:
+        if tcp:
+            # Parse host:port
+            parts = tcp.split(":")
+            if len(parts) != 2:
+                console.print("[red]Error: TCP address must be in format host:port[/red]")
+                sys.exit(1)
+            
+            host, port_str = parts
+            try:
+                port = int(port_str)
+            except ValueError:
+                console.print(f"[red]Error: Invalid port number: {port_str}[/red]")
+                sys.exit(1)
+            
+            asyncio.run(serve_tcp(host, port))
+        else:
+            # Use stdio
+            asyncio.run(serve_stdio())
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Server stopped[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     main()
