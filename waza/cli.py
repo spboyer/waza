@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +20,11 @@ from waza.runner import EvalRunner
 from waza.schemas.eval_spec import EvalSpec
 
 console = Console()
+
+
+def _get_timestamp() -> int:
+    """Get current Unix timestamp."""
+    return int(datetime.now().timestamp())
 
 
 @click.group()
@@ -72,11 +78,10 @@ def run(
         suggestions = True
 
     # stream_json mode: emit line-delimited JSON for IDE integration
-    import json as json_lib
     if stream_json:
-        # Disable rich console output for clean JSON streaming
+        # Suppress rich console output for clean JSON streaming
         import io
-        console._file = io.StringIO()  # Suppress rich output
+        console._file = io.StringIO()
         no_issues = True  # Auto-disable interactive prompts in stream mode
     else:
         console.print(f"[bold blue]waza[/bold blue] v{__version__}")
@@ -261,7 +266,7 @@ def run(
         if stream_json:
             json_event = {
                 "type": event,
-                "timestamp": int(datetime.now().timestamp()),
+                "timestamp": _get_timestamp(),
             }
             if task_name:
                 json_event["task"] = task_name
@@ -276,7 +281,7 @@ def run(
             if details and "score" in details:
                 json_event["score"] = details["score"]
             
-            print(json_lib.dumps(json_event), flush=True)
+            print(json.dumps(json_event), flush=True)
         
         # Update progress state for rich display
         if event == "task_start":
@@ -332,9 +337,9 @@ def run(
             "eval": spec.name,
             "skill": spec.skill,
             "tasks": len(tasks),
-            "timestamp": int(datetime.now().timestamp()),
+            "timestamp": _get_timestamp(),
         }
-        print(json_lib.dumps(json_event), flush=True)
+        print(json.dumps(json_event), flush=True)
 
     # Run with live progress display
     if not stream_json:
@@ -381,9 +386,9 @@ def run(
             "failed": result.summary.failed,
             "total": result.summary.total_tasks,
             "rate": result.summary.pass_rate,
-            "timestamp": int(datetime.now().timestamp()),
+            "timestamp": _get_timestamp(),
         }
-        print(json_lib.dumps(json_event), flush=True)
+        print(json.dumps(json_event), flush=True)
 
     # Display results
     if not stream_json:
@@ -391,7 +396,6 @@ def run(
 
     # Save transcript log if --log specified
     if log:
-        import json
         log_data = {
             "eval_name": result.eval_name,
             "skill": result.skill,

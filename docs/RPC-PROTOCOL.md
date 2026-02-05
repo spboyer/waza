@@ -58,8 +58,9 @@ Emitted when a task begins execution.
 {
   "type": "task_start",
   "idx": 0,
-  "name": "test-http-trigger",
-  "prompt": "Create an HTTP triggered function..."
+  "task": "test-http-trigger",
+  "total": 5,
+  "timestamp": 1234567890
 }
 ```
 
@@ -102,9 +103,16 @@ Final event with summary.
   "failed": 1,
   "total": 5,
   "rate": 0.8,
-  "duration_sec": 45.2
+  "timestamp": 1234567900
 }
 ```
+
+**Fields:**
+- `passed`: Number of tasks that passed
+- `failed`: Number of tasks that failed
+- `total`: Total number of tasks
+- `rate`: Pass rate (0.0 to 1.0)
+- `timestamp`: Unix timestamp
 
 ## IDE Integration Patterns
 

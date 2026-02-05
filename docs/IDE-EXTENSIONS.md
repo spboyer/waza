@@ -39,13 +39,13 @@ See `jetbrains-integration.md` for IntelliJ Platform integration.
 
 1. **Spawn waza subprocess:**
    ```
-   waza run eval.yaml -v --format json
+   waza run eval.yaml --stream-json
    ```
 
 2. **Parse stdout (line-delimited JSON):**
    ```json
-   {"type":"task_start","idx":0,"name":"test-auth"}
-   {"type":"task_complete","idx":0,"result":"pass"}
+   {"type":"task_start","idx":0,"task":"test-auth","total":5}
+   {"type":"task_complete","idx":0,"status":"passed","took_ms":1234,"score":1.0}
    ```
 
 3. **Update your UI based on events**
@@ -87,7 +87,7 @@ import subprocess
 import json
 
 proc = subprocess.Popen(
-    ["waza", "run", "eval.yaml", "-v", "--format", "json"],
+    ["waza", "run", "eval.yaml", "--stream-json"],
     stdout=subprocess.PIPE,
     text=True
 )
@@ -96,7 +96,7 @@ for line in proc.stdout:
     event = json.loads(line)
     print(f"Event: {event['type']}")
     if event['type'] == 'task_complete':
-        print(f"  Task {event['name']}: {event['result']}")
+        print(f"  Task {event['task']}: {event['status']}")
 ```
 
 ### Minimal JavaScript Integration
@@ -104,7 +104,7 @@ for line in proc.stdout:
 ```javascript
 const { spawn } = require('child_process');
 
-const proc = spawn('waza', ['run', 'eval.yaml', '-v', '--format', 'json']);
+const proc = spawn('waza', ['run', 'eval.yaml', '--stream-json']);
 
 proc.stdout.on('data', (data) => {
   const lines = data.toString().split('\n');

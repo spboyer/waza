@@ -22,19 +22,22 @@ Rather than implementing a traditional JSON-RPC server, waza uses a **subprocess
 IDEs execute waza CLI commands and parse JSON output:
 
 ```bash
-# Run eval and get JSON results
-waza run eval.yaml --format json --output results.json
+# Run eval with JSON streaming
+waza run eval.yaml --stream-json
 
-# Stream progress in real-time (verbose mode outputs line-delimited JSON)
-waza run eval.yaml -v --format json
+# With specific executor/model
+waza run eval.yaml --stream-json --executor mock
+
+# Save results to file as well
+waza run eval.yaml --stream-json --output results.json
 ```
 
 **Output Format:**
 ```jsonlines
-{"type":"task_start","task":"test-auth","num":1,"total":5}
-{"type":"task_progress","task":"test-auth","message":"Executing..."}
-{"type":"task_complete","task":"test-auth","status":"passed","duration_ms":1234}
-{"type":"eval_complete","summary":{"total":5,"passed":4,"failed":1}}
+{"type":"eval_start","eval":"my-eval","tasks":5,"timestamp":1234567890}
+{"type":"task_start","idx":0,"task":"test-auth","total":5,"timestamp":1234567890}
+{"type":"task_complete","idx":0,"task":"test-auth","status":"passed","took_ms":1234,"score":1.0,"timestamp":1234567891}
+{"type":"eval_complete","passed":4,"failed":1,"total":5,"rate":0.8,"timestamp":1234567900}
 ```
 
 ### Method 2: Watch Mode with File System
