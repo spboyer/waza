@@ -115,11 +115,7 @@ func runCommand() error {
 	case "mock":
 		engine = execution.NewMockEngine(spec.RuntimeOptions.ModelID)
 	case "copilot-sdk":
-		engine = execution.NewCopilotEngineBuilder(spec.RuntimeOptions.ModelID).
-			WithSkillPaths(spec.RuntimeOptions.SkillPaths).
-			WithServerConfigs(spec.RuntimeOptions.ServerConfigs).
-			WithTimeout(spec.RuntimeOptions.TimeoutSec).
-			Build()
+		engine = execution.NewCopilotEngineBuilder(spec.RuntimeOptions.ModelID).Build()
 	default:
 		return fmt.Errorf("unknown engine type: %s", spec.RuntimeOptions.EngineType)
 	}

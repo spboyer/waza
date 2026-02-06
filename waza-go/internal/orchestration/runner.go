@@ -99,14 +99,13 @@ func (r *TestRunner) RunBenchmark(ctx context.Context) (*models.EvaluationOutcom
 	testOutcomes := make([]models.TestOutcome, 0, len(testCases))
 
 	spec := r.cfg.Spec()
-	// NOTE: Although spec.RuntimeOptions.Concurrent may be set, the current
-	// AgentEngine implementation (particularly CopilotEngine) is not safe for
-	// concurrent use due to shared workspace and client state. To avoid data
-	// races and workspace/session corruption, we execute tests sequentially here.
-	// If/when engines become concurrency-safe or a per-worker engine factory is
-	// available, concurrent execution can be revisited.
-	_ = spec // Keep for documentation but suppress unused warning
-	testOutcomes = r.runSequential(ctx, testCases)
+	// Now that CopilotEngine is concurrency-safe (protected by mutex),
+	// we can safely use concurrent execution when configured
+	if spec.RuntimeOptions.Concurrent {
+		testOutcomes = r.runConcurrent(ctx, testCases)
+	} else {
+		testOutcomes = r.runSequential(ctx, testCases)
+	}
 
 	// Compute statistics
 	outcome := r.buildOutcome(testOutcomes, startTime)

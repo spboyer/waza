@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	copilot "github.com/github/copilot-sdk/go"
@@ -13,12 +14,10 @@ import (
 
 // CopilotEngine integrates with GitHub Copilot SDK
 type CopilotEngine struct {
-	modelID       string
-	skillPaths    []string
-	serverConfigs map[string]any
-	timeoutSec    int
-	streaming     bool
+	modelID string
 
+	// Mutex to protect concurrent access to workspace and client
+	mu        sync.Mutex
 	client    *copilot.Client
 	workspace string
 }
@@ -32,31 +31,9 @@ type CopilotEngineBuilder struct {
 func NewCopilotEngineBuilder(modelID string) *CopilotEngineBuilder {
 	return &CopilotEngineBuilder{
 		engine: &CopilotEngine{
-			modelID:    modelID,
-			timeoutSec: 300,
-			streaming:  true,
+			modelID: modelID,
 		},
 	}
-}
-
-func (b *CopilotEngineBuilder) WithSkillPaths(paths []string) *CopilotEngineBuilder {
-	b.engine.skillPaths = paths
-	return b
-}
-
-func (b *CopilotEngineBuilder) WithServerConfigs(configs map[string]any) *CopilotEngineBuilder {
-	b.engine.serverConfigs = configs
-	return b
-}
-
-func (b *CopilotEngineBuilder) WithTimeout(seconds int) *CopilotEngineBuilder {
-	b.engine.timeoutSec = seconds
-	return b
-}
-
-func (b *CopilotEngineBuilder) WithStreaming(enabled bool) *CopilotEngineBuilder {
-	b.engine.streaming = enabled
-	return b
 }
 
 func (b *CopilotEngineBuilder) Build() *CopilotEngine {
@@ -72,7 +49,12 @@ func (e *CopilotEngine) Initialize(ctx context.Context) error {
 }
 
 // Execute runs a test with Copilot SDK
+// This method is now concurrency-safe through mutex protection
 func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*ExecutionResponse, error) {
+	// Lock for the entire execution to ensure workspace/client isolation
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	start := time.Now()
 
 	// Clean up any previous workspace and create fresh one
@@ -201,6 +183,9 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 
 // Shutdown cleans up resources
 func (e *CopilotEngine) Shutdown(ctx context.Context) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if e.client != nil {
 		e.client.Stop()
 		e.client = nil
