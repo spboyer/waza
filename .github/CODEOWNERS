@@ -1,9 +1,4 @@
 # Default owners for everything in the repo
 # @spboyer is the primary owner, @chlowell and @richardpark-msft are additional reviewers
+# All three will be auto-assigned as reviewers on any new or opened PR
 * @spboyer @chlowell @richardpark-msft
-
-# Go code ownership - @richardpark-msft is the code owner for all Go-related files
-waza-go/ @richardpark-msft
-*.go @richardpark-msft
-go.mod @richardpark-msft
-go.sum @richardpark-msft
