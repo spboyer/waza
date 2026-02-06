@@ -1,13 +1,11 @@
-# This file defines code owners for the waza repository
+# CODEOWNERS file for automatic PR review assignment
 # Code owners are automatically requested for review when someone opens a pull request
 # that modifies code that they own.
 #
-# Learn more about CODEOWNERS: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default owner for everything in the repo
 * @chlowell
-# CODEOWNERS file for automatic PR review assignment
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Go implementation - richardpark-msft is the primary reviewer
 /waza-go/ @richardpark-msft
