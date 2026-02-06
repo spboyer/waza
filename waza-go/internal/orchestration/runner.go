@@ -78,7 +78,11 @@ func (r *TestRunner) RunBenchmark(ctx context.Context) (*models.EvaluationOutcom
 	if err := r.engine.Initialize(ctx); err != nil {
 		return nil, fmt.Errorf("failed to initialize engine: %w", err)
 	}
-	defer r.engine.Shutdown(ctx)
+	defer func() {
+		if err := r.engine.Shutdown(ctx); err != nil {
+			fmt.Printf("warning: failed to shutdown engine: %v\n", err)
+		}
+	}()
 
 	// Load test cases
 	testCases, err := r.loadTestCases()
@@ -96,7 +100,7 @@ func (r *TestRunner) RunBenchmark(ctx context.Context) (*models.EvaluationOutcom
 	})
 
 	// Execute tests
-	testOutcomes := make([]models.TestOutcome, 0, len(testCases))
+	var testOutcomes []models.TestOutcome
 
 	spec := r.cfg.Spec()
 	// Now that CopilotEngine is concurrency-safe (protected by mutex),

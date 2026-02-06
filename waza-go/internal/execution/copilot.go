@@ -78,7 +78,10 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 
 	// Reinitialize client with new workspace
 	if e.client != nil {
-		e.client.Stop()
+		if err := e.client.Stop(); err != nil {
+			// Log but don't fail on cleanup error
+			fmt.Printf("warning: failed to stop client: %v\n", err)
+		}
 	}
 
 	client := copilot.NewClient(&copilot.ClientOptions{
@@ -98,7 +101,11 @@ func (e *CopilotEngine) Execute(ctx context.Context, req *ExecutionRequest) (*Ex
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
-	defer session.Destroy()
+	defer func() {
+		if err := session.Destroy(); err != nil {
+			fmt.Printf("warning: failed to destroy session: %v\n", err)
+		}
+	}()
 
 	// Collect events
 	var events []SessionEvent
@@ -187,7 +194,10 @@ func (e *CopilotEngine) Shutdown(ctx context.Context) error {
 	defer e.mu.Unlock()
 
 	if e.client != nil {
-		e.client.Stop()
+		if err := e.client.Stop(); err != nil {
+			// Log but continue cleanup
+			fmt.Printf("warning: failed to stop client: %v\n", err)
+		}
 		e.client = nil
 	}
 

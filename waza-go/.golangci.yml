@@ -13,6 +13,7 @@ linters-settings:
     enable-all: true
     disable:
       - shadow
+      - fieldalignment
   
   misspell:
     locale: US
@@ -28,10 +29,6 @@ linters:
     - unconvert
     - unused
     - staticcheck
-  disable:
-    - structcheck
-    - deadcode
-    - varcheck
 
 issues:
   exclude-rules:
