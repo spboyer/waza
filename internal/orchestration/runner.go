@@ -29,9 +29,23 @@ type TestRunner struct {
 // ProgressListener receives progress updates
 type ProgressListener func(event ProgressEvent)
 
+// EventType represents the type of progress event
+type EventType string
+
+// EventType constants
+const (
+	EventBenchmarkStart    EventType = "benchmark_start"
+	EventBenchmarkComplete EventType = "benchmark_complete"
+	EventBenchmarkStopped  EventType = "benchmark_stopped"
+	EventTestStart         EventType = "test_start"
+	EventTestComplete      EventType = "test_complete"
+	EventRunStart          EventType = "run_start"
+	EventRunComplete       EventType = "run_complete"
+)
+
 // ProgressEvent represents a progress update
 type ProgressEvent struct {
-	EventType  string
+	EventType  EventType
 	TestName   string
 	TestNum    int
 	TotalTests int
@@ -95,7 +109,7 @@ func (r *TestRunner) RunBenchmark(ctx context.Context) (*models.EvaluationOutcom
 	}
 
 	r.notifyProgress(ProgressEvent{
-		EventType:  "benchmark_start",
+		EventType:  EventBenchmarkStart,
 		TotalTests: len(testCases),
 	})
 
@@ -115,7 +129,7 @@ func (r *TestRunner) RunBenchmark(ctx context.Context) (*models.EvaluationOutcom
 	outcome := r.buildOutcome(testOutcomes, startTime)
 
 	r.notifyProgress(ProgressEvent{
-		EventType:  "benchmark_complete",
+		EventType:  EventBenchmarkComplete,
 		DurationMs: time.Since(startTime).Milliseconds(),
 	})
 
@@ -173,7 +187,7 @@ func (r *TestRunner) runSequential(ctx context.Context, testCases []*models.Test
 			for _, prevResult := range outcomes {
 				if prevResult.Status != "passed" {
 					r.notifyProgress(ProgressEvent{
-						EventType: "benchmark_stopped",
+						EventType: EventBenchmarkStopped,
 						Details:   map[string]any{"reason": "fail_fast enabled and previous test failed"},
 					})
 					// Skip remaining tests
@@ -183,7 +197,7 @@ func (r *TestRunner) runSequential(ctx context.Context, testCases []*models.Test
 		}
 
 		r.notifyProgress(ProgressEvent{
-			EventType:  "test_start",
+			EventType:  EventTestStart,
 			TestName:   tc.DisplayName,
 			TestNum:    i + 1,
 			TotalTests: len(testCases),
@@ -193,7 +207,7 @@ func (r *TestRunner) runSequential(ctx context.Context, testCases []*models.Test
 		outcomes = append(outcomes, outcome)
 
 		r.notifyProgress(ProgressEvent{
-			EventType:  "test_complete",
+			EventType:  EventTestComplete,
 			TestName:   tc.DisplayName,
 			TestNum:    i + 1,
 			TotalTests: len(testCases),
@@ -231,7 +245,7 @@ func (r *TestRunner) runConcurrent(ctx context.Context, testCases []*models.Test
 			defer func() { <-semaphore }()
 
 			r.notifyProgress(ProgressEvent{
-				EventType:  "test_start",
+				EventType:  EventTestStart,
 				TestName:   test.DisplayName,
 				TestNum:    idx + 1,
 				TotalTests: len(testCases),
@@ -241,7 +255,7 @@ func (r *TestRunner) runConcurrent(ctx context.Context, testCases []*models.Test
 			resultChan <- result{index: idx, outcome: outcome}
 
 			r.notifyProgress(ProgressEvent{
-				EventType:  "test_complete",
+				EventType:  EventTestComplete,
 				TestName:   test.DisplayName,
 				TestNum:    idx + 1,
 				TotalTests: len(testCases),
@@ -272,7 +286,7 @@ func (r *TestRunner) runTest(ctx context.Context, tc *models.TestCase, testNum, 
 
 	for runNum := 1; runNum <= runsPerTest; runNum++ {
 		r.notifyProgress(ProgressEvent{
-			EventType:  "run_start",
+			EventType:  EventRunStart,
 			TestName:   tc.DisplayName,
 			TestNum:    testNum,
 			TotalTests: totalTests,
@@ -284,7 +298,7 @@ func (r *TestRunner) runTest(ctx context.Context, tc *models.TestCase, testNum, 
 		runs = append(runs, run)
 
 		r.notifyProgress(ProgressEvent{
-			EventType:  "run_complete",
+			EventType:  EventRunComplete,
 			TestName:   tc.DisplayName,
 			TestNum:    testNum,
 			TotalTests: totalTests,
