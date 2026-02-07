@@ -12,8 +12,8 @@ import (
 // RegexGrader validates using regex patterns
 type RegexGrader struct {
 	name         string
-	mustMatch    []string `mapstructure:"must_match"`
-	mustNotMatch []string `mapstructure:"must_not_match"`
+	mustMatch    []string
+	mustNotMatch []string
 }
 
 func NewRegexGrader(name string, mustMatch []string, mustNotMatch []string) (*RegexGrader, error) {
@@ -70,7 +70,7 @@ func (reg *RegexGrader) Grade(ctx context.Context, gradingContext *Context) (*mo
 
 		return &models.GraderResults{
 			Name:     reg.name,
-			Type:     "regex",
+			Type:     string(TypeRegex),
 			Score:    score,
 			Passed:   len(failures) == 0,
 			Feedback: feedback,
